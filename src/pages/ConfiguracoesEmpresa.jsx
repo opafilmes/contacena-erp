@@ -42,12 +42,21 @@ export default function ConfiguracoesEmpresa() {
   };
 
   const handleManagePlan = async () => {
+    if (!tenant?.stripe_customer_id) {
+      toast.info("Você ainda não possui uma assinatura ativa. Escolha um plano para começar.");
+      return;
+    }
     setPortalLoading(true);
-    const res = await base44.functions.invoke("createPortalSession", { tenantId: tenant.id });
-    if (res.data?.url) {
-      window.location.href = res.data.url;
-    } else {
-      toast.error("Não foi possível abrir o portal de faturamento.");
+    try {
+      const res = await base44.functions.invoke("createPortalSession", { tenantId: tenant.id });
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        toast.error("Não foi possível abrir o portal de faturamento.");
+      }
+    } catch {
+      toast.error("Erro ao conectar com o portal de faturamento.");
+    } finally {
       setPortalLoading(false);
     }
   };
