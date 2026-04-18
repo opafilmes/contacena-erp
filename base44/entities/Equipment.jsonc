@@ -18,6 +18,38 @@
       "type": "number",
       "description": "Valor de compra em BRL"
     },
+    "marca": {
+      "type": "string",
+      "description": "Marca do equipamento"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "C\u00e2mera",
+        "Lente",
+        "Ilumina\u00e7\u00e3o",
+        "\u00c1udio",
+        "Trip\u00e9/Suporte",
+        "Monitor",
+        "Estabilizador",
+        "Drone",
+        "Acess\u00f3rio",
+        "Outros"
+      ],
+      "description": "Categoria do equipamento"
+    },
+    "status_manutencao": {
+      "type": "boolean",
+      "default": false,
+      "description": "true = Em Manuten\u00e7\u00e3o, false = Ativo"
+    },
+    "fotos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs das fotos do equipamento"
+    },
     "tenant_id": {
       "type": "string",
       "description": "ID do Tenant ao qual este equipamento pertence"

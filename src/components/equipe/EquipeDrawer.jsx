@@ -13,17 +13,23 @@ const BLANK = {
   nome: "",
   email: "",
   role: "Producao",
-  perm_comercial: true,
+  perm_comercial: false,
   perm_financeiro: false,
   perm_studio_atividades: true,
-  perm_studio_inventario: false,
+  perm_studio_inventario: true,
+};
+
+const ROLE_PERMS = {
+  Admin:      { perm_comercial: true,  perm_financeiro: true,  perm_studio_atividades: true,  perm_studio_inventario: true  },
+  Financeiro: { perm_comercial: true,  perm_financeiro: true,  perm_studio_atividades: false, perm_studio_inventario: false },
+  Producao:   { perm_comercial: false, perm_financeiro: false, perm_studio_atividades: true,  perm_studio_inventario: true  },
 };
 
 const PERMS = [
-  { key: "perm_comercial", label: "Módulo Comercial", desc: "Acesso a propostas e contratos" },
-  { key: "perm_financeiro", label: "Módulo Financeiro", desc: "Acesso a receitas e despesas" },
-  { key: "perm_studio_atividades", label: "Studio · Atividades", desc: "Gestão de tarefas e ordem do dia" },
-  { key: "perm_studio_inventario", label: "Studio · Inventário", desc: "Gestão de equipamentos e reservas" },
+  { key: "perm_comercial",         label: "Módulo Comercial",     desc: "Acesso a propostas e contratos" },
+  { key: "perm_financeiro",        label: "Módulo Financeiro",    desc: "Acesso a receitas e despesas" },
+  { key: "perm_studio_atividades", label: "Studio · Atividades",  desc: "Gestão de tarefas e ordem do dia" },
+  { key: "perm_studio_inventario", label: "Studio · Inventário",  desc: "Gestão de equipamentos e reservas" },
 ];
 
 export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved }) {
@@ -38,8 +44,8 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
           nome: record.nome || "",
           email: record.email || "",
           role: record.role || "Producao",
-          perm_comercial: record.perm_comercial ?? true,
-          perm_financeiro: record.perm_financeiro ?? false,
+          perm_comercial:         record.perm_comercial         ?? true,
+          perm_financeiro:        record.perm_financeiro        ?? false,
           perm_studio_atividades: record.perm_studio_atividades ?? true,
           perm_studio_inventario: record.perm_studio_inventario ?? false,
         });
@@ -49,6 +55,10 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
     }
   }, [open, record]);
 
+  const handleRoleChange = (role) => {
+    setForm(f => ({ ...f, role, ...ROLE_PERMS[role] }));
+  };
+
   const handleSave = async () => {
     if (!form.nome.trim() || !form.email.trim()) {
       toast.error("Nome e e-mail são obrigatórios.");
@@ -57,25 +67,23 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
     setSaving(true);
     if (isEdit) {
       await base44.entities.Usuarios.update(record.id, {
-        nome: form.nome,
-        role: form.role,
-        perm_comercial: form.perm_comercial,
-        perm_financeiro: form.perm_financeiro,
+        nome:                   form.nome,
+        role:                   form.role,
+        perm_comercial:         form.perm_comercial,
+        perm_financeiro:        form.perm_financeiro,
         perm_studio_atividades: form.perm_studio_atividades,
         perm_studio_inventario: form.perm_studio_inventario,
       });
       toast.success("Usuário atualizado!");
     } else {
-      // Convidar novo membro
       await base44.users.inviteUser(form.email, form.role === "Admin" ? "admin" : "user");
-      // Criar registro Usuarios com as permissões
       await base44.entities.Usuarios.create({
-        nome: form.nome,
-        email: form.email,
-        role: form.role,
-        tenant_id: tenantId,
-        perm_comercial: form.perm_comercial,
-        perm_financeiro: form.perm_financeiro,
+        nome:                   form.nome,
+        email:                  form.email,
+        role:                   form.role,
+        tenant_id:              tenantId,
+        perm_comercial:         form.perm_comercial,
+        perm_financeiro:        form.perm_financeiro,
         perm_studio_atividades: form.perm_studio_atividades,
         perm_studio_inventario: form.perm_studio_inventario,
       });
@@ -86,13 +94,11 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
     onClose();
   };
 
-  const setPerm = (key, val) => setForm(f => ({ ...f, [key]: val }));
-
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50 overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="font-heading">{isEdit ? "Editar Membro" : "Convidar Membro"}</SheetTitle>
+          <SheetTitle className="font-heading">{isEdit ? "Editar Usuário" : "Novo Usuário"}</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-5 mt-6 pb-6">
@@ -111,7 +117,7 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
 
           <div className="space-y-1.5">
             <Label>Perfil</Label>
-            <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v }))}>
+            <Select value={form.role} onValueChange={handleRoleChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Admin">Admin</SelectItem>
@@ -119,10 +125,10 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
                 <SelectItem value="Producao">Produção</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">As permissões abaixo são ajustadas automaticamente pelo perfil.</p>
           </div>
 
-          {/* Permissões granulares */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-1">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-violet-400" />
               <Label className="text-sm font-semibold">Permissões de Acesso</Label>
@@ -133,7 +139,7 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
                   <Checkbox
                     id={perm.key}
                     checked={!!form[perm.key]}
-                    onCheckedChange={val => setPerm(perm.key, !!val)}
+                    onCheckedChange={val => setForm(f => ({ ...f, [perm.key]: !!val }))}
                     className="mt-0.5"
                   />
                   <div>

@@ -25,7 +25,7 @@ const BLANK_SUBTASK = {
   responsavel_id: "",
 };
 
-export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId, usuarios, jobs, clients, currentUserId, onSaved }) {
+export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId, usuarios, jobs, clients, currentUserId, preselectedClientId, onSaved }) {
   const [form, setForm] = useState(BLANK_FORM);
   const [subtasks, setSubtasks] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -47,8 +47,8 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
           client_id: task.client_id || "",
         });
       } else {
-        // Auto-atribuição: pré-seleciona o usuário logado como responsável
-        setForm({ ...BLANK_FORM, responsavel_id: currentUserId || "" });
+        // Auto-atribuição: pré-seleciona o usuário logado + cliente do sidebar
+        setForm({ ...BLANK_FORM, responsavel_id: currentUserId || "", client_id: preselectedClientId || "" });
       }
       setSubtasks([]);
     }

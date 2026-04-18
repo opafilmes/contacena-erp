@@ -2,26 +2,26 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Plus, CheckSquare, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plus, List, CalendarDays, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BackButton from "@/components/shared/BackButton";
-import TaskCard from "@/components/studio/TaskCard";
 import TaskDrawer from "@/components/studio/TaskDrawer";
-import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+import TaskListView from "@/components/studio/TaskListView";
+import TaskCalendarView from "@/components/studio/TaskCalendarView";
 
 export default function StudioAtividades() {
   const { tenant, usuario } = useOutletContext();
   const tenantId = tenant?.id;
   const inquilinoId = tenant?.id;
 
-  const [tasks, setTasks] = useState([]);
-  const [jobs, setJobs] = useState([]);
+  const [tasks, setTasks]       = useState([]);
+  const [jobs, setJobs]         = useState([]);
   const [usuarios, setUsuarios] = useState([]);
-  const [clients, setClients] = useState([]);
+  const [clients, setClients]   = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [tab, setTab] = useState("proximas");
+  const [selectedClient, setSelectedClient] = useState("todos");
+  const [view, setView] = useState("lista"); // "lista" | "calendario"
 
   const loadAll = useCallback(async () => {
     if (!inquilinoId) return;
@@ -39,167 +39,134 @@ export default function StudioAtividades() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  const hoje = startOfDay(new Date());
-  const fimHoje = endOfDay(new Date());
-
-  const proximas = tasks.filter(t =>
-    t.status === "A Fazer" &&
-    t.data_vencimento &&
-    !isBefore(new Date(t.data_vencimento), hoje)
+  // Clientes que têm ao menos 1 tarefa
+  const clientsWithTasks = clients.filter(c =>
+    tasks.some(t => t.client_id === c.id)
   );
-  const atrasadas = tasks.filter(t =>
-    t.status === "A Fazer" &&
-    t.data_vencimento &&
-    isBefore(new Date(t.data_vencimento), hoje)
-  );
-  const concluidasHoje = tasks.filter(t =>
-    t.status === "Concluída" &&
-    t.updated_date &&
-    !isBefore(new Date(t.updated_date), hoje) &&
-    !isAfter(new Date(t.updated_date), fimHoje)
-  );
-  const concluidas = tasks.filter(t => t.status === "Concluída");
 
-  const handleEdit = (task) => { setEditingTask(task); setDrawerOpen(true); };
-  const handleNew = () => { setEditingTask(null); setDrawerOpen(true); };
+  // Tarefas filtradas pelo cliente selecionado
+  const filteredTasks = selectedClient === "todos"
+    ? tasks
+    : tasks.filter(t => t.client_id === selectedClient);
 
-  const handleDelete = async (task) => {
-    await base44.entities.Task.delete(task.id);
-    loadAll();
-  };
-
+  const handleEdit   = (task) => { setEditingTask(task); setDrawerOpen(true); };
+  const handleNew    = () => { setEditingTask(null); setDrawerOpen(true); };
+  const handleDelete = async (task) => { await base44.entities.Task.delete(task.id); loadAll(); };
   const handleToggle = async (task) => {
-    const newStatus = task.status === "A Fazer" ? "Concluída" : "A Fazer";
-    await base44.entities.Task.update(task.id, { status: newStatus });
+    await base44.entities.Task.update(task.id, { status: task.status === "A Fazer" ? "Concluída" : "A Fazer" });
     loadAll();
   };
 
-  const MINI_CARDS = [
-    {
-      label: "Projetos Ativos",
-      value: jobs.length,
-      icon: CheckSquare,
-      color: "text-sky-400",
-      bg: "bg-sky-500/10 border-sky-500/20",
-    },
-    {
-      label: "Tarefas Pendentes",
-      value: tasks.filter(t => t.status === "A Fazer").length,
-      icon: Clock,
-      color: "text-amber-400",
-      bg: "bg-amber-500/10 border-amber-500/20",
-    },
-    {
-      label: "Concluídas Hoje",
-      value: concluidasHoje.length,
-      icon: CheckCircle2,
-      color: "text-green-400",
-      bg: "bg-green-500/10 border-green-500/20",
-    },
-  ];
-
-  const tabData = {
-    proximas: { list: proximas, empty: "Nenhuma tarefa próxima.", icon: Clock },
-    atrasadas: { list: atrasadas, empty: "Nenhuma tarefa atrasada. 🎉", icon: AlertTriangle },
-    concluidas: { list: concluidas, empty: "Nenhuma tarefa concluída.", icon: CheckCircle2 },
-  };
+  const selectedClientObj = clients.find(c => c.id === selectedClient);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-5xl mx-auto">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+      <div className="px-6 pt-8 pb-4 max-w-7xl mx-auto w-full">
         <BackButton to="/producao" label="← Studio" />
+      </div>
 
-        <div className="flex items-center justify-between mt-4 mb-8">
-          <div>
-            <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">🎬 Gestão de Atividades</h1>
-            <p className="text-muted-foreground text-sm mt-1">Acompanhe tarefas e delegue para sua equipe</p>
+      <div className="flex flex-1 max-w-7xl mx-auto w-full px-6 pb-10 gap-0">
+        {/* ── Coluna Esquerda: Client Sidebar ── */}
+        <aside className="w-52 shrink-0 mr-6 pt-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Clientes</p>
+          <nav className="space-y-1">
+            <button
+              onClick={() => setSelectedClient("todos")}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                selectedClient === "todos"
+                  ? "bg-accent/20 text-accent font-semibold"
+                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+              Todos
+              <span className="ml-auto text-xs opacity-60">{tasks.length}</span>
+            </button>
+
+            {clientsWithTasks.map(c => {
+              const count = tasks.filter(t => t.client_id === c.id).length;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedClient(c.id)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                    selectedClient === c.id
+                      ? "bg-accent/20 text-accent font-semibold"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                  <span className="truncate">{c.nome_fantasia}</span>
+                  <span className="ml-auto text-xs opacity-60">{count}</span>
+                </button>
+              );
+            })}
+
+            {clientsWithTasks.length === 0 && (
+              <p className="text-xs text-muted-foreground px-3 py-2 italic">Nenhum cliente com tarefas.</p>
+            )}
+          </nav>
+        </aside>
+
+        {/* ── Coluna Direita: Área Principal ── */}
+        <main className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h1 className="font-heading text-xl font-bold text-foreground tracking-tight">
+                {selectedClient === "todos" ? "Todas as Atividades" : (selectedClientObj?.nome_fantasia || "Cliente")}
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {filteredTasks.length} tarefa{filteredTasks.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Toggle Lista / Calendário */}
+              <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg border border-border/40">
+                <button
+                  onClick={() => setView("lista")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    view === "lista" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" /> Lista
+                </button>
+                <button
+                  onClick={() => setView("calendario")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    view === "calendario" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" /> Calendário
+                </button>
+              </div>
+              <Button onClick={handleNew} size="sm" className="gap-1.5 text-xs h-8">
+                <Plus className="w-3.5 h-3.5" /> Nova Tarefa
+              </Button>
+            </div>
           </div>
-          <Button onClick={handleNew} size="sm" className="gap-2">
-            <Plus className="w-4 h-4" /> Nova Tarefa
-          </Button>
-        </div>
 
-        {/* Mini Cards Bento */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {MINI_CARDS.map((card, i) => {
-            const Icon = card.icon;
-            return (
-              <motion.div
-                key={card.label}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07, duration: 0.4 }}
-                className={`rounded-xl border p-4 flex items-center gap-4 ${card.bg}`}
-              >
-                <div className={`p-2 rounded-lg bg-white/[0.05] ${card.color}`}>
-                  <Icon className="w-5 h-5 stroke-[1.5]" />
-                </div>
-                <div>
-                  <p className={`text-2xl font-heading font-bold ${card.color}`}>{card.value}</p>
-                  <p className="text-xs text-muted-foreground">{card.label}</p>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Tabs filtro */}
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-6 bg-secondary/50">
-            <TabsTrigger value="proximas" className="gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              Próximas
-              {proximas.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold">
-                  {proximas.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="atrasadas" className="gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Atrasadas
-              {atrasadas.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold">
-                  {atrasadas.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="concluidas" className="gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Concluídas
-            </TabsTrigger>
-          </TabsList>
-
-          {Object.entries(tabData).map(([key, { list, empty }]) => (
-            <TabsContent key={key} value={key}>
-              {list.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground text-sm">{empty}</div>
-              ) : (
-                <div className="space-y-3">
-                  {list.map((task, i) => (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04, duration: 0.3 }}
-                    >
-                      <TaskCard
-                        task={task}
-                        usuarios={usuarios}
-                        jobs={jobs}
-                        clients={clients}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onToggle={handleToggle}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </motion.div>
+          {/* Views */}
+          <motion.div key={view} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+            {view === "lista" ? (
+              <TaskListView
+                tasks={filteredTasks}
+                usuarios={usuarios}
+                jobs={jobs}
+                clients={clients}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggle={handleToggle}
+              />
+            ) : (
+              <TaskCalendarView
+                tasks={filteredTasks}
+                onEdit={handleEdit}
+              />
+            )}
+          </motion.div>
+        </main>
+      </div>
 
       <TaskDrawer
         open={drawerOpen}
@@ -211,6 +178,7 @@ export default function StudioAtividades() {
         jobs={jobs}
         clients={clients}
         currentUserId={usuario?.id}
+        preselectedClientId={selectedClient !== "todos" ? selectedClient : undefined}
         onSaved={loadAll}
       />
     </div>

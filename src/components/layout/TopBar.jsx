@@ -79,7 +79,7 @@ export default function TopBar({ tenant, usuario }) {
             <DropdownMenuItem asChild>
               <Link to="/gestao-equipe" className="cursor-pointer">
                 <Users className="mr-2 h-4 w-4" />
-                Gestão de Equipe
+                Usuários
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

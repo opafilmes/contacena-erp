@@ -10,6 +10,7 @@ import EquipmentTable from "@/components/studio/EquipmentTable";
 import EquipmentDrawer from "@/components/studio/EquipmentDrawer";
 import BookingDrawer from "@/components/studio/BookingDrawer";
 import BookingTable from "@/components/studio/BookingTable";
+import InventarioChart from "@/components/studio/InventarioChart";
 
 export default function StudioInventario() {
   const { tenant } = useOutletContext();
@@ -70,7 +71,7 @@ export default function StudioInventario() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-4 flex items-center gap-4">
             <div className="p-2 rounded-lg bg-white/[0.05] text-violet-400">
               <Package className="w-5 h-5 stroke-[1.5]" />
@@ -90,6 +91,13 @@ export default function StudioInventario() {
             </div>
           </div>
         </div>
+
+        {/* Chart */}
+        {bookings.length > 0 && (
+          <div className="mb-6">
+            <InventarioChart equipments={equipments} bookings={bookings} />
+          </div>
+        )}
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-6 bg-secondary/50">
