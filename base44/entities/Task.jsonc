@@ -36,6 +36,14 @@
       "type": "string",
       "description": "ID do Job relacionado"
     },
+    "client_id": {
+      "type": "string",
+      "description": "ID do Client relacionado"
+    },
+    "parent_task_id": {
+      "type": "string",
+      "description": "ID da Tarefa Mestre (self-reference). Se vazio, \u00e9 uma tarefa mestre."
+    },
     "inquilino_id": {
       "type": "string",
       "description": "ID do Tenant ao qual esta tarefa pertence"

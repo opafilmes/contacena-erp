@@ -18,20 +18,23 @@ export default function StudioAtividades() {
   const [tasks, setTasks] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [clients, setClients] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [tab, setTab] = useState("proximas");
 
   const loadAll = useCallback(async () => {
     if (!inquilinoId) return;
-    const [t, j, u] = await Promise.all([
+    const [t, j, u, c] = await Promise.all([
       base44.entities.Task.filter({ inquilino_id: inquilinoId }),
       base44.entities.Job.filter({ tenant_id: tenantId }),
       base44.entities.Usuarios.filter({ tenant_id: tenantId }),
+      base44.entities.Client.filter({ tenant_id: tenantId }),
     ]);
     setTasks(t);
     setJobs(j);
     setUsuarios(u);
+    setClients(c);
   }, [inquilinoId, tenantId]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -184,6 +187,7 @@ export default function StudioAtividades() {
                         task={task}
                         usuarios={usuarios}
                         jobs={jobs}
+                        clients={clients}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onToggle={handleToggle}
@@ -205,6 +209,7 @@ export default function StudioAtividades() {
         tenantId={tenantId}
         usuarios={usuarios}
         jobs={jobs}
+        clients={clients}
         currentUserId={usuario?.id}
         onSaved={loadAll}
       />

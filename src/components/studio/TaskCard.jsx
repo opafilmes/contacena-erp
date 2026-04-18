@@ -1,20 +1,23 @@
 import React from "react";
 import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, Pencil, Trash2, Calendar, User, Briefcase } from "lucide-react";
+import { Check, Pencil, Trash2, Calendar, User, Briefcase, Building2, GitBranch } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 
-export default function TaskCard({ task, usuarios, jobs, onEdit, onDelete, onToggle }) {
+export default function TaskCard({ task, usuarios, jobs, clients, onEdit, onDelete, onToggle }) {
   const responsavel = usuarios.find(u => u.id === task.responsavel_id);
   const job = jobs.find(j => j.id === task.job_id);
+  const client = (clients || []).find(c => c.id === task.client_id);
   const venc = task.data_vencimento ? new Date(task.data_vencimento) : null;
   const atrasada = venc && isBefore(venc, startOfDay(new Date())) && task.status === "A Fazer";
   const concluida = task.status === "Concluída";
+  const isSubtask = !!task.parent_task_id;
 
   return (
     <div className={`
       flex items-start gap-4 rounded-xl border p-4 transition-all duration-200
+      ${isSubtask ? "ml-6 border-l-2 border-l-accent/40" : ""}
       ${concluida
         ? "bg-white/[0.02] border-border/30 opacity-60"
         : atrasada
@@ -40,6 +43,14 @@ export default function TaskCard({ task, usuarios, jobs, onEdit, onDelete, onTog
 
       {/* Content */}
       <div className="flex-1 min-w-0">
+        {/* Badge subtarefa */}
+        {isSubtask && (
+          <div className="flex items-center gap-1 mb-1">
+            <GitBranch className="w-3 h-3 text-accent/70" />
+            <span className="text-[10px] font-semibold text-accent/70 uppercase tracking-wider">Subtarefa</span>
+          </div>
+        )}
+
         <p className={`font-medium text-sm leading-snug ${concluida ? "line-through text-muted-foreground" : "text-foreground"}`}>
           {task.titulo}
         </p>
@@ -58,6 +69,12 @@ export default function TaskCard({ task, usuarios, jobs, onEdit, onDelete, onTog
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <User className="w-3 h-3" />
               {responsavel.nome}
+            </span>
+          )}
+          {client && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Building2 className="w-3 h-3" />
+              {client.nome_fantasia}
             </span>
           )}
           {job && (
