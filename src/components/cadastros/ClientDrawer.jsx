@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Search, Loader2, ImagePlus } from "lucide-react";
+import { Search, Loader2, Upload } from "lucide-react";
+import { useRef } from "react";
 
 const emptyPJ = { tipo: "PJ", razao_social: "", nome_fantasia: "", cnpj_cpf: "", contato: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", cep: "", logo: "" };
 const emptyPF = { tipo: "PF", nome_completo: "", cnpj_cpf: "", contato: "", logo: "" };
@@ -32,6 +33,8 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
   const [form, setForm] = useState(emptyPJ);
   const [saving, setSaving] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef(null);
 
   useEffect(() => {
     if (record) {
@@ -119,6 +122,16 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
   };
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    set("logo", file_url);
+    setUploadingLogo(false);
+    toast.success("Logo enviada!");
+  };
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -220,14 +233,35 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
             <Input value={form.contato} onChange={e => set("contato", e.target.value)} placeholder="email@exemplo.com ou (11) 99999-9999" />
           </div>
 
-          {/* Logo */}
+          {/* Logo upload */}
           <div className="space-y-1.5">
-            <Label>Logo do Cliente (URL)</Label>
+            <Label>Logo do Cliente</Label>
             <div className="flex items-center gap-3">
-              {form.logo && (
-                <img src={form.logo} alt="logo" className="w-10 h-10 rounded-full object-cover border border-border/40 shrink-0" />
-              )}
-              <Input value={form.logo || ""} onChange={e => set("logo", e.target.value)} placeholder="https://..." />
+              <div
+                onClick={() => logoInputRef.current?.click()}
+                className="w-14 h-14 rounded-full border-2 border-dashed border-border/50 flex items-center justify-center cursor-pointer hover:border-accent/60 transition-colors shrink-0 overflow-hidden"
+              >
+                {form.logo ? (
+                  <img src={form.logo} alt="logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1 space-y-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="w-full"
+                >
+                  {uploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
+                  {uploadingLogo ? "Enviando..." : form.logo ? "Trocar Logo" : "Fazer Upload"}
+                </Button>
+                <p className="text-xs text-muted-foreground">PNG, JPG ou SVG</p>
+              </div>
+              <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
             </div>
           </div>
 

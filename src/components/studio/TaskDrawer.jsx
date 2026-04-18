@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Trash2, GitBranch } from "lucide-react";
 import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const BLANK_FORM = {
   titulo: "",
@@ -165,19 +166,21 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
           {/* Descrição Rich Text */}
           <div className="space-y-1.5">
             <Label>Descrição</Label>
-            <div className="rounded-md border border-input bg-transparent text-sm overflow-hidden">
+            <div className="quill-dark rounded-md overflow-hidden border border-border/50">
               <ReactQuill
                 value={form.descricao}
                 onChange={v => setForm(f => ({ ...f, descricao: v }))}
                 theme="snow"
                 placeholder="Detalhes, links, listas..."
                 modules={{
-                  toolbar: [
-                    ["bold", "italic", "underline"],
-                    [{ list: "ordered" }, { list: "bullet" }],
-                    ["link"],
-                    ["clean"],
-                  ],
+                  toolbar: {
+                    container: [
+                      ["bold", "italic", "underline"],
+                      [{ list: "ordered" }, { list: "bullet" }],
+                      ["link"],
+                      ["clean"],
+                    ],
+                  },
                 }}
                 style={{ minHeight: 120 }}
               />
@@ -208,11 +211,11 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
             </Select>
           </div>
 
-          {/* Data Vencimento + Status */}
+          {/* Data Conclusão + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Vencimento</Label>
-              <Input type="datetime-local" value={form.data_vencimento} onChange={e => setForm(f => ({ ...f, data_vencimento: e.target.value }))} />
+              <Label>Data de Conclusão</Label>
+              <Input type="date" value={form.data_vencimento ? form.data_vencimento.slice(0, 10) : ""} onChange={e => setForm(f => ({ ...f, data_vencimento: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
@@ -270,7 +273,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
                     </div>
                     <Input className="h-8 text-sm" placeholder="Título da subtarefa..." value={sub.titulo} onChange={e => updateSubtask(i, "titulo", e.target.value)} />
                     <div className="grid grid-cols-2 gap-2">
-                      <Input type="datetime-local" className="h-8 text-xs" value={sub.data_vencimento} onChange={e => updateSubtask(i, "data_vencimento", e.target.value)} />
+                      <Input type="date" className="h-8 text-xs" value={sub.data_vencimento ? sub.data_vencimento.slice(0, 10) : ""} onChange={e => updateSubtask(i, "data_vencimento", e.target.value)} />
                       <Select value={sub.responsavel_id} onValueChange={v => updateSubtask(i, "responsavel_id", v)}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Equipe..." /></SelectTrigger>
                         <SelectContent>
