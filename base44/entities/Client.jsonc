@@ -8,8 +8,7 @@
         "PJ",
         "PF"
       ],
-      "default": "PJ",
-      "description": "Pessoa Jur\u00eddica ou F\u00edsica"
+      "default": "PJ"
     },
     "nome_fantasia": {
       "type": "string",
@@ -20,40 +19,36 @@
       "description": "Raz\u00e3o social (apenas PJ)"
     },
     "cnpj_cpf": {
-      "type": "string",
-      "description": "CNPJ ou CPF do cliente"
+      "type": "string"
     },
     "contato": {
-      "type": "string",
-      "description": "Email ou telefone de contato"
+      "type": "string"
     },
     "logradouro": {
-      "type": "string",
-      "description": "Logradouro do endere\u00e7o"
+      "type": "string"
     },
     "numero": {
-      "type": "string",
-      "description": "N\u00famero do endere\u00e7o"
+      "type": "string"
     },
     "bairro": {
-      "type": "string",
-      "description": "Bairro"
+      "type": "string"
     },
     "cidade": {
-      "type": "string",
-      "description": "Cidade"
+      "type": "string"
     },
     "uf": {
-      "type": "string",
-      "description": "UF (estado)"
+      "type": "string"
     },
     "cep": {
+      "type": "string"
+    },
+    "logo": {
       "type": "string",
-      "description": "CEP"
+      "description": "URL da logo do cliente"
     },
     "tenant_id": {
       "type": "string",
-      "description": "ID do Tenant ao qual este cliente pertence"
+      "description": "ID do Tenant"
     }
   },
   "required": [

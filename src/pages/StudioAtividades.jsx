@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { Plus, List, CalendarDays, Building2 } from "lucide-react";
+import { Plus, List, CalendarDays, Building2, Sun, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/shared/BackButton";
 import TaskDrawer from "@/components/studio/TaskDrawer";
@@ -21,7 +21,8 @@ export default function StudioAtividades() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [selectedClient, setSelectedClient] = useState("todos");
-  const [view, setView] = useState("lista"); // "lista" | "calendario"
+  const [view, setView]       = useState("lista");   // "lista" | "calendario"
+  const [calView, setCalView] = useState("semana");  // "dia" | "semana" | "mes"
 
   const loadAll = useCallback(async () => {
     if (!inquilinoId) return;
@@ -95,7 +96,11 @@ export default function StudioAtividades() {
                       : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                   }`}
                 >
-                  <Building2 className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                  {c.logo ? (
+                    <img src={c.logo} alt={c.nome_fantasia} className="w-5 h-5 rounded-full object-cover shrink-0 border border-border/30" />
+                  ) : (
+                    <Building2 className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                  )}
                   <span className="truncate">{c.nome_fantasia}</span>
                   <span className="ml-auto text-xs opacity-60">{count}</span>
                 </button>
@@ -123,23 +128,30 @@ export default function StudioAtividades() {
             <div className="flex items-center gap-2">
               {/* Toggle Lista / Calendário */}
               <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg border border-border/40">
-                <button
-                  onClick={() => setView("lista")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    view === "lista" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <List className="w-3.5 h-3.5" /> Lista
-                </button>
-                <button
-                  onClick={() => setView("calendario")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    view === "calendario" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <CalendarDays className="w-3.5 h-3.5" /> Calendário
-                </button>
+                {[
+                  { key: "lista",      icon: List,        label: "Lista" },
+                  { key: "calendario", icon: CalendarDays, label: "Cal." },
+                ].map(({ key, icon: Icon, label }) => (
+                  <button key={key} onClick={() => setView(key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                    <Icon className="w-3.5 h-3.5" /> {label}
+                  </button>
+                ))}
               </div>
+              {view === "calendario" && (
+                <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg border border-border/40">
+                  {[
+                    { key: "dia",    label: "Dia" },
+                    { key: "semana", label: "Semana" },
+                    { key: "mes",    label: "Mês" },
+                  ].map(({ key, label }) => (
+                    <button key={key} onClick={() => setCalView(key)}
+                      className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${calView === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Button onClick={handleNew} size="sm" className="gap-1.5 text-xs h-8">
                 <Plus className="w-3.5 h-3.5" /> Nova Tarefa
               </Button>
@@ -162,6 +174,7 @@ export default function StudioAtividades() {
               <TaskCalendarView
                 tasks={filteredTasks}
                 onEdit={handleEdit}
+                calView={calView}
               />
             )}
           </motion.div>

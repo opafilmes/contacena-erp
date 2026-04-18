@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ImagePlus } from "lucide-react";
 
-const emptyPJ = { tipo: "PJ", razao_social: "", nome_fantasia: "", cnpj_cpf: "", contato: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", cep: "" };
-const emptyPF = { tipo: "PF", nome_completo: "", cnpj_cpf: "", contato: "" };
+const emptyPJ = { tipo: "PJ", razao_social: "", nome_fantasia: "", cnpj_cpf: "", contato: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", cep: "", logo: "" };
+const emptyPF = { tipo: "PF", nome_completo: "", cnpj_cpf: "", contato: "", logo: "" };
 
 function formatCNPJ(v) {
   const d = v.replace(/\D/g, "").slice(0, 14);
@@ -90,6 +90,7 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
       cnpj_cpf: form.cnpj_cpf || "",
       contato: form.contato || "",
       tenant_id: tenantId,
+      logo: form.logo || "",
       ...(tipo === "PJ" ? {
         nome_fantasia: form.nome_fantasia || "",
         razao_social: form.razao_social || "",
@@ -217,6 +218,17 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
           <div className="space-y-1.5">
             <Label>Contato (e-mail ou telefone)</Label>
             <Input value={form.contato} onChange={e => set("contato", e.target.value)} placeholder="email@exemplo.com ou (11) 99999-9999" />
+          </div>
+
+          {/* Logo */}
+          <div className="space-y-1.5">
+            <Label>Logo do Cliente (URL)</Label>
+            <div className="flex items-center gap-3">
+              {form.logo && (
+                <img src={form.logo} alt="logo" className="w-10 h-10 rounded-full object-cover border border-border/40 shrink-0" />
+              )}
+              <Input value={form.logo || ""} onChange={e => set("logo", e.target.value)} placeholder="https://..." />
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

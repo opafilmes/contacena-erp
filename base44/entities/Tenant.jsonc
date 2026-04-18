@@ -6,13 +6,59 @@
       "type": "string",
       "description": "Nome fantasia da produtora"
     },
+    "razao_social": {
+      "type": "string",
+      "description": "Raz\u00e3o social da empresa"
+    },
     "cnpj": {
       "type": "string",
       "description": "CNPJ da empresa"
     },
     "logo": {
       "type": "string",
-      "description": "URL da logo da empresa"
+      "description": "URL da logo da empresa (usada em PDFs e exporta\u00e7\u00f5es)"
+    },
+    "logradouro": {
+      "type": "string"
+    },
+    "numero": {
+      "type": "string"
+    },
+    "bairro": {
+      "type": "string"
+    },
+    "cidade": {
+      "type": "string"
+    },
+    "uf": {
+      "type": "string"
+    },
+    "cep": {
+      "type": "string"
+    },
+    "telefone": {
+      "type": "string"
+    },
+    "email_corporativo": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "porte_empresa": {
+      "type": "string",
+      "enum": [
+        "MEI",
+        "Micro Empresa",
+        "Empresa de Pequeno Porte",
+        "Lucro Presumido",
+        "Lucro Real"
+      ],
+      "description": "Porte da empresa"
+    },
+    "faturamento_anual": {
+      "type": "number",
+      "description": "Faturamento anual em BRL"
     },
     "plan_tier": {
       "type": "string",
@@ -21,8 +67,7 @@
         "Essencial",
         "Profissional"
       ],
-      "default": "Profissional",
-      "description": "Plano de assinatura do tenant"
+      "default": "Profissional"
     },
     "subscription_status": {
       "type": "string",
@@ -32,17 +77,14 @@
         "Past_Due",
         "Canceled"
       ],
-      "default": "Trial",
-      "description": "Status da assinatura"
+      "default": "Trial"
     },
     "trial_ends_at": {
       "type": "string",
-      "format": "date",
-      "description": "Data de expira\u00e7\u00e3o do trial"
+      "format": "date"
     },
     "stripe_customer_id": {
-      "type": "string",
-      "description": "ID do cliente no Stripe"
+      "type": "string"
     }
   },
   "required": [
