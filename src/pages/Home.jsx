@@ -8,7 +8,7 @@ const MODULES = [
   {
     Icon: Video,
     title: "Studio",
-    subtitle: "Ordem do dia, Inventário, Kanban",
+    subtitle: "Ordem do dia, Inventário, Produção",
     to: "/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2 md:col-span-2",
