@@ -19,20 +19,23 @@ export default function StudioInventario() {
   const [equipments, setEquipments] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [clients, setClients] = useState([]);
   const [eqDrawer, setEqDrawer] = useState({ open: false, record: null });
   const [bkDrawer, setBkDrawer] = useState({ open: false, record: null });
   const [tab, setTab] = useState("equipamentos");
 
   const loadAll = useCallback(async () => {
     if (!tenantId) return;
-    const [eq, bk, j] = await Promise.all([
+    const [eq, bk, j, c] = await Promise.all([
       base44.entities.Equipment.filter({ tenant_id: tenantId }),
       base44.entities.EquipmentBooking.filter({ inquilino_id: tenantId }),
       base44.entities.Job.filter({ tenant_id: tenantId }),
+      base44.entities.Client.filter({ tenant_id: tenantId }),
     ]);
     setEquipments(eq);
     setBookings(bk);
     setJobs(j);
+    setClients(c);
   }, [tenantId]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -139,6 +142,7 @@ export default function StudioInventario() {
         inquilinoId={tenantId}
         equipments={equipments}
         jobs={jobs}
+        clients={clients}
         onClose={() => setBkDrawer({ open: false, record: null })}
         onSaved={loadAll}
       />

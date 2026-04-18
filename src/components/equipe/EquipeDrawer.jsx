@@ -76,7 +76,7 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
       });
       toast.success("Usuário atualizado!");
     } else {
-      await base44.users.inviteUser(form.email, form.role === "Admin" ? "admin" : "user");
+      // Create the Usuarios record first, then invite to app auth
       await base44.entities.Usuarios.create({
         nome:                   form.nome,
         email:                  form.email,
@@ -87,7 +87,8 @@ export default function EquipeDrawer({ open, onClose, record, tenantId, onSaved 
         perm_studio_atividades: form.perm_studio_atividades,
         perm_studio_inventario: form.perm_studio_inventario,
       });
-      toast.success(`Convite enviado para ${form.email}!`);
+      await base44.users.inviteUser(form.email, form.role === "Admin" ? "admin" : "user");
+      toast.success(`Usuário criado e convite enviado para ${form.email}!`);
     }
     setSaving(false);
     onSaved();

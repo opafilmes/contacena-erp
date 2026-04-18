@@ -10,6 +10,10 @@
       "type": "string",
       "description": "ID do Job para o qual o equipamento est\u00e1 reservado"
     },
+    "client_id": {
+      "type": "string",
+      "description": "ID do Cliente relacionado"
+    },
     "data_inicio": {
       "type": "string",
       "format": "date-time",

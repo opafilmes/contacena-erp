@@ -149,72 +149,109 @@
 }
 
 @media print {
+  /* ── Reset global ── */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
   body {
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Montserrat', sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .no-print,
+  /* ── Ocultar chrome da app ── */
   header,
   nav,
-  [data-print-hide] {
+  aside,
+  .no-print,
+  [data-print-hide],
+  [data-sidebar],
+  .topbar,
+  button:not(.print-keep),
+  .sheet-overlay,
+  [role="dialog"] {
     display: none !important;
   }
 
+  /* ── Área de impressão ── */
   .print-area {
     display: block !important;
+    width: 100% !important;
     background: #ffffff !important;
     color: #000000 !important;
-    padding: 24px !important;
+    padding: 0 !important;
   }
 
-  .print-area table {
+  /* ── Cabeçalho com logo do tenant ── */
+  .print-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 2px solid #e5e7eb !important;
+  }
+  .print-header img {
+    height: 48px !important;
+    width: auto !important;
+    object-fit: contain !important;
+  }
+  .print-header .print-header-text h1 {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 !important;
+  }
+  .print-header .print-header-text p {
+    font-size: 11px !important;
+    color: #6b7280 !important;
+    margin: 2px 0 0 !important;
+  }
+
+  /* ── Títulos ── */
+  .print-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+    color: #111827 !important;
+  }
+  .print-subtitle {
+    font-size: 11px !important;
+    color: #6b7280 !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* ── Tabelas ── */
+  table {
     width: 100% !important;
     border-collapse: collapse !important;
     page-break-inside: auto !important;
   }
-
-  .print-area thead {
-    display: table-header-group !important;
-  }
-
-  .print-area tr {
+  thead { display: table-header-group !important; }
+  tr {
     page-break-inside: avoid !important;
     page-break-after: auto !important;
   }
-
-  .print-area th,
-  .print-area td {
-    border: 1px solid #cccccc !important;
-    color: #000000 !important;
+  th, td {
+    border: 1px solid #d1d5db !important;
+    color: #111827 !important;
     background: #ffffff !important;
-    padding: 8px 12px !important;
+    padding: 7px 10px !important;
+    font-size: 11px !important;
+    text-align: left !important;
   }
-
-  .print-area th {
-    background: #f0f0f0 !important;
+  th {
+    background: #f3f4f6 !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
     letter-spacing: 0.05em !important;
   }
 
-  .print-area .print-title {
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    margin-bottom: 8px !important;
-    color: #000000 !important;
-  }
-
-  .print-area .print-subtitle {
-    font-size: 12px !important;
-    color: #555555 !important;
-    margin-bottom: 20px !important;
-  }
-
+  /* ── Página ── */
   @page {
-    size: A4;
-    margin: 20mm;
+    size: A4 portrait;
+    margin: 18mm 15mm;
   }
 }

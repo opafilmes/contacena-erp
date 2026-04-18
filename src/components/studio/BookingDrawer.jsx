@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 
-const BLANK = { equipment_id: "", job_id: "", data_inicio: "", data_fim: "", qtd_reservada: "" };
+const BLANK = { equipment_id: "", client_id: "", job_id: "", data_inicio: "", data_fim: "", qtd_reservada: "" };
 
-export default function BookingDrawer({ open, record, inquilinoId, equipments, jobs, onClose, onSaved }) {
+export default function BookingDrawer({ open, record, inquilinoId, equipments, jobs, clients, onClose, onSaved }) {
   const [form, setForm] = useState(BLANK);
   const [saving, setSaving] = useState(false);
   const [conflictError, setConflictError] = useState("");
@@ -18,45 +18,44 @@ export default function BookingDrawer({ open, record, inquilinoId, equipments, j
   useEffect(() => {
     if (open) {
       setConflictError("");
-      setForm(record
-        ? {
-            equipment_id: record.equipment_id || "",
-            job_id: record.job_id || "",
-            data_inicio: record.data_inicio ? record.data_inicio.slice(0, 16) : "",
-            data_fim: record.data_fim ? record.data_fim.slice(0, 16) : "",
-            qtd_reservada: record.qtd_reservada ?? "",
-          }
-        : BLANK
-      );
+      if (record) {
+        // Try to find client from job
+        const job = jobs.find(j => j.id === record.job_id);
+        setForm({
+          equipment_id:  record.equipment_id || "",
+          client_id:     record.client_id    || "",
+          job_id:        record.job_id       || "",
+          data_inicio:   record.data_inicio  ? record.data_inicio.slice(0, 16) : "",
+          data_fim:      record.data_fim     ? record.data_fim.slice(0, 16)    : "",
+          qtd_reservada: record.qtd_reservada ?? "",
+        });
+      } else {
+        setForm(BLANK);
+      }
     }
   }, [open, record]);
+
+  // Jobs filtered by selected client
+  const clientJobs = form.client_id
+    ? jobs.filter(j => j.client_id === form.client_id || !j.client_id) // show all if job has no client_id
+    : jobs;
 
   const checkConflict = async () => {
     const { equipment_id, data_inicio, data_fim, qtd_reservada } = form;
     if (!equipment_id || !data_inicio || !data_fim || !qtd_reservada) return false;
-
     const eq = equipments.find(e => e.id === equipment_id);
     if (!eq) return false;
-
-    // Get all bookings for this equipment in conflicting time range
     const allBookings = await base44.entities.EquipmentBooking.filter({ inquilino_id: inquilinoId });
     const inicio = new Date(data_inicio);
-    const fim = new Date(data_fim);
-
+    const fim    = new Date(data_fim);
     const conflicting = allBookings.filter(b => {
-      if (record?.id && b.id === record.id) return false; // exclude self
+      if (record?.id && b.id === record.id) return false;
       if (b.equipment_id !== equipment_id) return false;
-      const bStart = new Date(b.data_inicio);
-      const bEnd = new Date(b.data_fim);
-      // Overlap check
-      return inicio < bEnd && fim > bStart;
+      return inicio < new Date(b.data_fim) && fim > new Date(b.data_inicio);
     });
-
     const totalReservado = conflicting.reduce((acc, b) => acc + (b.qtd_reservada || 0), 0);
-    const nova = Number(qtd_reservada);
-
-    if (totalReservado + nova > (eq.qtd_total || 0)) {
-      return `🚨 Conflito: Equipamento indisponível para este período (${totalReservado} já reservadas de ${eq.qtd_total} disponíveis).`;
+    if (totalReservado + Number(qtd_reservada) > (eq.qtd_total || 0)) {
+      return `🚨 Conflito: ${totalReservado} de ${eq.qtd_total} já reservadas neste período.`;
     }
     return false;
   };
@@ -70,22 +69,17 @@ export default function BookingDrawer({ open, record, inquilinoId, equipments, j
       toast.error("Data de fim deve ser após a data de início.");
       return;
     }
-
     setSaving(true);
     setConflictError("");
-
     const conflict = await checkConflict();
-    if (conflict) {
-      setConflictError(conflict);
-      setSaving(false);
-      return;
-    }
+    if (conflict) { setConflictError(conflict); setSaving(false); return; }
 
     const payload = {
       equipment_id: form.equipment_id,
-      job_id: form.job_id || undefined,
-      data_inicio: new Date(form.data_inicio).toISOString(),
-      data_fim: new Date(form.data_fim).toISOString(),
+      job_id:       form.job_id       || undefined,
+      client_id:    form.client_id    || undefined,
+      data_inicio:  new Date(form.data_inicio).toISOString(),
+      data_fim:     new Date(form.data_fim).toISOString(),
       qtd_reservada: Number(form.qtd_reservada),
       inquilino_id: inquilinoId,
     };
@@ -122,12 +116,26 @@ export default function BookingDrawer({ open, record, inquilinoId, equipments, j
             </Select>
           </div>
 
+          {/* Cliente */}
           <div className="space-y-1.5">
-            <Label>Job Relacionado</Label>
-            <Select value={form.job_id} onValueChange={v => setForm(f => ({ ...f, job_id: v }))}>
-              <SelectTrigger><SelectValue placeholder="Selecionar job..." /></SelectTrigger>
+            <Label>Cliente</Label>
+            <Select value={form.client_id} onValueChange={v => setForm(f => ({ ...f, client_id: v, job_id: "" }))}>
+              <SelectTrigger><SelectValue placeholder="Selecionar cliente..." /></SelectTrigger>
               <SelectContent>
-                {jobs.map(j => (
+                {(clients || []).map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome_fantasia}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Projeto dependente do cliente */}
+          <div className="space-y-1.5">
+            <Label>Projeto</Label>
+            <Select value={form.job_id} onValueChange={v => setForm(f => ({ ...f, job_id: v }))}>
+              <SelectTrigger><SelectValue placeholder="Selecionar projeto..." /></SelectTrigger>
+              <SelectContent>
+                {clientJobs.map(j => (
                   <SelectItem key={j.id} value={j.id}>{j.titulo}</SelectItem>
                 ))}
               </SelectContent>

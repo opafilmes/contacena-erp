@@ -8,6 +8,7 @@ import BackButton from "@/components/shared/BackButton";
 import TaskDrawer from "@/components/studio/TaskDrawer";
 import TaskListView from "@/components/studio/TaskListView";
 import TaskCalendarView from "@/components/studio/TaskCalendarView";
+import TaskActivityChart from "@/components/studio/TaskActivityChart";
 
 export default function StudioAtividades() {
   const { tenant, usuario } = useOutletContext();
@@ -157,6 +158,9 @@ export default function StudioAtividades() {
               </Button>
             </div>
           </div>
+
+          {/* Chart */}
+          <TaskActivityChart tasks={filteredTasks} />
 
           {/* Views */}
           <motion.div key={view} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { X, ImagePlus } from "lucide-react";
+import { X, Upload, Loader2 } from "lucide-react";
 
 const CATEGORIAS = ["Câmera","Lente","Iluminação","Áudio","Tripé/Suporte","Monitor","Estabilizador","Drone","Acessório","Outros"];
 const BLANK = { nome_item: "", num_serie: "", qtd_total: "", valor_compra: "", marca: "", categoria: "", status_manutencao: false, fotos: [] };
@@ -15,30 +15,35 @@ const BLANK = { nome_item: "", num_serie: "", qtd_total: "", valor_compra: "", m
 export default function EquipmentDrawer({ open, record, tenantId, onClose, onSaved }) {
   const [form, setForm] = useState(BLANK);
   const [saving, setSaving] = useState(false);
-  const [newFoto, setNewFoto] = useState("");
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fileRef = useRef(null);
 
   useEffect(() => {
     if (open) {
       setForm(record ? {
-        nome_item:        record.nome_item        || "",
-        num_serie:        record.num_serie        || "",
-        qtd_total:        record.qtd_total        ?? "",
-        valor_compra:     record.valor_compra     ?? "",
-        marca:            record.marca            || "",
-        categoria:        record.categoria        || "",
+        nome_item:         record.nome_item        || "",
+        num_serie:         record.num_serie        || "",
+        qtd_total:         record.qtd_total        ?? "",
+        valor_compra:      record.valor_compra     ?? "",
+        marca:             record.marca            || "",
+        categoria:         record.categoria        || "",
         status_manutencao: record.status_manutencao ?? false,
-        fotos:            record.fotos            || [],
+        fotos:             record.fotos            || [],
       } : BLANK);
-      setNewFoto("");
     }
   }, [open, record]);
 
-  const addFoto = () => {
-    if (!newFoto.trim()) return;
-    setForm(f => ({ ...f, fotos: [...(f.fotos || []), newFoto.trim()] }));
-    setNewFoto("");
+  const handleFotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFoto(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, fotos: [file_url] })); // limit to 1 photo
+    setUploadingFoto(false);
+    toast.success("Foto adicionada!");
   };
-  const removeFoto = (i) => setForm(f => ({ ...f, fotos: f.fotos.filter((_, idx) => idx !== i) }));
+
+  const removeFoto = () => setForm(f => ({ ...f, fotos: [] }));
 
   const handleSave = async () => {
     if (!form.nome_item.trim()) { toast.error("Nome obrigatório."); return; }
@@ -65,6 +70,8 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
     onSaved();
     onClose();
   };
+
+  const currentFoto = form.fotos?.[0];
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -117,40 +124,43 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
               <p className="text-sm font-medium">Em Manutenção</p>
               <p className="text-xs text-muted-foreground">Equipamento indisponível para reserva</p>
             </div>
-            <Switch
-              checked={form.status_manutencao}
-              onCheckedChange={v => setForm(f => ({ ...f, status_manutencao: v }))}
-            />
+            <Switch checked={form.status_manutencao} onCheckedChange={v => setForm(f => ({ ...f, status_manutencao: v }))} />
           </div>
 
-          {/* Fotos */}
+          {/* Foto Upload (1 foto) */}
           <div className="space-y-2">
-            <Label>Fotos (URLs)</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="https://..."
-                value={newFoto}
-                onChange={e => setNewFoto(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addFoto()}
-              />
-              <Button type="button" variant="outline" size="icon" onClick={addFoto}>
-                <ImagePlus className="w-4 h-4" />
-              </Button>
-            </div>
-            {form.fotos && form.fotos.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {form.fotos.map((url, i) => (
-                  <div key={i} className="relative group w-16 h-16">
-                    <img src={url} alt="" className="w-16 h-16 rounded-lg object-cover border border-border/40" />
-                    <button
-                      onClick={() => removeFoto(i)}
-                      className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-destructive text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+            <Label>Foto do Equipamento</Label>
+            {currentFoto ? (
+              <div className="relative group w-full h-40 rounded-xl overflow-hidden border border-border/40">
+                <img src={currentFoto} alt="foto" className="w-full h-full object-cover" />
+                <button
+                  onClick={removeFoto}
+                  className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
+            ) : (
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="w-full h-28 rounded-xl border-2 border-dashed border-border/50 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-accent/50 transition-colors"
+              >
+                {uploadingFoto ? (
+                  <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Clique para fazer upload (PNG, JPG)</p>
+                  </>
+                )}
+              </div>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFotoUpload} />
+            {currentFoto && (
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploadingFoto} className="w-full">
+                {uploadingFoto ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
+                Trocar Foto
+              </Button>
             )}
           </div>
 

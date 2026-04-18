@@ -1,0 +1,31 @@
+{
+  "name": "TaskComment",
+  "type": "object",
+  "properties": {
+    "texto": {
+      "type": "string",
+      "description": "Texto do coment\u00e1rio"
+    },
+    "task_id": {
+      "type": "string",
+      "description": "ID da Task relacionada"
+    },
+    "usuario_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que comentou"
+    },
+    "usuario_nome": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio (cache)"
+    },
+    "inquilino_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    }
+  },
+  "required": [
+    "texto",
+    "task_id",
+    "inquilino_id"
+  ]
+}
