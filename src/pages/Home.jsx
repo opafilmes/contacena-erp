@@ -13,7 +13,7 @@ const MODULES = [
     requiredPlan: "Profissional",
     gridClass: "col-span-2 md:col-span-2",
     minH: "min-h-[220px]",
-    image: "https://images.unsplash.com/pt-br/fotografias/banda-tocando-no-palco-durante-o-dia-br2HgQuvq6I",
+    image: "https://images.unsplash.com/photo-1612544409025-e1f6a56c1152?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(34,197,94,0.55)",
     iconColor: "text-green-300",
     glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(34,197,94,0.45),0_8px_60px_-12px_rgba(34,197,94,0.5)]",
