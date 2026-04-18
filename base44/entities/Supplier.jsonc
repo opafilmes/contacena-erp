@@ -1,0 +1,26 @@
+{
+  "name": "Supplier",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do fornecedor"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria do fornecedor (ex: Equipamento, Loca\u00e7\u00e3o, Servi\u00e7o)"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone de contato do fornecedor"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant ao qual este fornecedor pertence"
+    }
+  },
+  "required": [
+    "nome",
+    "tenant_id"
+  ]
+}

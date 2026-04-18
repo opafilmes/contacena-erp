@@ -1,0 +1,26 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "nome_fantasia": {
+      "type": "string",
+      "description": "Nome fantasia ou nome do cliente/marca"
+    },
+    "cnpj_cpf": {
+      "type": "string",
+      "description": "CNPJ ou CPF do cliente"
+    },
+    "contato": {
+      "type": "string",
+      "description": "Email ou telefone de contato"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant ao qual este cliente pertence"
+    }
+  },
+  "required": [
+    "nome_fantasia",
+    "tenant_id"
+  ]
+}

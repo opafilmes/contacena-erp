@@ -1,0 +1,36 @@
+{
+  "name": "Proposal",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da proposta"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente (Client) relacionado"
+    },
+    "valor_total": {
+      "type": "number",
+      "description": "Valor total da proposta em BRL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Aprovada",
+        "Recusada"
+      ],
+      "default": "Pendente",
+      "description": "Status atual da proposta"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant ao qual esta proposta pertence"
+    }
+  },
+  "required": [
+    "titulo",
+    "tenant_id"
+  ]
+}

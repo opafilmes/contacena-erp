@@ -9,6 +9,8 @@ import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
+import Cadastros from './pages/Cadastros';
+import Comercial from './pages/Comercial';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -40,6 +42,8 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />
+        <Route path="/cadastros" element={<Cadastros />} />
+        <Route path="/comercial" element={<Comercial />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
