@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, Settings, User, BookUser } from "lucide-react";
+import { LogOut, Settings, User, Database } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   DropdownMenu,
@@ -49,15 +49,6 @@ export default function TopBar({ tenant, usuario }) {
           </span>
         </Link>
 
-        {/* Diretório Link */}
-        <Link
-          to="/diretorio"
-          className="no-print flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-muted-foreground border border-border/50 hover:bg-secondary/60 hover:text-foreground transition-colors"
-        >
-          <BookUser className="w-3.5 h-3.5" />
-          Diretório
-        </Link>
-
         {/* Avatar Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -83,6 +74,12 @@ export default function TopBar({ tenant, usuario }) {
               <Link to="/configuracoes-empresa" className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações da Empresa
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/cadastros" className="cursor-pointer">
+                <Database className="mr-2 h-4 w-4" />
+                Cadastros Base
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

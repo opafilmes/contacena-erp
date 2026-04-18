@@ -47,7 +47,8 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
           client_id: task.client_id || "",
         });
       } else {
-        setForm({ ...BLANK_FORM });
+        // Auto-atribuição: pré-seleciona o usuário logado como responsável
+        setForm({ ...BLANK_FORM, responsavel_id: currentUserId || "" });
       }
       setSubtasks([]);
     }
