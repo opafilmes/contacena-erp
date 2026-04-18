@@ -1,21 +1,39 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { format, isThisMonth } from "date-fns";
+import { format } from "date-fns";
 import BackButton from "@/components/shared/BackButton";
 import DataTable from "@/components/shared/DataTable";
-import FinancialSummaryCards from "@/components/financeiro/FinancialSummaryCards";
 import StatusPill from "@/components/financeiro/StatusPill";
 import AccountReceivableDrawer from "@/components/financeiro/AccountReceivableDrawer";
 import AccountPayableDrawer from "@/components/financeiro/AccountPayableDrawer";
 import BankAccountDrawer from "@/components/financeiro/BankAccountDrawer";
 import CategoryDrawer from "@/components/financeiro/CategoryDrawer";
+import ExtratoConsolidado from "@/components/financeiro/ExtratoConsolidado";
+import FinancialFilters from "@/components/financeiro/FinancialFilters";
+import OFXImport from "@/components/financeiro/OFXImport";
 import { formatBRL } from "@/utils/format";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpCircle, ArrowDownCircle, Wallet } from "lucide-react";
+
+const EMPTY_FILTERS = { dateFrom: "", dateTo: "", accountId: "", categoryId: "", status: "" };
+
+function SummaryCard({ label, value, icon: Icon, colorClass }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.04] border border-border/30 p-5 flex items-center gap-4">
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${colorClass}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground uppercase tracking-widest mb-0.5">{label}</p>
+        <p className="font-heading font-bold text-lg text-foreground">{formatBRL(value)}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Financeiro() {
   const { tenant } = useOutletContext();
@@ -28,6 +46,7 @@ export default function Financeiro() {
   const [clients, setClients] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
 
   const [receivableDrawer, setReceivableDrawer] = useState({ open: false, record: null });
   const [payableDrawer, setPayableDrawer] = useState({ open: false, record: null });
@@ -52,14 +71,34 @@ export default function Financeiro() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  // Dashboard calculations — filter to current month, exclude paid/received
-  const totalReceber = receivables
-    .filter(r => r.status !== "Recebido" && isThisMonth(new Date(r.data_vencimento || Date.now())))
-    .reduce((s, r) => s + (r.valor || 0), 0);
+  // Reactive dashboard calculations based on active filters
+  const filteredReceivables = useMemo(() => {
+    let r = receivables;
+    if (filters.dateFrom) r = r.filter(e => e.data_vencimento && e.data_vencimento >= filters.dateFrom);
+    if (filters.dateTo)   r = r.filter(e => e.data_vencimento && e.data_vencimento <= filters.dateTo);
+    if (filters.categoryId) r = r.filter(e => e.category_id === filters.categoryId);
+    if (filters.status) r = r.filter(e => e.status === filters.status);
+    return r;
+  }, [receivables, filters]);
 
-  const totalPagar = payables
-    .filter(p => p.status !== "Pago" && isThisMonth(new Date(p.data_vencimento || Date.now())))
-    .reduce((s, p) => s + (p.valor || 0), 0);
+  const filteredPayables = useMemo(() => {
+    let p = payables;
+    if (filters.dateFrom) p = p.filter(e => e.data_vencimento && e.data_vencimento >= filters.dateFrom);
+    if (filters.dateTo)   p = p.filter(e => e.data_vencimento && e.data_vencimento <= filters.dateTo);
+    if (filters.categoryId) p = p.filter(e => e.category_id === filters.categoryId);
+    if (filters.status) p = p.filter(e => e.status === filters.status);
+    return p;
+  }, [payables, filters]);
+
+  const totalReceber = useMemo(() =>
+    filteredReceivables.filter(r => r.status !== "Recebido").reduce((s, r) => s + (r.valor || 0), 0),
+    [filteredReceivables]);
+
+  const totalPagar = useMemo(() =>
+    filteredPayables.filter(p => p.status !== "Pago").reduce((s, p) => s + (p.valor || 0), 0),
+    [filteredPayables]);
+
+  const saldo = totalReceber - totalPagar;
 
   // Lookup helpers
   const getCategoryName = (id) => categories.find(c => c.id === id)?.nome || "—";
@@ -67,7 +106,6 @@ export default function Financeiro() {
   const getSupplierName = (id) => suppliers.find(s => s.id === id)?.nome || "—";
   const getJobName = (id) => jobs.find(j => j.id === id)?.titulo || "—";
 
-  // Table columns
   const receivableCols = [
     { key: "descricao", label: "Descrição" },
     { key: "client_id", label: "Cliente", render: row => getClientName(row.client_id) },
@@ -107,51 +145,75 @@ export default function Financeiro() {
     <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-7xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <BackButton />
-        <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight mb-8">
-          💰 Financeiro
-        </h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">💰 Financeiro</h1>
+          <OFXImport tenantId={tenantId} onImported={loadAll} />
+        </div>
 
-        <FinancialSummaryCards totalReceber={totalReceber} totalPagar={totalPagar} />
+        {/* Reactive Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <SummaryCard label="A Receber" value={totalReceber} icon={ArrowUpCircle} colorClass="bg-green-500/15 text-green-400" />
+          <SummaryCard label="A Pagar" value={totalPagar} icon={ArrowDownCircle} colorClass="bg-red-500/15 text-red-400" />
+          <SummaryCard label="Saldo Projetado" value={saldo} icon={Wallet} colorClass={saldo >= 0 ? "bg-violet-500/15 text-violet-400" : "bg-amber-500/15 text-amber-400"} />
+        </div>
 
-        <Tabs defaultValue="receber">
+        {/* Persistent Filters */}
+        <FinancialFilters
+          filters={filters}
+          setFilters={setFilters}
+          bankAccounts={bankAccounts}
+          categories={categories}
+        />
+
+        <Tabs defaultValue="extrato">
           <TabsList className="mb-6 bg-muted/50 border border-border/50 flex-wrap h-auto gap-1">
+            <TabsTrigger value="extrato">Extrato</TabsTrigger>
             <TabsTrigger value="receber">A Receber</TabsTrigger>
             <TabsTrigger value="pagar">A Pagar</TabsTrigger>
             <TabsTrigger value="contas">Contas Bancárias</TabsTrigger>
             <TabsTrigger value="categorias">Categorias</TabsTrigger>
           </TabsList>
 
+          {/* EXTRATO CONSOLIDADO */}
+          <TabsContent value="extrato">
+            <ExtratoConsolidado
+              receivables={receivables}
+              payables={payables}
+              filters={filters}
+            />
+          </TabsContent>
+
           {/* A RECEBER */}
           <TabsContent value="receber">
             <div className="flex justify-between items-center mb-4">
-              <p className="text-muted-foreground text-sm">{receivables.length} lançamento(s)</p>
+              <p className="text-muted-foreground text-sm">{filteredReceivables.length} lançamento(s)</p>
               <Button size="sm" onClick={() => setReceivableDrawer({ open: true, record: null })}>
                 <Plus className="w-4 h-4 mr-1" /> Nova Receita
               </Button>
             </div>
             <DataTable
               columns={receivableCols}
-              rows={receivables}
+              rows={filteredReceivables}
               onEdit={row => setReceivableDrawer({ open: true, record: row })}
               onDelete={async row => { await base44.entities.AccountReceivable.delete(row.id); load("AccountReceivable", setReceivables); }}
-              emptyMessage="Nenhuma conta a receber cadastrada."
+              emptyMessage="Nenhuma conta a receber."
             />
           </TabsContent>
 
           {/* A PAGAR */}
           <TabsContent value="pagar">
             <div className="flex justify-between items-center mb-4">
-              <p className="text-muted-foreground text-sm">{payables.length} lançamento(s)</p>
+              <p className="text-muted-foreground text-sm">{filteredPayables.length} lançamento(s)</p>
               <Button size="sm" onClick={() => setPayableDrawer({ open: true, record: null })}>
                 <Plus className="w-4 h-4 mr-1" /> Nova Despesa
               </Button>
             </div>
             <DataTable
               columns={payableCols}
-              rows={payables}
+              rows={filteredPayables}
               onEdit={row => setPayableDrawer({ open: true, record: row })}
               onDelete={async row => { await base44.entities.AccountPayable.delete(row.id); load("AccountPayable", setPayables); }}
-              emptyMessage="Nenhuma conta a pagar cadastrada."
+              emptyMessage="Nenhuma conta a pagar."
             />
           </TabsContent>
 

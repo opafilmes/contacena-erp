@@ -86,9 +86,11 @@ export default function Producao() {
 
         <KanbanBoard
           jobs={jobs}
+          tenantId={tenantId}
           onDragEnd={handleDragEnd}
           onCardClick={(job) => setDetailDrawer({ open: true, job })}
           onNewJob={(status) => setFormDrawer({ open: true, initialStatus: status })}
+          onJobDeleted={loadJobs}
         />
       </motion.div>
 

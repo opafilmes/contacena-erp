@@ -88,6 +88,16 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+
+  /* Remove number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 @media print {
@@ -111,7 +121,21 @@
     padding: 24px !important;
   }
 
-  .print-area table,
+  .print-area table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  .print-area thead {
+    display: table-header-group !important;
+  }
+
+  .print-area tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
   .print-area th,
   .print-area td {
     border: 1px solid #cccccc !important;
