@@ -39,7 +39,7 @@ const MODULES = [
     requiredPlan: null,
     gridClass: "col-span-1",
     minH: "min-h-[180px]",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=700&q=80&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1635927555354-e7fa116808bd?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(14,165,233,0.55)",
     iconColor: "text-sky-300",
     glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(14,165,233,0.45),0_8px_40px_-12px_rgba(14,165,233,0.5)]",
