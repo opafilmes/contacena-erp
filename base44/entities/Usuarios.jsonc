@@ -27,6 +27,26 @@
     "tenant_id": {
       "type": "string",
       "description": "ID do Tenant (Produtora) ao qual o usu\u00e1rio pertence"
+    },
+    "perm_comercial": {
+      "type": "boolean",
+      "default": true,
+      "description": "Acesso ao m\u00f3dulo Comercial"
+    },
+    "perm_financeiro": {
+      "type": "boolean",
+      "default": true,
+      "description": "Acesso ao m\u00f3dulo Financeiro"
+    },
+    "perm_studio_atividades": {
+      "type": "boolean",
+      "default": true,
+      "description": "Acesso ao subm\u00f3dulo de Atividades"
+    },
+    "perm_studio_inventario": {
+      "type": "boolean",
+      "default": true,
+      "description": "Acesso ao subm\u00f3dulo de Invent\u00e1rio"
     }
   },
   "required": [

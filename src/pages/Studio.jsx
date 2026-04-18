@@ -87,8 +87,19 @@ function HubCard({ hub, index }) {
   );
 }
 
+const PERM_MAP = {
+  "/studio/atividades": "perm_studio_atividades",
+  "/studio/inventario": "perm_studio_inventario",
+};
+
 export default function Studio() {
   const { usuario } = useOutletContext();
+
+  const visibleHubs = HUBS.filter(hub => {
+    const permKey = PERM_MAP[hub.to];
+    if (!permKey) return true;
+    return usuario?.[permKey] !== false;
+  });
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col" style={{ background: "#09090B" }}>
@@ -107,7 +118,7 @@ export default function Studio() {
 
       <div className="flex-1 px-6 pb-14 max-w-4xl mx-auto w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {HUBS.map((hub, i) => (
+          {visibleHubs.map((hub, i) => (
             <HubCard key={hub.to} hub={hub} index={i} />
           ))}
         </div>

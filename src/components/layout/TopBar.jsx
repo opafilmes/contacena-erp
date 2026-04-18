@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, Settings, User, Database } from "lucide-react";
+import { LogOut, Settings, User, Database, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   DropdownMenu,
@@ -74,6 +74,12 @@ export default function TopBar({ tenant, usuario }) {
               <Link to="/configuracoes-empresa" className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações da Empresa
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/gestao-equipe" className="cursor-pointer">
+                <Users className="mr-2 h-4 w-4" />
+                Gestão de Equipe
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

@@ -19,6 +19,7 @@ import RoleGuard from './components/shared/RoleGuard';
 import Studio from './pages/Studio';
 import StudioAtividades from './pages/StudioAtividades';
 import StudioInventario from './pages/StudioInventario';
+import GestaoEquipe from './pages/GestaoEquipe';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -57,6 +58,7 @@ const AuthenticatedApp = () => {
         <Route path="/studio/atividades" element={<StudioAtividades />} />
         <Route path="/studio/inventario" element={<StudioInventario />} />
         <Route path="/financeiro" element={<RoleGuard blockedRoles={["Producao"]}><Financeiro /></RoleGuard>} />
+        <Route path="/gestao-equipe" element={<GestaoEquipe />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

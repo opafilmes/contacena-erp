@@ -121,14 +121,16 @@ function BentoCard({ mod, index, locked }) {
 
 export default function Home() {
   const { tenant, usuario } = useOutletContext();
-  const plano = tenant?.plan_tier || tenant?.plano_assinatura || "Básico";
-  const role = usuario?.role || "Admin";
-  const isProducao = role === "Producao";
+  const plano = tenant?.plan_tier || "Básico";
 
-  const visibleModules = MODULES.filter(mod => {
-    if (isProducao && (mod.to === "/financeiro" || mod.to === "/comercial")) return false;
+  const hasPermission = (mod) => {
+    if (mod.to === "/comercial" && usuario?.perm_comercial === false) return false;
+    if (mod.to === "/financeiro" && usuario?.perm_financeiro === false) return false;
+    if (mod.to === "/producao" && usuario?.perm_studio_atividades === false && usuario?.perm_studio_inventario === false) return false;
     return true;
-  });
+  };
+
+  const visibleModules = MODULES.filter(mod => hasPermission(mod));
 
   const isModuleLocked = (mod) => {
     if (mod.requiredPlan === "Profissional" && !["Profissional"].includes(plano)) return true;
