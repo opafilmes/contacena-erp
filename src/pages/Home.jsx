@@ -2,87 +2,105 @@ import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Users, Briefcase, LineChart, Video } from "lucide-react";
 
 const MODULES = [
   {
-    icon: "🚀",
+    Icon: Video,
     title: "PRODUÇÃO & JOBS",
     subtitle: "Ordem do dia, Inventário, Kanban",
     to: "/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2 md:col-span-2",
-    minH: "min-h-[200px]",
-    accentColor: "from-green-500/20 via-transparent to-transparent",
-    iconColor: "text-green-400",
-    glowColor: "group-hover:shadow-[0_8px_60px_-12px_rgba(34,197,94,0.35)]",
-    borderGlow: "group-hover:border-green-500/30",
+    minH: "min-h-[220px]",
+    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=900&q=80&auto=format&fit=crop",
+    accent: "rgba(34,197,94,0.55)",
+    iconColor: "text-green-300",
+    glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(34,197,94,0.45),0_8px_60px_-12px_rgba(34,197,94,0.5)]",
   },
   {
-    icon: "💰",
+    Icon: LineChart,
     title: "FINANCEIRO",
     subtitle: "Receitas e Despesas",
     to: "/financeiro",
     requiredPlan: null,
     gridClass: "col-span-1",
-    minH: "min-h-[160px]",
-    accentColor: "from-violet-500/15 via-transparent to-transparent",
-    iconColor: "text-violet-400",
-    glowColor: "group-hover:shadow-[0_8px_40px_-12px_rgba(139,92,246,0.3)]",
-    borderGlow: "group-hover:border-violet-500/30",
+    minH: "min-h-[180px]",
+    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=700&q=80&auto=format&fit=crop",
+    accent: "rgba(139,92,246,0.55)",
+    iconColor: "text-violet-300",
+    glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(139,92,246,0.45),0_8px_40px_-12px_rgba(139,92,246,0.5)]",
   },
   {
-    icon: "📝",
+    Icon: Briefcase,
     title: "COMERCIAL",
     subtitle: "Propostas e Contratos",
     to: "/comercial",
     requiredPlan: null,
     gridClass: "col-span-1",
-    minH: "min-h-[160px]",
-    accentColor: "from-sky-500/15 via-transparent to-transparent",
-    iconColor: "text-sky-400",
-    glowColor: "group-hover:shadow-[0_8px_40px_-12px_rgba(14,165,233,0.3)]",
-    borderGlow: "group-hover:border-sky-500/30",
+    minH: "min-h-[180px]",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=700&q=80&auto=format&fit=crop",
+    accent: "rgba(14,165,233,0.55)",
+    iconColor: "text-sky-300",
+    glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(14,165,233,0.45),0_8px_40px_-12px_rgba(14,165,233,0.5)]",
   },
   {
-    icon: "🗂️",
+    Icon: Users,
     title: "CADASTROS",
     subtitle: "Clientes, Fornecedores, Equipe",
     to: "/cadastros",
     requiredPlan: null,
     gridClass: "col-span-1",
-    minH: "min-h-[160px]",
-    accentColor: "from-amber-500/15 via-transparent to-transparent",
-    iconColor: "text-amber-400",
-    glowColor: "group-hover:shadow-[0_8px_40px_-12px_rgba(245,158,11,0.3)]",
-    borderGlow: "group-hover:border-amber-500/30",
+    minH: "min-h-[180px]",
+    image: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?w=700&q=80&auto=format&fit=crop",
+    accent: "rgba(245,158,11,0.55)",
+    iconColor: "text-amber-300",
+    glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(245,158,11,0.45),0_8px_40px_-12px_rgba(245,158,11,0.5)]",
   },
 ];
 
 function BentoCard({ mod, index, locked }) {
+  const { Icon } = mod;
+
   const inner = (
     <div
       className={`
-        group relative overflow-hidden rounded-2xl h-full flex flex-col justify-between p-6
-        bg-white/[0.04] backdrop-blur-[12px]
-        border border-white/[0.07]
-        transition-all duration-500 cursor-pointer
+        group relative overflow-hidden rounded-2xl h-full flex flex-col justify-between
+        border border-white/[0.08] cursor-pointer
+        transition-all duration-500 ease-out
         ${mod.minH}
         ${mod.glowColor}
-        ${mod.borderGlow}
         ${locked ? "opacity-50 cursor-not-allowed" : ""}
       `}
     >
-      {/* Gradient accent */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${mod.accentColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+      {/* Background image with zoom on hover */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out scale-100 group-hover:scale-105"
+        style={{ backgroundImage: `url(${mod.image})`, filter: "brightness(0.35)" }}
+      />
 
-      {/* Top ambient orb */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/[0.02] blur-3xl group-hover:bg-white/[0.04] transition-all duration-700 pointer-events-none" />
+      {/* Deep cinematic gradient overlay — bottom to transparent */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `linear-gradient(to top, #09090B 0%, #09090Bcc 30%, transparent 70%)`,
+        }}
+      />
 
-      {/* Content */}
-      <div className="relative z-10 flex items-start justify-between">
-        <span className={`text-3xl transition-transform duration-500 group-hover:scale-110 ${mod.iconColor}`}>
-          {mod.icon}
-        </span>
+      {/* Accent color vignette on hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse at 80% 20%, ${mod.accent} 0%, transparent 65%)` }}
+      />
+
+      {/* Border glow rim */}
+      <div className="absolute inset-0 rounded-2xl ring-0 group-hover:ring-1 ring-white/10 transition-all duration-500 pointer-events-none" />
+
+      {/* Top: Icon + Pro badge */}
+      <div className="relative z-10 flex items-start justify-between p-6 pb-0">
+        <div className={`p-2 rounded-xl bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] ${mod.iconColor}`}>
+          <Icon className="w-5 h-5 stroke-[1.5]" />
+        </div>
         {locked && (
           <span className="text-[10px] font-semibold uppercase tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2 py-0.5 rounded-full">
             Pro
@@ -90,11 +108,12 @@ function BentoCard({ mod, index, locked }) {
         )}
       </div>
 
-      <div className="relative z-10">
-        <p className="font-heading font-bold text-foreground text-lg tracking-tight leading-tight">
+      {/* Bottom: Text */}
+      <div className="relative z-10 p-6 pt-4">
+        <p className="font-heading font-bold text-white text-lg tracking-tight leading-tight drop-shadow-md">
           {mod.title}
         </p>
-        <p className="text-muted-foreground text-xs mt-1 leading-relaxed">
+        <p className="text-white/50 text-xs mt-1 leading-relaxed font-body">
           {mod.subtitle}
         </p>
       </div>
@@ -106,7 +125,7 @@ function BentoCard({ mod, index, locked }) {
       className={mod.gridClass}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.55, delay: index * 0.09, ease: [0.22, 1, 0.36, 1] }}
     >
       {locked ? inner : <Link to={mod.to} className="block h-full">{inner}</Link>}
     </motion.div>
@@ -119,17 +138,13 @@ export default function Home() {
   const role = usuario?.role || "Admin";
   const isProducao = role === "Producao";
 
-  // Filter modules based on role
   const visibleModules = MODULES.filter(mod => {
     if (isProducao && (mod.to === "/financeiro" || mod.to === "/comercial")) return false;
     return true;
   });
 
   return (
-    <div
-      className="min-h-[calc(100vh-4rem)] flex flex-col"
-      style={{ background: "#09090B" }}
-    >
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col" style={{ background: "#09090B" }}>
       {/* Hero */}
       <div className="px-6 pt-12 pb-8 max-w-5xl mx-auto w-full">
         <motion.div
@@ -138,16 +153,14 @@ export default function Home() {
           transition={{ duration: 0.6 }}
         >
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-white tracking-tight">
-            Olá, {usuario?.nome?.split(" ")[0] || "Usuário"} 👋
+            Olá, {usuario?.nome?.split(" ")[0] || "Usuário"}
           </h1>
           <p className="text-zinc-500 mt-2 text-sm">
             Selecione um módulo para começar.
           </p>
           <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs font-medium text-green-400">
-              Plano {plano}
-            </span>
+            <span className="text-xs font-medium text-green-400">Plano {plano}</span>
           </div>
         </motion.div>
       </div>
