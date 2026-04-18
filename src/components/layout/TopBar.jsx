@@ -29,6 +29,7 @@ export default function TopBar({ tenant, usuario }) {
     : "U";
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="flex items-center justify-between h-full px-6">
         {/* Logo / Tenant */}
@@ -107,5 +108,6 @@ export default function TopBar({ tenant, usuario }) {
       onClose={() => setCaixinhaOpen(false)}
       tenantId={tenant?.id}
     />
+    </>
   );
 }
