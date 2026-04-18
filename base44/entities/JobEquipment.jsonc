@@ -1,0 +1,27 @@
+{
+  "name": "JobEquipment",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "ID do Job"
+    },
+    "equipment_id": {
+      "type": "string",
+      "description": "ID do Equipamento"
+    },
+    "qtd_utilizada": {
+      "type": "number",
+      "description": "Quantidade alocada para este job"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    }
+  },
+  "required": [
+    "job_id",
+    "equipment_id",
+    "tenant_id"
+  ]
+}

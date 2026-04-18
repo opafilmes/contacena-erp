@@ -1,0 +1,22 @@
+{
+  "name": "Equipment",
+  "type": "object",
+  "properties": {
+    "nome_item": {
+      "type": "string",
+      "description": "Nome do equipamento"
+    },
+    "qtd_total": {
+      "type": "number",
+      "description": "Quantidade total em estoque"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant ao qual este equipamento pertence"
+    }
+  },
+  "required": [
+    "nome_item",
+    "tenant_id"
+  ]
+}

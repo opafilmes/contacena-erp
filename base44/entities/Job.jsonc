@@ -1,0 +1,33 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do projeto/job"
+    },
+    "status_kanban": {
+      "type": "string",
+      "enum": [
+        "Pr\u00e9-produ\u00e7\u00e3o",
+        "Capta\u00e7\u00e3o",
+        "Edi\u00e7\u00e3o",
+        "Finalizado"
+      ],
+      "default": "Pr\u00e9-produ\u00e7\u00e3o",
+      "description": "Status atual no Kanban"
+    },
+    "proposal_id": {
+      "type": "string",
+      "description": "ID da Proposta relacionada"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant ao qual este job pertence"
+    }
+  },
+  "required": [
+    "titulo",
+    "tenant_id"
+  ]
+}
