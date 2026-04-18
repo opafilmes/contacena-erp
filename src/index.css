@@ -89,3 +89,60 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Montserrat', sans-serif !important;
+  }
+
+  .no-print,
+  header,
+  nav,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .print-area {
+    display: block !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 24px !important;
+  }
+
+  .print-area table,
+  .print-area th,
+  .print-area td {
+    border: 1px solid #cccccc !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    padding: 8px 12px !important;
+  }
+
+  .print-area th {
+    background: #f0f0f0 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 11px !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .print-area .print-title {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+    color: #000000 !important;
+  }
+
+  .print-area .print-subtitle {
+    font-size: 12px !important;
+    color: #555555 !important;
+    margin-bottom: 20px !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+}

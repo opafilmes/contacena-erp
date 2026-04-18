@@ -111,6 +111,8 @@ module.exports = {
     "border-red-500/50",
     "text-red-400",
     "text-yellow-400",
+    "print:hidden",
+    "print:table",
   ],
   plugins: [require("tailwindcss-animate")],
 }

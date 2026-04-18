@@ -13,6 +13,7 @@ import Cadastros from './pages/Cadastros';
 import Comercial from './pages/Comercial';
 import Producao from './pages/Producao';
 import Financeiro from './pages/Financeiro';
+import RoleGuard from './components/shared/RoleGuard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -45,9 +46,9 @@ const AuthenticatedApp = () => {
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />
         <Route path="/cadastros" element={<Cadastros />} />
-        <Route path="/comercial" element={<Comercial />} />
+        <Route path="/comercial" element={<RoleGuard blockedRoles={["Producao"]}><Comercial /></RoleGuard>} />
         <Route path="/producao" element={<Producao />} />
-        <Route path="/financeiro" element={<Financeiro />} />
+        <Route path="/financeiro" element={<RoleGuard blockedRoles={["Producao"]}><Financeiro /></RoleGuard>} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
