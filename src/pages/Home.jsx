@@ -7,13 +7,13 @@ import { Users, Briefcase, LineChart, Video } from "lucide-react";
 const MODULES = [
   {
     Icon: Video,
-    title: "PRODUÇÃO & JOBS",
+    title: "Studio",
     subtitle: "Ordem do dia, Inventário, Kanban",
     to: "/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2 md:col-span-2",
     minH: "min-h-[220px]",
-    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=900&q=80&auto=format&fit=crop",
+    image: "https://drive.google.com/file/d/1jUXoGwqwXS5Qt6dZB9zX9e0osV854ha7/view?usp=sharing",
     accent: "rgba(34,197,94,0.55)",
     iconColor: "text-green-300",
     glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(34,197,94,0.45),0_8px_60px_-12px_rgba(34,197,94,0.5)]",
