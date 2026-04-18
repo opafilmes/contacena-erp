@@ -12,6 +12,7 @@ import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
 import Comercial from './pages/Comercial';
 import Producao from './pages/Producao';
+import Financeiro from './pages/Financeiro';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -46,6 +47,7 @@ const AuthenticatedApp = () => {
         <Route path="/cadastros" element={<Cadastros />} />
         <Route path="/comercial" element={<Comercial />} />
         <Route path="/producao" element={<Producao />} />
+        <Route path="/financeiro" element={<Financeiro />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

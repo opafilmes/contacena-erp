@@ -1,0 +1,50 @@
+{
+  "name": "AccountReceivable",
+  "type": "object",
+  "properties": {
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da conta a receber"
+    },
+    "category_id": {
+      "type": "string",
+      "description": "ID da FinancialCategory relacionada"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do Client relacionado"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "ID do Job relacionado"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor em BRL"
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de vencimento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Recebido",
+        "Atrasado"
+      ],
+      "default": "Pendente",
+      "description": "Status do recebimento"
+    },
+    "inquilino_id": {
+      "type": "string",
+      "description": "ID do Tenant ao qual este lan\u00e7amento pertence"
+    }
+  },
+  "required": [
+    "descricao",
+    "valor",
+    "inquilino_id"
+  ]
+}
