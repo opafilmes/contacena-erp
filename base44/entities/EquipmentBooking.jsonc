@@ -1,0 +1,39 @@
+{
+  "name": "EquipmentBooking",
+  "type": "object",
+  "properties": {
+    "equipment_id": {
+      "type": "string",
+      "description": "ID do Equipamento reservado"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "ID do Job para o qual o equipamento est\u00e1 reservado"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de in\u00edcio da reserva"
+    },
+    "data_fim": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora de fim da reserva"
+    },
+    "qtd_reservada": {
+      "type": "number",
+      "description": "Quantidade reservada"
+    },
+    "inquilino_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "data_inicio",
+    "data_fim",
+    "qtd_reservada",
+    "inquilino_id"
+  ]
+}

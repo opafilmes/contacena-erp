@@ -16,6 +16,9 @@ import Comercial from './pages/Comercial';
 import Producao from './pages/Producao';
 import Financeiro from './pages/Financeiro';
 import RoleGuard from './components/shared/RoleGuard';
+import Studio from './pages/Studio';
+import StudioAtividades from './pages/StudioAtividades';
+import StudioInventario from './pages/StudioInventario';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -50,7 +53,9 @@ const AuthenticatedApp = () => {
         <Route path="/cadastros" element={<Cadastros />} />
         <Route path="/diretorio" element={<Diretorio />} />
         <Route path="/comercial" element={<RoleGuard blockedRoles={["Producao"]}><Comercial /></RoleGuard>} />
-        <Route path="/producao" element={<Producao />} />
+        <Route path="/producao" element={<Studio />} />
+        <Route path="/studio/atividades" element={<StudioAtividades />} />
+        <Route path="/studio/inventario" element={<StudioInventario />} />
         <Route path="/financeiro" element={<RoleGuard blockedRoles={["Producao"]}><Financeiro /></RoleGuard>} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

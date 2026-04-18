@@ -131,7 +131,7 @@ export default function Home() {
   });
 
   const isModuleLocked = (mod) => {
-    if (mod.requiredPlan === "Profissional" && plano !== "Profissional") return true;
+    if (mod.requiredPlan === "Profissional" && !["Profissional"].includes(plano)) return true;
     if (mod.requiredPlan === "Financeiro" && !["Essencial", "Profissional"].includes(plano)) return true;
     return false;
   };

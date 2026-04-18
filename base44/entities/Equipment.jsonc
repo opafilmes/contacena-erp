@@ -6,9 +6,17 @@
       "type": "string",
       "description": "Nome do equipamento"
     },
+    "num_serie": {
+      "type": "string",
+      "description": "N\u00famero de s\u00e9rie do equipamento"
+    },
     "qtd_total": {
       "type": "number",
       "description": "Quantidade total em estoque"
+    },
+    "valor_compra": {
+      "type": "number",
+      "description": "Valor de compra em BRL"
     },
     "tenant_id": {
       "type": "string",
