@@ -89,5 +89,19 @@ module.exports = {
   		}
   	}
   },
+  safelist: [
+    "col-span-2",
+    "col-span-1",
+    "text-green-400",
+    "text-violet-400",
+    "text-sky-400",
+    "text-amber-400",
+    "bg-green-500/10",
+    "border-green-500/20",
+    "border-green-500/30",
+    "border-violet-500/30",
+    "border-sky-500/30",
+    "border-amber-500/30",
+  ],
   plugins: [require("tailwindcss-animate")],
 }

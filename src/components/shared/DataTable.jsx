@@ -17,36 +17,36 @@ export default function DataTable({ columns, rows, onEdit, onDelete, emptyMessag
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border/50">
+    <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border/50 bg-muted/30">
+          <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground/70 uppercase tracking-widest"
               >
                 {col.label}
               </th>
             ))}
-            <th className="px-4 py-3 w-12" />
+            <th className="px-4 py-2.5 w-12" />
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
             <tr
               key={row.id || i}
-              className="border-b border-border/30 hover:bg-white/[0.03] transition-colors"
+              className="group hover:bg-white/[0.03] transition-colors duration-150 rounded-lg"
             >
               {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3 text-foreground/90">
+                <td key={col.key} className="px-4 py-3.5 text-foreground/85 first:rounded-l-lg last:rounded-r-lg">
                   {col.render ? col.render(row) : row[col.key] ?? "—"}
                 </td>
               ))}
-              <td className="px-4 py-3">
+              <td className="px-4 py-3.5">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-1.5 rounded-lg hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
+                    <button className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-all">
                       <MoreVertical className="w-4 h-4" />
                     </button>
                   </DropdownMenuTrigger>
