@@ -1,0 +1,30 @@
+{
+  "name": "Tenant",
+  "type": "object",
+  "properties": {
+    "nome_fantasia": {
+      "type": "string",
+      "description": "Nome fantasia da produtora"
+    },
+    "cnpj": {
+      "type": "string",
+      "description": "CNPJ da empresa"
+    },
+    "logo": {
+      "type": "string",
+      "description": "URL da logo da empresa"
+    },
+    "plano_assinatura": {
+      "type": "string",
+      "enum": [
+        "B\u00e1sico",
+        "Profissional"
+      ],
+      "default": "B\u00e1sico",
+      "description": "Plano de assinatura do tenant"
+    }
+  },
+  "required": [
+    "nome_fantasia"
+  ]
+}

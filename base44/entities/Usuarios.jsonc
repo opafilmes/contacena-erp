@@ -1,0 +1,37 @@
+{
+  "name": "Usuarios",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome completo do usu\u00e1rio"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "foto_perfil": {
+      "type": "string",
+      "description": "URL da foto de perfil"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "Admin",
+        "Financeiro",
+        "Producao"
+      ],
+      "default": "Admin",
+      "description": "Papel do usu\u00e1rio no sistema"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant (Produtora) ao qual o usu\u00e1rio pertence"
+    }
+  },
+  "required": [
+    "nome",
+    "email",
+    "tenant_id"
+  ]
+}
