@@ -14,14 +14,35 @@
       "type": "string",
       "description": "URL da logo da empresa"
     },
-    "plano_assinatura": {
+    "plan_tier": {
       "type": "string",
       "enum": [
         "B\u00e1sico",
+        "Essencial",
         "Profissional"
       ],
-      "default": "B\u00e1sico",
+      "default": "Profissional",
       "description": "Plano de assinatura do tenant"
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "Trial",
+        "Active",
+        "Past_Due",
+        "Canceled"
+      ],
+      "default": "Trial",
+      "description": "Status da assinatura"
+    },
+    "trial_ends_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de expira\u00e7\u00e3o do trial"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "ID do cliente no Stripe"
     }
   },
   "required": [

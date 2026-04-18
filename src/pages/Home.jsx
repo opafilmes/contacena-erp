@@ -121,15 +121,20 @@ function BentoCard({ mod, index, locked }) {
 
 export default function Home() {
   const { tenant, usuario } = useOutletContext();
-  const plano = tenant?.plano_assinatura || "Básico";
+  const plano = tenant?.plan_tier || tenant?.plano_assinatura || "Básico";
   const role = usuario?.role || "Admin";
   const isProducao = role === "Producao";
 
   const visibleModules = MODULES.filter(mod => {
     if (isProducao && (mod.to === "/financeiro" || mod.to === "/comercial")) return false;
-    if (mod.requiredPlan === "Financeiro" && !["Financeiro", "Profissional"].includes(plano)) return false;
     return true;
   });
+
+  const isModuleLocked = (mod) => {
+    if (mod.requiredPlan === "Profissional" && plano !== "Profissional") return true;
+    if (mod.requiredPlan === "Financeiro" && !["Essencial", "Profissional"].includes(plano)) return true;
+    return false;
+  };
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col" style={{ background: "#09090B" }}>
@@ -157,7 +162,7 @@ export default function Home() {
       <div className="flex-1 px-6 pb-14 max-w-5xl mx-auto w-full">
         <div className="grid grid-cols-2 gap-4">
           {visibleModules.map((mod, i) => {
-            const locked = mod.requiredPlan && mod.requiredPlan !== plano;
+            const locked = isModuleLocked(mod);
             return <BentoCard key={mod.to} mod={mod} index={i} locked={locked} />;
           })}
         </div>

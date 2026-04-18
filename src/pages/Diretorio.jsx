@@ -27,7 +27,7 @@ function LockedTab({ label }) {
 export default function Diretorio() {
   const { tenant } = useOutletContext();
   const tenantId = tenant?.id;
-  const plano = tenant?.plano_assinatura || "Básico";
+  const plano = tenant?.plan_tier || tenant?.plano_assinatura || "Básico";
   const isAvancado = PLANOS_AVANCADOS.includes(plano);
 
   const [clients, setClients] = useState([]);
