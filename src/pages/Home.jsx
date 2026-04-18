@@ -26,7 +26,7 @@ const MODULES = [
     requiredPlan: null,
     gridClass: "col-span-1",
     minH: "min-h-[180px]",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=700&q=80&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1776531056208-1e1bec2642ec?q=80&w=2564&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(139,92,246,0.55)",
     iconColor: "text-violet-300",
     glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(139,92,246,0.45),0_8px_40px_-12px_rgba(139,92,246,0.5)]",
