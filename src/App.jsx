@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
+import Diretorio from './pages/Diretorio';
 import Comercial from './pages/Comercial';
 import Producao from './pages/Producao';
 import Financeiro from './pages/Financeiro';
@@ -46,6 +47,7 @@ const AuthenticatedApp = () => {
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />
         <Route path="/cadastros" element={<Cadastros />} />
+        <Route path="/diretorio" element={<Diretorio />} />
         <Route path="/comercial" element={<RoleGuard blockedRoles={["Producao"]}><Comercial /></RoleGuard>} />
         <Route path="/producao" element={<Producao />} />
         <Route path="/financeiro" element={<RoleGuard blockedRoles={["Producao"]}><Financeiro /></RoleGuard>} />

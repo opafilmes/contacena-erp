@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { LogOut, Settings, User } from "lucide-react";
+import React from "react";
+import { LogOut, Settings, User, BookUser } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   DropdownMenu,
@@ -10,11 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
-import CaixinhaModal from "@/components/financeiro/CaixinhaModal";
 
 export default function TopBar({ tenant, usuario }) {
-  const [caixinhaOpen, setCaixinhaOpen] = useState(false);
-
   const handleLogout = () => {
     base44.auth.logout();
   };
@@ -52,13 +49,14 @@ export default function TopBar({ tenant, usuario }) {
           </span>
         </Link>
 
-        {/* Caixinha Button */}
-        <button
-          onClick={() => setCaixinhaOpen(true)}
-          className="no-print flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/25 hover:bg-amber-500/25 transition-colors"
+        {/* Diretório Link */}
+        <Link
+          to="/diretorio"
+          className="no-print flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-muted-foreground border border-border/50 hover:bg-secondary/60 hover:text-foreground transition-colors"
         >
-          🪙 Caixinha
-        </button>
+          <BookUser className="w-3.5 h-3.5" />
+          Diretório
+        </Link>
 
         {/* Avatar Dropdown */}
         <DropdownMenu>
@@ -103,11 +101,6 @@ export default function TopBar({ tenant, usuario }) {
       </div>
     </header>
 
-    <CaixinhaModal
-      open={caixinhaOpen}
-      onClose={() => setCaixinhaOpen(false)}
-      tenantId={tenant?.id}
-    />
     </>
   );
 }

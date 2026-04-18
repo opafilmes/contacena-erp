@@ -2,7 +2,7 @@ import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, Briefcase, LineChart, Video } from "lucide-react";
+import { Briefcase, LineChart, Video } from "lucide-react";
 
 const MODULES = [
   {
@@ -11,8 +11,8 @@ const MODULES = [
     subtitle: "Ordem do dia, Inventário, Produção",
     to: "/producao",
     requiredPlan: "Profissional",
-    gridClass: "col-span-2 md:col-span-2",
-    minH: "min-h-[220px]",
+    gridClass: "col-span-2",
+    minH: "min-h-[260px]",
     image: "https://images.unsplash.com/photo-1632187981988-40f3cbaeef5e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(34,197,94,0.55)",
     iconColor: "text-green-300",
@@ -23,9 +23,9 @@ const MODULES = [
     title: "Financeiro",
     subtitle: "Receitas e Despesas",
     to: "/financeiro",
-    requiredPlan: null,
+    requiredPlan: "Financeiro",
     gridClass: "col-span-1",
-    minH: "min-h-[180px]",
+    minH: "min-h-[200px]",
     image: "https://images.unsplash.com/photo-1776531056208-1e1bec2642ec?q=80&w=2564&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(139,92,246,0.55)",
     iconColor: "text-violet-300",
@@ -38,24 +38,11 @@ const MODULES = [
     to: "/comercial",
     requiredPlan: null,
     gridClass: "col-span-1",
-    minH: "min-h-[180px]",
+    minH: "min-h-[200px]",
     image: "https://images.unsplash.com/photo-1635927555354-e7fa116808bd?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(14,165,233,0.55)",
     iconColor: "text-sky-300",
     glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(14,165,233,0.45),0_8px_40px_-12px_rgba(14,165,233,0.5)]",
-  },
-  {
-    Icon: Users,
-    title: "Cadastros",
-    subtitle: "Clientes, Fornecedores, Equipe",
-    to: "/cadastros",
-    requiredPlan: null,
-    gridClass: "col-span-1",
-    minH: "min-h-[180px]",
-    image: "https://www.istockphoto.com/br/foto/homem-filmando-pessoas-de-neg%C3%B3cios-no-escrit%C3%B3rio-gm2164232420-584519072",
-    accent: "rgba(245,158,11,0.55)",
-    iconColor: "text-amber-300",
-    glowColor: "group-hover:shadow-[0_0_0_1.5px_rgba(245,158,11,0.45),0_8px_40px_-12px_rgba(245,158,11,0.5)]",
   },
 ];
 
@@ -140,6 +127,7 @@ export default function Home() {
 
   const visibleModules = MODULES.filter(mod => {
     if (isProducao && (mod.to === "/financeiro" || mod.to === "/comercial")) return false;
+    if (mod.requiredPlan === "Financeiro" && !["Financeiro", "Profissional"].includes(plano)) return false;
     return true;
   });
 
