@@ -6,8 +6,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger } from
+"@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import CadastrosGlobal from "./CadastrosGlobal";
@@ -17,34 +17,34 @@ export default function TopBar({ tenant, usuario, tenantId }) {
     base44.auth.logout();
   };
 
-  const initials = usuario?.nome
-    ? usuario.nome
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
-    : "U";
+  const initials = usuario?.nome ?
+  usuario.nome.
+  split(" ").
+  map((n) => n[0]).
+  slice(0, 2).
+  join("").
+  toUpperCase() :
+  "U";
 
   return (
     <>
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      <div className="flex items-center justify-between h-full px-6">
+      <div className="bg-transparent px-6 flex items-center justify-between h-full">
         {/* Logo / Tenant */}
         <Link to="/" className="flex items-center gap-3">
-          {tenant?.logo ? (
+          {tenant?.logo ?
             <img
               src={tenant.logo}
               alt={tenant.nome_fantasia}
-              className="h-8 w-8 rounded-lg object-cover"
-            />
-          ) : (
+              className="h-8 w-8 rounded-lg object-cover" /> :
+
+
             <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
               <span className="text-primary font-heading font-bold text-sm">
                 {tenant?.nome_fantasia?.[0] || "C"}
               </span>
             </div>
-          )}
+            }
           <span className="font-heading font-semibold text-foreground text-lg tracking-tight">
             {tenant?.nome_fantasia || "ConTaCena"}
           </span>
@@ -67,9 +67,9 @@ export default function TopBar({ tenant, usuario, tenantId }) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            align="end"
-            className="w-56 bg-popover/95 backdrop-blur-xl border-border/50"
-          >
+                align="end"
+                className="w-56 bg-popover/95 backdrop-blur-xl border-border/50">
+                
             <div className="px-3 py-2">
               <p className="text-sm font-medium text-foreground">{usuario?.nome}</p>
               <p className="text-xs text-muted-foreground">{usuario?.role}</p>
@@ -104,6 +104,6 @@ export default function TopBar({ tenant, usuario, tenantId }) {
       </div>
     </header>
 
-    </>
-  );
+    </>);
+
 }
