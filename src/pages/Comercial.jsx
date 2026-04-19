@@ -313,7 +313,11 @@ export default function Comercial() {
                   </thead>
                   <tbody>
                     {filteredProposals.map((p, idx) => (
-                      <tr key={p.id} className={`border-b border-border/30 hover:bg-secondary/20 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}>
+                      <tr
+                        key={p.id}
+                        onClick={() => setManagingProposal(p)}
+                        className={`border-b border-border/30 cursor-pointer hover:bg-secondary/40 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}
+                      >
                         <td className="px-4 py-3 font-mono font-semibold text-foreground text-xs">
                           {p.numero_proposta ? `PROP-${p.numero_proposta}` : `#${p.id?.slice(-4).toUpperCase()}`}
                         </td>
@@ -327,13 +331,10 @@ export default function Comercial() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1 justify-end">
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setManagingProposal(p)}>
-                              <Eye className="w-3 h-3" /> Ver
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setProposalModal({ open: true, record: p })}>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={e => { e.stopPropagation(); setProposalModal({ open: true, record: p }); }}>
                               <Pencil className="w-3 h-3" /> Editar
                             </Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProposal(p)}>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={e => { e.stopPropagation(); handleDeleteProposal(p); }}>
                               <XCircle className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -437,7 +438,11 @@ function ContractTable({ rows, clients, onEdit, onDelete }) {
         </thead>
         <tbody>
           {rows.map((r, idx) => (
-            <tr key={r.id} className={`border-b border-border/30 hover:bg-secondary/20 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}>
+            <tr
+              key={r.id}
+              onClick={() => onEdit(r)}
+              className={`border-b border-border/30 cursor-pointer hover:bg-secondary/40 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}
+            >
               <td className="px-4 py-3 font-medium text-foreground">{r.titulo}</td>
               <td className="px-4 py-3 text-muted-foreground">{getClientName(r.client_id)}</td>
               <td className="px-4 py-3 text-foreground whitespace-nowrap">{r.valor ? formatBRL(r.valor) : "—"}</td>
@@ -452,8 +457,7 @@ function ContractTable({ rows, clients, onEdit, onDelete }) {
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2 justify-end">
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => onEdit(r)}>Editar</Button>
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => onDelete(r)}>
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={e => { e.stopPropagation(); onDelete(r); }}>
                     <XCircle className="w-3.5 h-3.5" />
                   </Button>
                 </div>

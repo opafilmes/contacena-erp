@@ -15,19 +15,22 @@ export default function TaskCard({ task, usuarios, jobs, clients, onEdit, onDele
   const isSubtask = !!task.parent_task_id;
 
   return (
-    <div className={`
-      flex items-start gap-4 rounded-xl border p-4 transition-all duration-200
-      ${isSubtask ? "ml-6 border-l-2 border-l-accent/40" : ""}
-      ${concluida
-        ? "bg-white/[0.02] border-border/30 opacity-60"
-        : atrasada
-          ? "bg-red-500/[0.04] border-red-500/20 hover:border-red-500/30"
-          : "bg-white/[0.03] border-border/50 hover:bg-white/[0.05]"
-      }
-    `}>
+    <div
+      onClick={() => onEdit(task)}
+      className={`
+        flex items-start gap-4 rounded-xl border p-4 transition-all duration-200 cursor-pointer
+        ${isSubtask ? "ml-6 border-l-2 border-l-accent/40" : ""}
+        ${concluida
+          ? "bg-white/[0.02] border-border/30 opacity-60"
+          : atrasada
+            ? "bg-red-500/[0.04] border-red-500/20 hover:border-red-500/30 hover:bg-red-500/[0.07]"
+            : "bg-white/[0.03] border-border/50 hover:bg-secondary/40"
+        }
+      `}
+    >
       {/* Toggle */}
       <button
-        onClick={() => onToggle(task)}
+        onClick={e => { e.stopPropagation(); onToggle(task); }}
         className={`
           mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center
           ${concluida
@@ -89,16 +92,16 @@ export default function TaskCard({ task, usuarios, jobs, clients, onEdit, onDele
       {/* Actions */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-1.5 rounded-lg opacity-50 hover:opacity-100 hover:bg-secondary/50 text-muted-foreground transition-all">
+          <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-lg opacity-50 hover:opacity-100 hover:bg-secondary/50 text-muted-foreground transition-all">
             <MoreVertical className="w-4 h-4" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40 bg-popover/95 backdrop-blur-xl border-border/50">
-          <DropdownMenuItem onClick={() => onEdit(task)} className="cursor-pointer">
+          <DropdownMenuItem onClick={e => { e.stopPropagation(); onEdit(task); }} className="cursor-pointer">
             <Pencil className="mr-2 h-4 w-4" /> Editar
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => onDelete(task)}
+            onClick={e => { e.stopPropagation(); onDelete(task); }}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" /> Excluir

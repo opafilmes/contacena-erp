@@ -149,116 +149,42 @@
 }
 
 @media print {
-  /* ── Reset global ── */
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-family: 'Montserrat', sans-serif !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  /* ── Técnica definitiva: esconde tudo, mostra só o container ── */
+  body * {
+    visibility: hidden;
   }
 
-  /* ── Ocultar chrome da app (tudo por padrão) ── */
-  body > * {
-    display: none !important;
+  #print-container,
+  #print-container * {
+    visibility: visible;
   }
 
-  /* ── Mostrar apenas o container de impressão da proposta ── */
-  #proposal-print-root,
-  #proposal-print-root * {
-    display: revert !important;
+  #print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px 24px;
+    background-color: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  #proposal-print-root {
-    display: block !important;
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 99999 !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 20px 24px !important;
-    overflow: visible !important;
-  }
-
-  /* Ocultar elementos UI dentro do painel de gestão */
+  /* Oculta botões e UI dentro do container */
+  #print-container button,
   .no-print {
     display: none !important;
-  }
-
-  /* ── Ocultar chrome da app (fallback) ── */
-  header,
-  nav,
-  aside,
-  [data-print-hide],
-  [data-sidebar],
-  .topbar,
-  .sheet-overlay {
-    display: none !important;
-  }
-
-  /* ── Área de impressão legada ── */
-  .print-area {
-    display: block !important;
-    width: 100% !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    padding: 0 !important;
-  }
-
-  /* ── Cabeçalho com logo do tenant ── */
-  .print-header {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    margin-bottom: 20px !important;
-    padding-bottom: 12px !important;
-    border-bottom: 2px solid #e5e7eb !important;
-  }
-  .print-header img {
-    height: 48px !important;
-    width: auto !important;
-    object-fit: contain !important;
-  }
-  .print-header .print-header-text h1 {
-    font-size: 18px !important;
-    font-weight: 700 !important;
-    color: #111827 !important;
-    margin: 0 !important;
-  }
-  .print-header .print-header-text p {
-    font-size: 11px !important;
-    color: #6b7280 !important;
-    margin: 2px 0 0 !important;
-  }
-
-  /* ── Títulos ── */
-  .print-title {
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    margin-bottom: 4px !important;
-    color: #111827 !important;
-  }
-  .print-subtitle {
-    font-size: 11px !important;
-    color: #6b7280 !important;
-    margin-bottom: 16px !important;
   }
 
   /* ── Tabelas ── */
   table {
     width: 100% !important;
     border-collapse: collapse !important;
-    page-break-inside: auto !important;
   }
   thead { display: table-header-group !important; }
-  tr {
-    page-break-inside: avoid !important;
-    page-break-after: auto !important;
-  }
+  tr { page-break-inside: avoid !important; }
   th, td {
     border: 1px solid #d1d5db !important;
     color: #111827 !important;

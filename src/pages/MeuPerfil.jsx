@@ -30,26 +30,17 @@ export default function MeuPerfil() {
   };
 
   const handleSave = async () => {
-    if (!usuario?.id) return;
+    if (!usuario?.id) {
+      toast.error("Sessão inválida. Recarregue a página.");
+      return;
+    }
     setSaving(true);
-
     try {
-      // 1. Salva no banco de dados
-      await base44.entities.Usuarios.update(usuario.id, form);
-
-      // 2. Dispara o aviso verde
+      await base44.entities.Usuarios.update(usuario.id, { nome: form.nome, foto_perfil: form.foto_perfil });
       toast.success("Perfil atualizado com sucesso!");
-
-      // 3. Aguarda 1 segundo para o usuário ler o aviso e recarrega a página 
-      // para que o nome novo apareça no topo da tela e no menu.
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
-      // Se algo der errado, dispara o aviso vermelho
       toast.error("Erro ao atualizar o perfil. Tente novamente.");
-      console.error(error);
     } finally {
       setSaving(false);
     }

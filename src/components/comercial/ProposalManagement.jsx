@@ -149,15 +149,6 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
 
   return (
     <>
-      {/* ── PRINT STYLES (injected inline) ── */}
-      <style>{`
-        @media print {
-          body > * { display: none !important; }
-          #proposal-print-root { display: block !important; position: fixed; inset: 0; z-index: 99999; background: #fff; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
       <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto py-4">
         <div className="bg-card border border-border/50 rounded-2xl shadow-2xl w-full max-w-5xl mx-4 my-auto">
 
@@ -280,7 +271,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
             </div>
 
             {/* ── VISUALIZAÇÃO DA PROPOSTA (direita) ── */}
-            <div className="lg:col-span-2 p-6 lg:p-8" id="proposal-print-root">
+            <div className="lg:col-span-2 p-6 lg:p-8" id="print-container">
 
               {/* ══════════════════════════════════════
                   CABEÇALHO DO DOCUMENTO (V1 CLASSIC)

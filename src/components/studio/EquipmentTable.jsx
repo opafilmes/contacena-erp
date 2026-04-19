@@ -76,7 +76,7 @@ export default function EquipmentTable({ equipments, onEdit, onDelete }) {
           </thead>
           <tbody>
             {filtered.map((eq, i) => (
-              <tr key={eq.id || i} className="group hover:bg-white/[0.03] border-t border-border/30 transition-colors">
+              <tr key={eq.id || i} onClick={() => onEdit(eq)} className="group cursor-pointer hover:bg-secondary/40 border-t border-border/30 transition-colors">
                 <td className="px-4 py-3.5 font-medium text-foreground/90">
                   <div className="flex items-center gap-2">
                     {eq.fotos?.[0] && (
@@ -104,16 +104,16 @@ export default function EquipmentTable({ equipments, onEdit, onDelete }) {
                 <td className="px-4 py-3.5 no-print">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-secondary/50 text-muted-foreground transition-all">
+                      <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-secondary/50 text-muted-foreground transition-all">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 bg-popover/95 backdrop-blur-xl border-border/50">
-                      <DropdownMenuItem onClick={() => onEdit(eq)} className="cursor-pointer">
-                        <Pencil className="mr-2 h-4 w-4" /> Editar
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(eq); }} className="cursor-pointer">
+                       <Pencil className="mr-2 h-4 w-4" /> Editar
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onDelete(eq)} className="cursor-pointer text-destructive focus:text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(eq); }} className="cursor-pointer text-destructive focus:text-destructive">
+                       <Trash2 className="mr-2 h-4 w-4" /> Excluir
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
