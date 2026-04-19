@@ -3,13 +3,13 @@ import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2, XCircle, Eye } from "lucide-react";
-import ProposalView from "@/components/comercial/ProposalView";
+import { Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2, XCircle, Eye, Pencil } from "lucide-react";
+import ProposalModal from "@/components/comercial/ProposalModal";
+import ProposalManagement from "@/components/comercial/ProposalManagement";
 import { motion } from "framer-motion";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import BackButton from "@/components/shared/BackButton";
-import ProposalDrawer from "@/components/comercial/ProposalDrawer";
 import ContractDrawer from "@/components/comercial/ContractDrawer";
 import { formatBRL } from "@/utils/format";
 
@@ -56,9 +56,9 @@ export default function Comercial() {
   const [contracts, setContracts] = useState([]);
   const [clients, setClients] = useState([]);
   const [tab, setTab] = useState("propostas");
-  const [proposalDrawer, setProposalDrawer] = useState({ open: false, record: null });
+  const [proposalModal, setProposalModal] = useState({ open: false, record: null });
   const [contractDrawer, setContractDrawer] = useState({ open: false, record: null });
-  const [viewingProposal, setViewingProposal] = useState(null);
+  const [managingProposal, setManagingProposal] = useState(null);
 
   const loadAll = useCallback(async () => {
     if (!tenantId) return;
@@ -116,7 +116,7 @@ export default function Comercial() {
             <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">📝 Comercial</h1>
             <p className="text-sm text-muted-foreground mt-1">Dashboard do mês: <span className="text-foreground capitalize">{mesLabel}</span></p>
           </div>
-          <Button size="sm" onClick={() => tab === "propostas" ? setProposalDrawer({ open: true, record: null }) : setContractDrawer({ open: true, record: null })} className="gap-2">
+          <Button size="sm" onClick={() => tab === "propostas" ? setProposalModal({ open: true, record: null }) : setContractDrawer({ open: true, record: null })} className="gap-2">
             <Plus className="w-4 h-4" />
             {tab === "propostas" ? "Nova Proposta" : "Novo Contrato"}
           </Button>
@@ -147,7 +147,7 @@ export default function Comercial() {
               <div className="text-center py-16 text-muted-foreground">
                 <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">Nenhuma proposta cadastrada ainda.</p>
-                <Button size="sm" variant="outline" className="mt-4" onClick={() => setProposalDrawer({ open: true, record: null })}>
+                <Button size="sm" variant="outline" className="mt-4" onClick={() => setProposalModal({ open: true, record: null })}>
                   <Plus className="w-4 h-4 mr-1" /> Criar primeira proposta
                 </Button>
               </div>
@@ -174,10 +174,12 @@ export default function Comercial() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2 justify-end">
-                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setViewingProposal(p)}>
+                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setManagingProposal(p)}>
                                <Eye className="w-3 h-3" /> Ver
                              </Button>
-                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setProposalDrawer({ open: true, record: p })}>Editar</Button>
+                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setProposalModal({ open: true, record: p })}>
+                               <Pencil className="w-3 h-3" /> Editar
+                             </Button>
                              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProposal(p)}>
                                <XCircle className="w-3.5 h-3.5" />
                              </Button>
@@ -229,22 +231,29 @@ export default function Comercial() {
         </Tabs>
       </motion.div>
 
-      <ProposalDrawer
-        open={proposalDrawer.open}
-        onClose={() => setProposalDrawer({ open: false, record: null })}
-        record={proposalDrawer.record}
+      <ProposalModal
+        open={proposalModal.open}
+        onClose={() => setProposalModal({ open: false, record: null })}
+        record={proposalModal.record}
         tenantId={tenantId}
+        tenant={tenant}
         clients={clients}
         onSaved={loadAll}
       />
 
-      {viewingProposal && (
-        <ProposalView
-          proposal={viewingProposal}
+      {managingProposal && (
+        <ProposalManagement
+          proposal={managingProposal}
           clients={clients}
           tenant={tenant}
-          onClose={() => setViewingProposal(null)}
-          onApproved={loadAll}
+          tenantId={tenantId}
+          onClose={() => setManagingProposal(null)}
+          onApproved={() => { loadAll(); setManagingProposal(null); }}
+          onEdit={() => {
+            const rec = managingProposal;
+            setManagingProposal(null);
+            setProposalModal({ open: true, record: rec });
+          }}
         />
       )}
 

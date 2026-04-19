@@ -2,10 +2,6 @@
   "name": "Proposal",
   "type": "object",
   "properties": {
-    "titulo": {
-      "type": "string",
-      "description": "T\u00edtulo da proposta"
-    },
     "client_id": {
       "type": "string",
       "description": "ID do cliente (Client) relacionado"
@@ -19,6 +15,11 @@
       "default": "Projeto",
       "description": "Tipo da proposta"
     },
+    "data_emissao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de emiss\u00e3o da proposta"
+    },
     "validade": {
       "type": "string",
       "format": "date",
@@ -27,6 +28,42 @@
     "valor_total": {
       "type": "number",
       "description": "Valor total da proposta em BRL"
+    },
+    "desconto_tipo": {
+      "type": "string",
+      "enum": [
+        "%",
+        "R$"
+      ],
+      "default": "%",
+      "description": "Tipo do desconto"
+    },
+    "desconto_valor": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor do desconto"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es / Termos e Condi\u00e7\u00f5es em Rich Text (HTML)"
+    },
+    "vigencia_meses": {
+      "type": "number",
+      "description": "Vig\u00eancia em meses (apenas Recorrente)"
+    },
+    "dia_vencimento": {
+      "type": "number",
+      "description": "Dia do m\u00eas para vencimento (apenas Recorrente)"
+    },
+    "metodo_pagamento": {
+      "type": "string",
+      "enum": [
+        "Boleto",
+        "Pix",
+        "Cart\u00e3o",
+        "Transfer\u00eancia"
+      ],
+      "description": "M\u00e9todo de pagamento (apenas Recorrente)"
     },
     "status": {
       "type": "string",
@@ -44,7 +81,6 @@
     }
   },
   "required": [
-    "titulo",
     "tenant_id"
   ]
 }
