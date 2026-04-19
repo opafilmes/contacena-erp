@@ -84,24 +84,44 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   const removeSubtask = (i) => setSubtasks(s => s.filter((_, idx) => idx !== i));
 
   const handleSave = async () => {
-    if (!form.titulo.trim()) { toast.error("Título obrigatório."); return; }
+const handleDeleteTask = async () => {
+    // 1. Primeira confirmação de segurança
+    if (!window.confirm("🚨 Tem certeza que deseja excluir esta tarefa?")) return;
+
     setSaving(true);
+    try {
+      // 2. Exclui a tarefa principal
+      await base44.entities.Task.delete(task.id);
 
-    const baseDate = form.data_vencimento || undefined;
+      // 3. Verifica se o usuário também quer deletar o "futuro" / subtarefas
+      const querExcluirVinculadas = window.confirm(
+        "🗑️ Deseja excluir também todas as ocorrências futuras e subtarefas vinculadas a esta tarefa?"
+      );
 
-    const masterPayload = {
-      titulo:          form.titulo,
-      descricao:       form.descricao || undefined,
-      data_vencimento: baseDate ? `${baseDate}T12:00:00` : undefined,
-      status:          form.status,
-      prioridade:      form.prioridade,
-      repeticao:       form.repeticao,
-      responsavel_id:  form.responsavel_id  || undefined,
-      job_id:          form.job_id          || undefined,
-      client_id:       form.client_id       || undefined,
-      inquilino_id:    inquilinoId,
-      criado_por_id:   task ? task.criado_por_id : (currentUserId || undefined),
-    };
+      if (querExcluirVinculadas) {
+        // Busca no banco tudo que é "filho" dessa tarefa
+        const vinculadas = await base44.entities.Task.filter({
+          parent_task_id: task.id
+        });
+
+        // Deleta todas as filhas encontradas
+        if (vinculadas.length > 0) {
+          await Promise.all(vinculadas.map(v => base44.entities.Task.delete(v.id)));
+        }
+        toast.success("Tarefa, subtarefas e ocorrências excluídas com sucesso!");
+      } else {
+        toast.success("Apenas a tarefa principal foi excluída.");
+      }
+
+      // 4. Atualiza a tela e fecha a gaveta
+      onSaved();
+      onClose();
+    } catch (error) {
+      toast.error("Erro ao excluir a tarefa.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
     let masterId;
     if (isEditMode) {
