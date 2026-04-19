@@ -32,9 +32,27 @@ export default function MeuPerfil() {
   const handleSave = async () => {
     if (!usuario?.id) return;
     setSaving(true);
-    await base44.entities.Usuarios.update(usuario.id, form);
-    toast.success("Perfil atualizado com sucesso!");
-    setSaving(false);
+    
+    try {
+      // 1. Salva no banco de dados
+      await base44.entities.Usuarios.update(usuario.id, form);
+      
+      // 2. Dispara o aviso verde
+      toast.success("Perfil atualizado com sucesso!");
+      
+      // 3. Aguarda 1 segundo para o usuário ler o aviso e recarrega a página 
+      // para que o nome novo apareça no topo da tela e no menu.
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } catch (error) {
+      // Se algo der errado, dispara o aviso vermelho
+      toast.error("Erro ao atualizar o perfil. Tente novamente.");
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const initials = usuario?.nome
