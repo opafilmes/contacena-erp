@@ -25,9 +25,10 @@ const PROPOSAL_STATUS = {
 };
 
 const CONTRACT_STATUS = {
-  Ativo:      { cls: "bg-green-500/15 text-green-400 border-green-500/30" },
-  Finalizado: { cls: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
-  Cancelado:  { cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+  "Em Elaboração": { cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  Ativo:           { cls: "bg-green-500/15 text-green-400 border-green-500/30" },
+  Finalizado:      { cls: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
+  Cancelado:       { cls: "bg-red-500/15 text-red-400 border-red-500/30" },
 };
 
 function StatusChip({ status, map }) {
