@@ -114,9 +114,15 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
     }
 
     // Create recurring occurrences (1 year cycle) for new tasks only
-    if (!isEditMode && form.repeticao !== "Nenhuma" && baseDate) {
+   if (!isEditMode && form.repeticao !== "Nenhuma" && baseDate) {
+      let limiteOcorrencias = 0;
+      if (form.repeticao === "Diário") limiteOcorrencias = 365;
+      else if (form.repeticao === "Semanal") limiteOcorrencias = 52;
+      else if (form.repeticao === "Quinzenal") limiteOcorrencias = 26;
+      else if (form.repeticao === "Mensal") limiteOcorrencias = 12;
+
       const occurrences = [];
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= limiteOcorrencias; i++) {
         const nextDate = calcNextDate(baseDate, form.repeticao, i);
         occurrences.push({
           ...masterPayload,
@@ -126,7 +132,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
         });
       }
       await Promise.all(occurrences.map(o => base44.entities.Task.create(o)));
-      toast.success(`Tarefa criada com 10 ocorrências (${form.repeticao})!`);
+      toast.success(`Tarefa criada com ${limiteOcorrencias} ocorrências (${form.repeticao})!`);
     } else if (!isEditMode && form.repeticao === "Nenhuma") {
       toast.success("Tarefa criada!");
     }
