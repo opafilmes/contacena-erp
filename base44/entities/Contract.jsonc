@@ -1,0 +1,55 @@
+{
+  "name": "Contract",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do contrato"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do cliente relacionado"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Avulso",
+        "Recorrente"
+      ],
+      "default": "Avulso",
+      "description": "Tipo do contrato"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor em BRL"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de in\u00edcio"
+    },
+    "data_fim": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de fim"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Finalizado",
+        "Cancelado"
+      ],
+      "default": "Ativo",
+      "description": "Status do contrato"
+    },
+    "inquilino_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    }
+  },
+  "required": [
+    "titulo",
+    "inquilino_id"
+  ]
+}
