@@ -12,7 +12,7 @@ import {
 import ProposalModal from "@/components/comercial/ProposalModal";
 import ProposalManagement from "@/components/comercial/ProposalManagement";
 import { motion } from "framer-motion";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import BackButton from "@/components/shared/BackButton";
 import ContractDrawer from "@/components/comercial/ContractDrawer";
@@ -87,9 +87,12 @@ export default function Comercial() {
   // ── Filtros & Busca ──
   const [searchCliente, setSearchCliente] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterDatePreset, setFilterDatePreset] = useState("este_mes");
   const [filterDateStart, setFilterDateStart] = useState("");
   const [filterDateEnd, setFilterDateEnd] = useState("");
   const [sort, setSort] = useState({ field: "numero_proposta", dir: "desc" });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const loadAll = useCallback(async () => {
     if (!tenantId) return;
@@ -111,7 +114,6 @@ export default function Comercial() {
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd   = endOfMonth(now);
-  const mesLabel   = format(now, "MMMM 'de' yyyy", { locale: ptBR });
 
   const proposalsMes = proposals.filter(p => {
     const d = new Date(p.created_date);
@@ -142,6 +144,19 @@ export default function Comercial() {
     setSort(s => s.field === field ? { field, dir: s.dir === "asc" ? "desc" : "asc" } : { field, dir: "asc" });
   };
 
+  // ── Compute date range from preset ──
+  const effectiveDateStart = useMemo(() => {
+    if (filterDatePreset === "hoje") return format(now, "yyyy-MM-dd");
+    if (filterDatePreset === "este_mes") return format(monthStart, "yyyy-MM-dd");
+    return filterDateStart;
+  }, [filterDatePreset, filterDateStart]);
+
+  const effectiveDateEnd = useMemo(() => {
+    if (filterDatePreset === "hoje") return format(now, "yyyy-MM-dd");
+    if (filterDatePreset === "este_mes") return format(monthEnd, "yyyy-MM-dd");
+    return filterDateEnd;
+  }, [filterDatePreset, filterDateEnd]);
+
   // ── Filtered & sorted proposals ──
   const filteredProposals = useMemo(() => {
     let list = [...proposals];
@@ -153,11 +168,11 @@ export default function Comercial() {
     if (filterStatus !== "todos") {
       list = list.filter(p => p.status === filterStatus);
     }
-    if (filterDateStart) {
-      list = list.filter(p => p.data_emissao >= filterDateStart);
+    if (effectiveDateStart) {
+      list = list.filter(p => p.data_emissao >= effectiveDateStart);
     }
-    if (filterDateEnd) {
-      list = list.filter(p => p.data_emissao <= filterDateEnd);
+    if (effectiveDateEnd) {
+      list = list.filter(p => p.data_emissao <= effectiveDateEnd);
     }
 
     list.sort((a, b) => {
@@ -173,7 +188,10 @@ export default function Comercial() {
     });
 
     return list;
-  }, [proposals, searchCliente, filterStatus, filterDateStart, filterDateEnd, sort, clients]);
+  }, [proposals, searchCliente, filterStatus, effectiveDateStart, effectiveDateEnd, sort, clients]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProposals.length / PAGE_SIZE));
+  const pagedProposals = filteredProposals.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-6xl mx-auto">
@@ -183,7 +201,6 @@ export default function Comercial() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-heading text-3xl font-bold text-foreground tracking-tight">📝 Comercial</h1>
-            <p className="text-sm text-muted-foreground mt-1">Dashboard do mês: <span className="text-foreground capitalize">{mesLabel}</span></p>
           </div>
           <Button size="sm" onClick={() => tab === "propostas" ? setProposalModal({ open: true, record: null }) : setContractDrawer({ open: true, record: null })} className="gap-2">
             <Plus className="w-4 h-4" />
@@ -243,11 +260,11 @@ export default function Comercial() {
                 <Input
                   placeholder="Buscar por cliente..."
                   value={searchCliente}
-                  onChange={e => setSearchCliente(e.target.value)}
+                  onChange={e => { setSearchCliente(e.target.value); setPage(1); }}
                   className="h-8 text-sm bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
                 />
               </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setPage(1); }}>
                 <SelectTrigger className="h-8 w-36 text-xs">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -258,27 +275,31 @@ export default function Comercial() {
                   <SelectItem value="Recusada">Recusada</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex items-center gap-1.5">
-                <Input
-                  type="date"
-                  value={filterDateStart}
-                  onChange={e => setFilterDateStart(e.target.value)}
-                  className="h-8 w-36 text-xs"
-                />
-                <span className="text-muted-foreground text-xs">→</span>
-                <Input
-                  type="date"
-                  value={filterDateEnd}
-                  onChange={e => setFilterDateEnd(e.target.value)}
-                  className="h-8 w-36 text-xs"
-                />
-              </div>
-              {(searchCliente || filterStatus !== "todos" || filterDateStart || filterDateEnd) && (
+              {/* Filtro de Período Inteligente */}
+              <Select value={filterDatePreset} onValueChange={v => { setFilterDatePreset(v); setPage(1); }}>
+                <SelectTrigger className="h-8 w-40 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos_periodos">Todos os períodos</SelectItem>
+                  <SelectItem value="hoje">Hoje</SelectItem>
+                  <SelectItem value="este_mes">Este Mês</SelectItem>
+                  <SelectItem value="personalizado">Período Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+              {filterDatePreset === "personalizado" && (
+                <div className="flex items-center gap-1.5">
+                  <Input type="date" value={filterDateStart} onChange={e => { setFilterDateStart(e.target.value); setPage(1); }} className="h-8 w-36 text-xs" />
+                  <span className="text-muted-foreground text-xs">→</span>
+                  <Input type="date" value={filterDateEnd} onChange={e => { setFilterDateEnd(e.target.value); setPage(1); }} className="h-8 w-36 text-xs" />
+                </div>
+              )}
+              {(searchCliente || filterStatus !== "todos" || filterDatePreset !== "este_mes") && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-8 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => { setSearchCliente(""); setFilterStatus("todos"); setFilterDateStart(""); setFilterDateEnd(""); }}
+                  onClick={() => { setSearchCliente(""); setFilterStatus("todos"); setFilterDatePreset("este_mes"); setFilterDateStart(""); setFilterDateEnd(""); setPage(1); }}
                 >
                   Limpar
                 </Button>
@@ -312,7 +333,7 @@ export default function Comercial() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProposals.map((p, idx) => (
+                    {pagedProposals.map((p, idx) => (
                       <tr
                         key={p.id}
                         onClick={() => setManagingProposal(p)}
@@ -343,6 +364,22 @@ export default function Comercial() {
                     ))}
                   </tbody>
                 </table>
+                {/* Paginação */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/30 bg-secondary/10">
+                    <span className="text-xs text-muted-foreground">
+                      Página {page} de {totalPages} · {filteredProposals.length} resultado{filteredProposals.length !== 1 ? "s" : ""}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs px-3" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                        ← Anterior
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs px-3" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                        Próxima →
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>

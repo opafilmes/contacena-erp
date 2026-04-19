@@ -363,37 +363,37 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               </div>
 
               {/* ══════════════════════════════════════
-                  TABELA DE ITENS
+                  TABELA DE ITENS — Clean Data Grid
               ══════════════════════════════════════ */}
               {items.length > 0 && (
-                <div className="mb-6" style={{ pageBreakInside: "avoid" }}>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 print:text-gray-500">Serviços</p>
-                  <div className="rounded-xl border border-border/40 overflow-hidden print:rounded-none print:border-gray-300">
+                <div className="mb-2" style={{ pageBreakInside: "avoid" }}>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 print:text-[#64748b]">Serviços</p>
+                  <div className="rounded-xl overflow-hidden border border-border/40 print:border-[#e2e8f0]">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-secondary/30 border-b border-border/30 print:bg-gray-100">
-                          <th className="text-left px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600">Descrição</th>
-                          <th className="text-center px-3 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600 w-16">Qtd</th>
-                          <th className="text-right px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600 w-32">Valor Unit.</th>
-                          <th className="text-right px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600 w-32">Total</th>
+                        <tr className="bg-secondary/30 print:bg-[#f8fafc]">
+                          <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b]">Descrição</th>
+                          <th className="text-center px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-16">Qtd</th>
+                          <th className="text-right px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Valor Unit.</th>
+                          <th className="text-right px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {items.map((item, idx) => (
                           <React.Fragment key={item.id}>
-                            <tr className={`border-b border-border/20 print:border-gray-200 ${idx % 2 === 1 ? "bg-secondary/10 print:bg-gray-50" : ""}`}>
-                              <td className="px-4 py-3 font-medium text-foreground print:text-black">{item.titulo}</td>
-                              <td className="px-3 py-3 text-center text-muted-foreground print:text-gray-700">{item.quantidade}</td>
-                              <td className="px-4 py-3 text-right text-muted-foreground print:text-gray-700 whitespace-nowrap">{formatBRL(item.valor_unitario)}</td>
-                              <td className="px-4 py-3 text-right font-semibold text-foreground print:text-black whitespace-nowrap">{formatBRL(item.valor_total)}</td>
+                            <tr className={`border-b border-border/30 last:border-b-0 print:border-[#e2e8f0] ${idx % 2 === 1 ? "bg-secondary/[0.06]" : ""}`}>
+                              <td className="px-4 py-4 font-medium text-foreground print:text-black">
+                                {item.titulo}
+                                {item.descricao_detalhada && item.descricao_detalhada !== "<p><br></p>" && (
+                                  <div className="text-xs text-muted-foreground print:text-[#64748b] mt-1 font-normal">
+                                    <div dangerouslySetInnerHTML={{ __html: item.descricao_detalhada }} />
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-4 py-4 text-center text-muted-foreground print:text-[#374151]">{item.quantidade}</td>
+                              <td className="px-4 py-4 text-right text-muted-foreground print:text-[#374151] whitespace-nowrap">{formatBRL(item.valor_unitario)}</td>
+                              <td className="px-4 py-4 text-right font-semibold text-foreground print:text-black whitespace-nowrap">{formatBRL(item.valor_total)}</td>
                             </tr>
-                            {item.descricao_detalhada && item.descricao_detalhada !== "<p><br></p>" && (
-                              <tr className="border-b border-border/10 print:border-gray-100">
-                                <td colSpan={4} className="px-6 py-2 text-xs text-muted-foreground print:text-gray-600 bg-secondary/5 print:bg-transparent">
-                                  <div dangerouslySetInnerHTML={{ __html: item.descricao_detalhada }} />
-                                </td>
-                              </tr>
-                            )}
                           </React.Fragment>
                         ))}
                       </tbody>
@@ -407,25 +407,34 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               )}
 
               {/* ══════════════════════════════════════
-                  TOTAIS (alinhados à direita)
+                  RESUMO FINANCEIRO — alinhado à direita
               ══════════════════════════════════════ */}
-              <div className="flex justify-end mb-6">
-                <div className="w-72 space-y-2">
-                  {subtotalItems > 0 && (proposal.desconto_valor > 0) && (
-                    <div className="flex justify-between text-sm text-muted-foreground print:text-gray-600 px-1">
-                      <span>Subtotal</span>
-                      <span className="whitespace-nowrap">{formatBRL(subtotalItems)}</span>
+              <div className="flex flex-col items-end pt-6 mb-6">
+                <div className="w-80 space-y-2">
+                  {subtotalItems > 0 && proposal.desconto_valor > 0 && (
+                    <div className="flex justify-between text-sm px-1">
+                      <span className="text-muted-foreground print:text-[#64748b]">Subtotal</span>
+                      <span className="text-foreground print:text-[#111827] whitespace-nowrap">{formatBRL(subtotalItems)}</span>
                     </div>
                   )}
                   {proposal.desconto_valor > 0 && (
-                    <div className="flex justify-between text-sm text-muted-foreground print:text-gray-600 px-1">
-                      <span>Desconto ({proposal.desconto_valor}{proposal.desconto_tipo === "%" ? "%" : " R$"})</span>
-                      <span className="text-destructive print:text-red-600 whitespace-nowrap">-{formatBRL(descontoReais)}</span>
+                    <div className="flex justify-between text-sm px-1">
+                      <span className="text-muted-foreground print:text-[#64748b]">
+                        Desconto ({proposal.desconto_valor}{proposal.desconto_tipo === "%" ? "%" : " R$"})
+                      </span>
+                      <span className="text-destructive print:text-red-600 whitespace-nowrap">−{formatBRL(descontoReais)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center px-4 py-3 rounded-xl bg-accent/10 border border-accent/20 print:bg-gray-100 print:border-gray-300">
-                    <span className="font-semibold text-accent print:text-black text-sm">Valor Total</span>
-                    <span className="text-xl font-heading font-bold text-accent print:text-black whitespace-nowrap">{formatBRL(total)}</span>
+                  {/* Separador */}
+                  <div className="border-t border-border/30 print:border-[#e2e8f0] pt-3 mt-1">
+                    <div className="flex justify-between items-center px-5 py-4 rounded-xl bg-accent/10 border border-accent/20 print:bg-white print:border-[#e2e8f0]">
+                      <span className="font-semibold text-sm text-muted-foreground print:text-[#374151]">
+                        {proposal.tipo_proposta === "Recorrente" ? "Valor Mensal" : "Valor Total"}
+                      </span>
+                      <span className="text-2xl font-heading font-bold text-accent print:text-black whitespace-nowrap">
+                        {formatBRL(total)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
