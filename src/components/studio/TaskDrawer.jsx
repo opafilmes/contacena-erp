@@ -225,7 +225,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
             {/* Repeat hint */}
             {hasRepeat && (
               <p className="text-xs text-accent bg-accent/10 border border-accent/20 rounded-lg px-3 py-2">
-                🔁 Serão criadas automaticamente as próximas 10 ocorrências ({form.repeticao}).
+                🔁 Serão criadas automaticamente as ocorrências para 1 ano ({form.repeticao}).
               </p>
             )}
 
