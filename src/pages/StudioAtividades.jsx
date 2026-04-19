@@ -29,7 +29,7 @@ export default function StudioAtividades() {
     if (!inquilinoId) return;
     const [t, j, u, c] = await Promise.all([
     base44.entities.Task.filter({ inquilino_id: inquilinoId }),
-    base44.entities.Job.filter({ tenant_id: tenantId }),
+    base44.entities.Job.filter({ inquilino_id: inquilinoId }),
     base44.entities.Usuarios.filter({ tenant_id: tenantId }),
     base44.entities.Client.filter({ tenant_id: tenantId })]
     );
