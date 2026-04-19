@@ -106,7 +106,17 @@ export default function ProposalModal({ open, onClose, record, tenantId, tenant,
 
   const handleSave = async () => {
     setSaving(true);
+
+    // Numeração automática para novas propostas
+    let numero_proposta = record?.numero_proposta;
+    if (!isEdit) {
+      const existing = await base44.entities.Proposal.filter({ tenant_id: tenantId });
+      const maxNum = existing.reduce((max, p) => Math.max(max, p.numero_proposta || 0), 0);
+      numero_proposta = maxNum > 0 ? maxNum + 1 : 1001;
+    }
+
     const payload = {
+      numero_proposta,
       client_id: form.client_id || undefined,
       tipo_proposta: form.tipo_proposta,
       data_emissao: form.data_emissao || undefined,

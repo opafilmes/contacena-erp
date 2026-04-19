@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2, XCircle, Eye, Pencil } from "lucide-react";
+import {
+  Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2,
+  XCircle, Eye, Pencil, ArrowUpDown, Search
+} from "lucide-react";
 import ProposalModal from "@/components/comercial/ProposalModal";
 import ProposalManagement from "@/components/comercial/ProposalManagement";
 import { motion } from "framer-motion";
@@ -14,9 +19,9 @@ import ContractDrawer from "@/components/comercial/ContractDrawer";
 import { formatBRL } from "@/utils/format";
 
 const PROPOSAL_STATUS = {
-  Pendente: { cls: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",  label: "Pendente" },
-  Aprovada: { cls: "bg-green-500/15 text-green-400 border-green-500/30",    label: "Aprovada" },
-  Recusada: { cls: "bg-red-500/15 text-red-400 border-red-500/30",          label: "Recusada" },
+  Pendente: { cls: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", label: "Pendente" },
+  Aprovada: { cls: "bg-green-500/15 text-green-400 border-green-500/30", label: "Aprovada" },
+  Recusada: { cls: "bg-red-500/15 text-red-400 border-red-500/30", label: "Recusada" },
 };
 
 const CONTRACT_STATUS = {
@@ -34,17 +39,35 @@ function StatusChip({ status, map }) {
   );
 }
 
-function MiniCard({ icon: Icon, label, value, colorCls }) {
+// ── Bento Card (glassmorphism) ──────────────────────────────────────
+function BentoCard({ icon: Icon, label, value, colorCls, glowCls }) {
   return (
-    <div className={`rounded-xl border p-4 flex items-center gap-4 bg-card/60 backdrop-blur-sm ${colorCls}`}>
-      <div className="p-2 rounded-lg bg-white/[0.05]">
+    <div className={`relative rounded-2xl border p-5 flex items-center gap-4 overflow-hidden backdrop-blur-sm ${colorCls}`}>
+      {/* Glow blur blob */}
+      <div className={`absolute -top-4 -right-4 w-24 h-24 rounded-full blur-2xl opacity-20 ${glowCls}`} />
+      <div className="p-2.5 rounded-xl bg-white/[0.07] z-10">
         <Icon className="w-5 h-5 stroke-[1.5]" />
       </div>
-      <div>
-        <p className="text-2xl font-heading font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="z-10">
+        <p className="text-2xl font-heading font-bold tracking-tight">{value}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
       </div>
     </div>
+  );
+}
+
+// ── Sortable column header ──────────────────────────────────────────
+function SortHeader({ label, field, sortState, onSort }) {
+  return (
+    <th
+      className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide cursor-pointer select-none hover:text-foreground transition-colors"
+      onClick={() => onSort(field)}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        <ArrowUpDown className={`w-3 h-3 ${sortState.field === field ? "text-accent" : "opacity-40"}`} />
+      </span>
+    </th>
   );
 }
 
@@ -59,6 +82,13 @@ export default function Comercial() {
   const [proposalModal, setProposalModal] = useState({ open: false, record: null });
   const [contractDrawer, setContractDrawer] = useState({ open: false, record: null });
   const [managingProposal, setManagingProposal] = useState(null);
+
+  // ── Filtros & Busca ──
+  const [searchCliente, setSearchCliente] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterDateStart, setFilterDateStart] = useState("");
+  const [filterDateEnd, setFilterDateEnd] = useState("");
+  const [sort, setSort] = useState({ field: "numero_proposta", dir: "desc" });
 
   const loadAll = useCallback(async () => {
     if (!tenantId) return;
@@ -87,12 +117,12 @@ export default function Comercial() {
     return d >= monthStart && d <= monthEnd;
   });
 
-  const totalMes    = proposalsMes.length;
-  const aprovadas   = proposalsMes.filter(p => p.status === "Aprovada").length;
-  const pendentes   = proposalsMes.filter(p => p.status === "Pendente").length;
-  const conversao   = totalMes > 0 ? Math.round((aprovadas / totalMes) * 100) : 0;
+  const totalMes  = proposalsMes.length;
+  const aprovadas = proposalsMes.filter(p => p.status === "Aprovada").length;
+  const pendentes = proposalsMes.filter(p => p.status === "Pendente").length;
+  const conversao = totalMes > 0 ? Math.round((aprovadas / totalMes) * 100) : 0;
 
-  // ── Contracts grouped by tipo ──
+  // ── Contracts grouped ──
   const avulsas     = contracts.filter(c => c.tipo === "Avulso");
   const recorrentes = contracts.filter(c => c.tipo === "Recorrente");
 
@@ -105,6 +135,44 @@ export default function Comercial() {
     await base44.entities.Contract.delete(row.id);
     loadAll();
   };
+
+  // ── Sort toggle ──
+  const handleSort = (field) => {
+    setSort(s => s.field === field ? { field, dir: s.dir === "asc" ? "desc" : "asc" } : { field, dir: "asc" });
+  };
+
+  // ── Filtered & sorted proposals ──
+  const filteredProposals = useMemo(() => {
+    let list = [...proposals];
+
+    if (searchCliente.trim()) {
+      const q = searchCliente.toLowerCase();
+      list = list.filter(p => getClientName(p.client_id).toLowerCase().includes(q));
+    }
+    if (filterStatus !== "todos") {
+      list = list.filter(p => p.status === filterStatus);
+    }
+    if (filterDateStart) {
+      list = list.filter(p => p.data_emissao >= filterDateStart);
+    }
+    if (filterDateEnd) {
+      list = list.filter(p => p.data_emissao <= filterDateEnd);
+    }
+
+    list.sort((a, b) => {
+      let va, vb;
+      if (sort.field === "numero_proposta") { va = a.numero_proposta || 0; vb = b.numero_proposta || 0; }
+      else if (sort.field === "cliente") { va = getClientName(a.client_id); vb = getClientName(b.client_id); }
+      else if (sort.field === "valor_total") { va = a.valor_total || 0; vb = b.valor_total || 0; }
+      else if (sort.field === "data_emissao") { va = a.data_emissao || ""; vb = b.data_emissao || ""; }
+      else { va = 0; vb = 0; }
+      if (va < vb) return sort.dir === "asc" ? -1 : 1;
+      if (va > vb) return sort.dir === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [proposals, searchCliente, filterStatus, filterDateStart, filterDateEnd, sort, clients]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-6xl mx-auto">
@@ -122,12 +190,36 @@ export default function Comercial() {
           </Button>
         </div>
 
-        {/* ── Mini-Cards (mês atual) ── */}
+        {/* ── Bento Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <MiniCard icon={FileText}     label="Total de Propostas (Mês)" value={totalMes}         colorCls="border-violet-500/30 text-violet-400" />
-          <MiniCard icon={CheckCircle2} label="Aprovadas"                value={aprovadas}         colorCls="border-green-500/30 text-green-400" />
-          <MiniCard icon={Clock}        label="Pendentes"                 value={pendentes}         colorCls="border-amber-500/30 text-amber-400" />
-          <MiniCard icon={TrendingUp}   label="Taxa de Conversão"         value={`${conversao}%`}  colorCls="border-sky-500/30 text-sky-400" />
+          <BentoCard
+            icon={FileText}
+            label="Total de Propostas (Mês)"
+            value={totalMes}
+            colorCls="bg-violet-500/[0.08] border-violet-500/20 text-violet-400"
+            glowCls="bg-violet-500"
+          />
+          <BentoCard
+            icon={CheckCircle2}
+            label="Aprovadas"
+            value={aprovadas}
+            colorCls="bg-green-500/[0.08] border-green-500/20 text-green-400"
+            glowCls="bg-green-500"
+          />
+          <BentoCard
+            icon={Clock}
+            label="Pendentes"
+            value={pendentes}
+            colorCls="bg-amber-500/[0.08] border-amber-500/20 text-amber-400"
+            glowCls="bg-amber-500"
+          />
+          <BentoCard
+            icon={TrendingUp}
+            label="Taxa de Conversão"
+            value={`${conversao}%`}
+            colorCls="bg-sky-500/[0.08] border-sky-500/20 text-sky-400"
+            glowCls="bg-sky-500"
+          />
         </div>
 
         {/* ── Tabs ── */}
@@ -143,6 +235,55 @@ export default function Comercial() {
 
           {/* ── ABA PROPOSTAS ── */}
           <TabsContent value="propostas">
+            {/* Barra de Filtros */}
+            <div className="flex flex-wrap gap-3 mb-4 p-4 rounded-xl border border-border/30 bg-secondary/20">
+              <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  placeholder="Buscar por cliente..."
+                  value={searchCliente}
+                  onChange={e => setSearchCliente(e.target.value)}
+                  className="h-8 text-sm bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
+                />
+              </div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="h-8 w-36 text-xs">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Status</SelectItem>
+                  <SelectItem value="Pendente">Pendente</SelectItem>
+                  <SelectItem value="Aprovada">Aprovada</SelectItem>
+                  <SelectItem value="Recusada">Recusada</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  type="date"
+                  value={filterDateStart}
+                  onChange={e => setFilterDateStart(e.target.value)}
+                  className="h-8 w-36 text-xs"
+                />
+                <span className="text-muted-foreground text-xs">→</span>
+                <Input
+                  type="date"
+                  value={filterDateEnd}
+                  onChange={e => setFilterDateEnd(e.target.value)}
+                  className="h-8 w-36 text-xs"
+                />
+              </div>
+              {(searchCliente || filterStatus !== "todos" || filterDateStart || filterDateEnd) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => { setSearchCliente(""); setFilterStatus("todos"); setFilterDateStart(""); setFilterDateEnd(""); }}
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+
             {proposals.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -151,39 +292,50 @@ export default function Comercial() {
                   <Plus className="w-4 h-4 mr-1" /> Criar primeira proposta
                 </Button>
               </div>
+            ) : filteredProposals.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Nenhuma proposta encontrada com esses filtros.</p>
+              </div>
             ) : (
               <div className="rounded-xl border border-border/50 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/50 bg-secondary/30">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Título</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cliente</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Valor Total</th>
+                      <SortHeader label="Nº Proposta" field="numero_proposta" sortState={sort} onSort={handleSort} />
+                      <SortHeader label="Cliente" field="cliente" sortState={sort} onSort={handleSort} />
+                      <SortHeader label="Valor" field="valor_total" sortState={sort} onSort={handleSort} />
+                      <SortHeader label="Emissão" field="data_emissao" sortState={sort} onSort={handleSort} />
                       <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
                   <tbody>
-                    {proposals.map((p, idx) => (
+                    {filteredProposals.map((p, idx) => (
                       <tr key={p.id} className={`border-b border-border/30 hover:bg-secondary/20 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}>
-                        <td className="px-4 py-3 font-medium text-foreground">{p.titulo}</td>
+                        <td className="px-4 py-3 font-mono font-semibold text-foreground text-xs">
+                          {p.numero_proposta ? `PROP-${p.numero_proposta}` : `#${p.id?.slice(-4).toUpperCase()}`}
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">{getClientName(p.client_id)}</td>
-                        <td className="px-4 py-3 text-foreground">{formatBRL(p.valor_total)}</td>
+                        <td className="px-4 py-3 text-foreground whitespace-nowrap">{formatBRL(p.valor_total)}</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">
+                          {p.data_emissao ? format(new Date(p.data_emissao + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                        </td>
                         <td className="px-4 py-3">
                           <StatusChip status={p.status} map={PROPOSAL_STATUS} />
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2 justify-end">
-                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setManagingProposal(p)}>
-                               <Eye className="w-3 h-3" /> Ver
-                             </Button>
-                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setProposalModal({ open: true, record: p })}>
-                               <Pencil className="w-3 h-3" /> Editar
-                             </Button>
-                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProposal(p)}>
-                               <XCircle className="w-3.5 h-3.5" />
-                             </Button>
-                           </div>
+                          <div className="flex items-center gap-1 justify-end">
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setManagingProposal(p)}>
+                              <Eye className="w-3 h-3" /> Ver
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setProposalModal({ open: true, record: p })}>
+                              <Pencil className="w-3 h-3" /> Editar
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProposal(p)}>
+                              <XCircle className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -205,7 +357,6 @@ export default function Comercial() {
               </div>
             ) : (
               <div className="space-y-8">
-                {/* Recorrentes */}
                 {recorrentes.length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -215,7 +366,6 @@ export default function Comercial() {
                     <ContractTable rows={recorrentes} clients={clients} onEdit={r => setContractDrawer({ open: true, record: r })} onDelete={handleDeleteContract} />
                   </div>
                 )}
-                {/* Avulsos */}
                 {avulsas.length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -289,7 +439,7 @@ function ContractTable({ rows, clients, onEdit, onDelete }) {
             <tr key={r.id} className={`border-b border-border/30 hover:bg-secondary/20 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}>
               <td className="px-4 py-3 font-medium text-foreground">{r.titulo}</td>
               <td className="px-4 py-3 text-muted-foreground">{getClientName(r.client_id)}</td>
-              <td className="px-4 py-3 text-foreground">{r.valor ? formatBRL(r.valor) : "—"}</td>
+              <td className="px-4 py-3 text-foreground whitespace-nowrap">{r.valor ? formatBRL(r.valor) : "—"}</td>
               <td className="px-4 py-3 text-muted-foreground text-xs">
                 {r.data_inicio ? format(new Date(r.data_inicio), "dd/MM/yy") : "—"}
                 {r.data_fim ? ` → ${format(new Date(r.data_fim), "dd/MM/yy")}` : ""}

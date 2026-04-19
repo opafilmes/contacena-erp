@@ -2,6 +2,10 @@
   "name": "Proposal",
   "type": "object",
   "properties": {
+    "numero_proposta": {
+      "type": "number",
+      "description": "N\u00famero sequencial da proposta (ex: 1001, 1002...)"
+    },
     "client_id": {
       "type": "string",
       "description": "ID do cliente (Client) relacionado"

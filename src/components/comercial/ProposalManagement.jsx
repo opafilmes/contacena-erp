@@ -116,7 +116,11 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
     }
   }, [proposal?.id]);
 
-  const total = items.reduce((a, i) => a + (i.valor_total || 0), 0) || proposal.valor_total || 0;
+  const subtotalItems = items.reduce((a, i) => a + (i.valor_total || 0), 0);
+  const descontoReais = proposal.desconto_tipo === "%"
+    ? subtotalItems * (proposal.desconto_valor || 0) / 100
+    : (proposal.desconto_valor || 0);
+  const total = proposal.valor_total || Math.max(0, subtotalItems - descontoReais);
 
   const handleApprove = async () => {
     if (!window.confirm("Aprovar esta proposta? Isso criará automaticamente um Contrato e um Projeto no Studio.")) return;
@@ -137,20 +141,28 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   };
 
   const handlePrint = () => window.print();
+  const handleGerarBoleto = () => toast.info("Integração de boleto em breve! Configure sua conta de pagamento nas configurações.");
 
-  const handleGerarBoleto = () => {
-    toast.info("Integração de boleto em breve! Configure sua conta de pagamento nas configurações.");
-  };
+  const propNum = proposal.numero_proposta ? `PROP-${proposal.numero_proposta}` : `PROP-${proposal.id?.slice(-4).toUpperCase()}`;
 
   if (!proposal) return null;
 
   return (
     <>
+      {/* ── PRINT STYLES (injected inline) ── */}
+      <style>{`
+        @media print {
+          body > * { display: none !important; }
+          #proposal-print-root { display: block !important; position: fixed; inset: 0; z-index: 99999; background: #fff; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
+
       <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto py-4">
         <div className="bg-card border border-border/50 rounded-2xl shadow-2xl w-full max-w-5xl mx-4 my-auto">
 
-          {/* Cabeçalho */}
-          <div className="flex items-center justify-between px-8 py-5 border-b border-border/30 bg-secondary/20 rounded-t-2xl">
+          {/* Cabeçalho da UI */}
+          <div className="no-print flex items-center justify-between px-8 py-5 border-b border-border/30 bg-secondary/20 rounded-t-2xl">
             <div className="flex items-center gap-4">
               {tenant?.logo ? (
                 <img src={tenant.logo} alt="logo" className="h-10 object-contain" />
@@ -173,23 +185,27 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-            {/* ── PAINEL DE AÇÕES (esquerda) ── */}
-            <div className="lg:col-span-1 border-r border-border/30 p-6 space-y-3">
+            {/* ── PAINEL DE AÇÕES (esquerda) – oculto na impressão ── */}
+            <div className="no-print lg:col-span-1 border-r border-border/30 p-6 space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Painel de Gestão</h3>
 
-              {/* Status badge */}
               <div className="flex items-center gap-2 mb-4">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${STATUS_STYLE[proposal.status] || ""}`}>
                   {proposal.status}
                 </span>
               </div>
 
-              {/* Info da proposta */}
               <div className="space-y-2 text-sm border border-border/30 rounded-xl p-3 bg-secondary/20">
                 {client && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Cliente</span>
                     <span className="text-foreground font-medium truncate max-w-[140px]">{client.nome_fantasia}</span>
+                  </div>
+                )}
+                {proposal.numero_proposta && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nº Proposta</span>
+                    <span className="text-foreground font-mono font-semibold">{propNum}</span>
                   </div>
                 )}
                 {proposal.tipo_proposta && (
@@ -230,7 +246,6 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 )}
               </div>
 
-              {/* Ações */}
               <div className="space-y-2 pt-2">
                 <Button variant="outline" className="w-full justify-start gap-2.5 text-sm" onClick={onEdit}>
                   <Pencil className="w-4 h-4" /> Editar Proposta
@@ -265,56 +280,125 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
             </div>
 
             {/* ── VISUALIZAÇÃO DA PROPOSTA (direita) ── */}
-            <div className="lg:col-span-2 p-6 space-y-5">
-              {/* Partes envolvidas */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-xl border border-border/30 p-4 bg-secondary/10">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">Prestador</p>
-                  <p className="font-semibold text-foreground">{tenant?.razao_social || tenant?.nome_fantasia || "—"}</p>
-                  {tenant?.cnpj && <p className="text-xs text-muted-foreground mt-0.5">CNPJ: {tenant.cnpj}</p>}
-                  {tenant?.email_corporativo && <p className="text-xs text-muted-foreground">{tenant.email_corporativo}</p>}
+            <div className="lg:col-span-2 p-6 lg:p-8" id="proposal-print-root">
+
+              {/* ══════════════════════════════════════
+                  CABEÇALHO DO DOCUMENTO (V1 CLASSIC)
+              ══════════════════════════════════════ */}
+              <div className="flex items-start justify-between mb-6 pb-5 border-b-2 border-gray-200 print:border-gray-300">
+                {/* Esquerda: Logo + dados do tenant */}
+                <div className="flex items-start gap-3">
+                  {tenant?.logo ? (
+                    <img
+                      src={tenant.logo}
+                      alt="logo"
+                      className="object-contain"
+                      style={{ maxHeight: 60, maxWidth: 160 }}
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-accent/20 flex items-center justify-center">
+                      <Building2 className="w-7 h-7 text-accent" />
+                    </div>
+                  )}
+                  <div className="ml-1">
+                    <p className="font-heading font-bold text-foreground text-sm print:text-black">{tenant?.razao_social || tenant?.nome_fantasia || "—"}</p>
+                    {tenant?.cnpj && <p className="text-xs text-muted-foreground print:text-gray-600">CNPJ: {tenant.cnpj}</p>}
+                    {tenant?.email_corporativo && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant.email_corporativo}</p>}
+                    {tenant?.telefone && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant.telefone}</p>}
+                  </div>
                 </div>
-                <div className="rounded-xl border border-border/30 p-4 bg-secondary/10">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">Contratante</p>
+
+                {/* Direita: Título do documento */}
+                <div className="text-right">
+                  <h1 className="font-heading font-bold text-xl text-foreground print:text-black tracking-wider uppercase">Proposta Comercial</h1>
+                  <p className="text-sm font-mono font-semibold text-accent print:text-gray-700 mt-1">{propNum}</p>
+                  {proposal.data_emissao && (
+                    <p className="text-xs text-muted-foreground print:text-gray-500 mt-0.5">
+                      Emitida em {format(new Date(proposal.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* ══════════════════════════════════════
+                  GRID DE INFORMAÇÕES (CLIENTE + TERMOS)
+              ══════════════════════════════════════ */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Dados do Cliente */}
+                <div className="rounded-xl border border-border/30 p-4 bg-secondary/10 print:border-gray-200 print:bg-gray-50">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 print:text-gray-500">Dados do Cliente</p>
                   {client ? (
                     <>
-                      <p className="font-semibold text-foreground">{client.nome_fantasia}</p>
-                      {client.razao_social && <p className="text-xs text-muted-foreground mt-0.5">{client.razao_social}</p>}
-                      {client.cnpj_cpf && <p className="text-xs text-muted-foreground">CNPJ/CPF: {client.cnpj_cpf}</p>}
-                      {client.contato && <p className="text-xs text-muted-foreground">{client.contato}</p>}
+                      <p className="font-semibold text-foreground print:text-black text-sm">{client.nome_fantasia}</p>
+                      {client.razao_social && <p className="text-xs text-muted-foreground print:text-gray-600 mt-0.5">{client.razao_social}</p>}
+                      {client.cnpj_cpf && <p className="text-xs text-muted-foreground print:text-gray-600">CNPJ/CPF: {client.cnpj_cpf}</p>}
+                      {client.contato && <p className="text-xs text-muted-foreground print:text-gray-600">{client.contato}</p>}
                     </>
                   ) : (
                     <p className="text-sm text-muted-foreground">Não definido</p>
                   )}
                 </div>
+
+                {/* Metadados (4 campos) */}
+                <div className="rounded-xl border border-border/30 p-4 bg-secondary/10 print:border-gray-200 print:bg-gray-50">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 print:text-gray-500">Detalhes da Proposta</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {proposal.data_emissao && (
+                      <div>
+                        <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Emissão</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">{format(new Date(proposal.data_emissao + "T12:00:00"), "dd/MM/yyyy")}</p>
+                      </div>
+                    )}
+                    {proposal.validade && (
+                      <div>
+                        <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Válida até</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">{format(new Date(proposal.validade + "T12:00:00"), "dd/MM/yyyy")}</p>
+                      </div>
+                    )}
+                    {proposal.tipo_proposta === "Recorrente" && proposal.vigencia_meses && (
+                      <div>
+                        <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Vigência</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">{proposal.vigencia_meses} meses</p>
+                      </div>
+                    )}
+                    {proposal.tipo_proposta === "Recorrente" && proposal.dia_vencimento && (
+                      <div>
+                        <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Vencimento Mensal</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">Dia {proposal.dia_vencimento}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Itens */}
-              {items.length > 0 ? (
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Itens</h4>
-                  <div className="rounded-xl border border-border/40 overflow-hidden">
+              {/* ══════════════════════════════════════
+                  TABELA DE ITENS
+              ══════════════════════════════════════ */}
+              {items.length > 0 && (
+                <div className="mb-6" style={{ pageBreakInside: "avoid" }}>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 print:text-gray-500">Serviços</p>
+                  <div className="rounded-xl border border-border/40 overflow-hidden print:rounded-none print:border-gray-300">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-secondary/30 border-b border-border/30">
-                          <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase">Descrição</th>
-                          <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground uppercase">Qtd</th>
-                          <th className="text-right px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase">Unit.</th>
-                          <th className="text-right px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase">Total</th>
+                        <tr className="bg-secondary/30 border-b border-border/30 print:bg-gray-100">
+                          <th className="text-left px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600">Descrição</th>
+                          <th className="text-center px-3 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600 w-16">Qtd</th>
+                          <th className="text-right px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600 w-32">Valor Unit.</th>
+                          <th className="text-right px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider print:text-gray-600 w-32">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {items.map((item, idx) => (
                           <React.Fragment key={item.id}>
-                            <tr className={`border-b border-border/20 ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}>
-                              <td className="px-4 py-3 font-medium text-foreground">{item.titulo}</td>
-                              <td className="px-3 py-3 text-center text-muted-foreground">{item.quantidade}</td>
-                              <td className="px-4 py-3 text-right text-muted-foreground">{formatBRL(item.valor_unitario)}</td>
-                              <td className="px-4 py-3 text-right font-semibold text-foreground">{formatBRL(item.valor_total)}</td>
+                            <tr className={`border-b border-border/20 print:border-gray-200 ${idx % 2 === 1 ? "bg-secondary/10 print:bg-gray-50" : ""}`}>
+                              <td className="px-4 py-3 font-medium text-foreground print:text-black">{item.titulo}</td>
+                              <td className="px-3 py-3 text-center text-muted-foreground print:text-gray-700">{item.quantidade}</td>
+                              <td className="px-4 py-3 text-right text-muted-foreground print:text-gray-700 whitespace-nowrap">{formatBRL(item.valor_unitario)}</td>
+                              <td className="px-4 py-3 text-right font-semibold text-foreground print:text-black whitespace-nowrap">{formatBRL(item.valor_total)}</td>
                             </tr>
-                            {item.descricao_detalhada && (
-                              <tr className="border-b border-border/10">
-                                <td colSpan={4} className="px-6 py-2 text-xs text-muted-foreground bg-secondary/5">
+                            {item.descricao_detalhada && item.descricao_detalhada !== "<p><br></p>" && (
+                              <tr className="border-b border-border/10 print:border-gray-100">
+                                <td colSpan={4} className="px-6 py-2 text-xs text-muted-foreground print:text-gray-600 bg-secondary/5 print:bg-transparent">
                                   <div dangerouslySetInnerHTML={{ __html: item.descricao_detalhada }} />
                                 </td>
                               </tr>
@@ -325,45 +409,56 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                     </table>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {items.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-6">Nenhum item cadastrado nesta proposta.</p>
               )}
 
-              {/* Subtotal / Desconto / Total */}
-              <div className="space-y-2">
-                {(proposal.desconto_valor > 0) && (
-                  <>
-                    <div className="flex justify-between text-sm text-muted-foreground px-1">
+              {/* ══════════════════════════════════════
+                  TOTAIS (alinhados à direita)
+              ══════════════════════════════════════ */}
+              <div className="flex justify-end mb-6">
+                <div className="w-72 space-y-2">
+                  {subtotalItems > 0 && (proposal.desconto_valor > 0) && (
+                    <div className="flex justify-between text-sm text-muted-foreground print:text-gray-600 px-1">
                       <span>Subtotal</span>
-                      <span>{formatBRL(items.reduce((a, i) => a + (i.valor_total || 0), 0))}</span>
+                      <span className="whitespace-nowrap">{formatBRL(subtotalItems)}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-muted-foreground px-1">
+                  )}
+                  {proposal.desconto_valor > 0 && (
+                    <div className="flex justify-between text-sm text-muted-foreground print:text-gray-600 px-1">
                       <span>Desconto ({proposal.desconto_valor}{proposal.desconto_tipo === "%" ? "%" : " R$"})</span>
-                      <span className="text-destructive">
-                        -{formatBRL(
-                          proposal.desconto_tipo === "%"
-                            ? items.reduce((a, i) => a + (i.valor_total || 0), 0) * proposal.desconto_valor / 100
-                            : proposal.desconto_valor
-                        )}
-                      </span>
+                      <span className="text-destructive print:text-red-600 whitespace-nowrap">-{formatBRL(descontoReais)}</span>
                     </div>
-                  </>
-                )}
-                <div className="flex justify-between items-center px-4 py-3 rounded-xl bg-accent/10 border border-accent/20">
-                  <span className="font-semibold text-accent">Valor Total</span>
-                  <span className="text-2xl font-heading font-bold text-accent">{formatBRL(total)}</span>
+                  )}
+                  <div className="flex justify-between items-center px-4 py-3 rounded-xl bg-accent/10 border border-accent/20 print:bg-gray-100 print:border-gray-300">
+                    <span className="font-semibold text-accent print:text-black text-sm">Valor Total</span>
+                    <span className="text-xl font-heading font-bold text-accent print:text-black whitespace-nowrap">{formatBRL(total)}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Observações */}
-              {proposal.observacoes && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Observações</h4>
-                  <div className="text-xs text-muted-foreground bg-secondary/20 rounded-xl p-4 border border-border/30">
+              {/* ══════════════════════════════════════
+                  OBSERVAÇÕES / TERMOS
+              ══════════════════════════════════════ */}
+              {proposal.observacoes && proposal.observacoes !== "<p><br></p>" && (
+                <div className="space-y-2 mb-6" style={{ pageBreakInside: "avoid" }}>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest print:text-gray-500">
+                    {proposal.metodo_pagamento ? `Forma de Pagamento: ${proposal.metodo_pagamento} · ` : ""}Observações e Termos
+                  </p>
+                  <div className="text-xs text-muted-foreground print:text-gray-700 bg-secondary/20 print:bg-gray-50 rounded-xl p-4 border border-border/30 print:border-gray-200">
                     <div dangerouslySetInnerHTML={{ __html: proposal.observacoes }} />
                   </div>
                 </div>
               )}
+
+              {/* ══════════════════════════════════════
+                  RODAPÉ (visível apenas na impressão)
+              ══════════════════════════════════════ */}
+              <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">
+                <p className="text-[9px] text-gray-400">Proposta gerada pelo sistema ContaCena ERP</p>
+              </div>
             </div>
           </div>
         </div>
