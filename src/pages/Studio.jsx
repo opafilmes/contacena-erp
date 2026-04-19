@@ -18,7 +18,7 @@ const HUBS = [
   },
   {
     icon: Package,
-    title: "Inventário de Equipamentos",
+    title: "Equipamentos",
     subtitle: "Controle de ativos, reservas e detecção de conflitos",
     to: "/studio/inventario",
     image: "https://images.unsplash.com/photo-1604978880209-8e21f7b69e50?q=80&w=1974&auto=format&fit=crop",
