@@ -92,7 +92,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
     const masterPayload = {
       titulo:          form.titulo,
       descricao:       form.descricao || undefined,
-      data_vencimento: baseDate,
+      data_vencimento: baseDate ? `${baseDate}T12:00:00` : undefined,
       status:          form.status,
       prioridade:      form.prioridade,
       repeticao:       form.repeticao,
@@ -126,7 +126,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
         const nextDate = calcNextDate(baseDate, form.repeticao, i);
         occurrences.push({
           ...masterPayload,
-          data_vencimento: nextDate.toISOString().slice(0, 10),
+          data_vencimento: `${nextDate.toISOString().slice(0, 10)}T12:00:00`,
           parent_task_id: masterId,
           status: "A Fazer",
         });
@@ -144,7 +144,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
         base44.entities.Task.create({
           titulo:          sub.titulo,
           descricao:       sub.descricao       || undefined,
-          data_vencimento: sub.data_vencimento || undefined,
+          data_vencimento: sub.data_vencimento ? `${sub.data_vencimento}T12:00:00` : undefined,
           responsavel_id:  sub.responsavel_id  || undefined,
           status:          "A Fazer",
           prioridade:      "Normal",
