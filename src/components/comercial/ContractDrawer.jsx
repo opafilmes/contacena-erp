@@ -82,26 +82,27 @@ const MODELOS = [
     id: "uso_imagem",
     label: "Autorização de Uso de Imagem",
     body: `<h2>AUTORIZAÇÃO DE USO DE IMAGEM E VOZ</h2>
-<p>Pelo presente instrumento, o(a) AUTORIZANTE abaixo qualificado(a) concede autorização de uso de imagem e voz à CONTRATADA:</p>
-<p><strong>AUTORIZANTE:</strong> {{nome_cliente}} – CPF: {{cpf_cnpj}}</p>
-<p><strong>BENEFICIÁRIA:</strong> {{razao_social_prestador}} – CNPJ: {{cnpj_prestador}}</p>
+<p>Pelo presente instrumento, o(a) AUTORIZANTE abaixo qualificado(a) concede autorização de uso de imagem e voz à CESSIONÁRIA:</p>
+<p><strong>AUTORIZANTE:</strong> {{nome_autorizante}} – CPF: {{cpf_autorizante}}</p>
+<p><strong>CESSIONÁRIA (Beneficiária):</strong> {{nome_cliente}} – CNPJ/CPF: {{cpf_cnpj}}</p>
+<p><strong>CONTRATADA (Produtora):</strong> {{razao_social_prestador}} – CNPJ: {{cnpj_prestador}}</p>
 <hr/>
 <h3>1. OBJETO</h3>
 <p>O(a) AUTORIZANTE autoriza, em caráter gratuito/oneroso (conforme acordado), o uso de sua imagem e voz captadas durante as gravações realizadas em <strong>{{data_gravacao}}</strong>.</p>
 <h3>2. FINALIDADE E TERRITÓRIO</h3>
-<p>As imagens poderão ser utilizadas para fins de divulgação institucional, publicidade, redes sociais e demais mídias digitais e impressas, sem limitação territorial, pelo prazo de <strong>{{prazo_uso}} anos</strong>.</p>
+<p>As imagens poderão ser utilizadas pela CESSIONÁRIA para fins de divulgação institucional, publicidade, redes sociais e demais mídias digitais e impressas, sem limitação territorial, pelo prazo de <strong>{{prazo_uso}} anos</strong>.</p>
 <h3>3. VEDAÇÕES</h3>
 <p>É expressamente vedado o uso das imagens em contextos que possam denegrir a imagem ou honra do(a) AUTORIZANTE, ou para fins políticos-partidários sem consentimento expresso.</p>
 <h3>4. REMUNERAÇÃO</h3>
 <p>Pela presente autorização, o(a) AUTORIZANTE receberá a importância de <strong>{{valor_total}}</strong> (ou declara que a autorização é gratuita, conforme ajuste prévio).</p>
 <p><em>Local e data: _________________, ___/___/______</em></p>
 <p>______________________________ &nbsp;&nbsp;&nbsp; ______________________________</p>
-<p>AUTORIZANTE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BENEFICIÁRIA</p>`,
+<p>{{nome_autorizante}} (AUTORIZANTE) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{nome_cliente}} (CESSIONÁRIA)</p>`,
   },
 ];
 
 // ── Variáveis dinâmicas disponíveis ──────────────────────────────────
-const VARIAVEIS = [
+const VARIAVEIS_PADRAO = [
   { label: "Nome do Cliente", code: "{{nome_cliente}}" },
   { label: "CNPJ/CPF", code: "{{cpf_cnpj}}" },
   { label: "Valor Total", code: "{{valor_total}}" },
@@ -111,6 +112,18 @@ const VARIAVEIS = [
   { label: "Método Pagamento", code: "{{metodo_pagamento}}" },
   { label: "Razão Social Prestador", code: "{{razao_social_prestador}}" },
   { label: "CNPJ Prestador", code: "{{cnpj_prestador}}" },
+];
+
+const VARIAVEIS_IMAGEM = [
+  { label: "Nome do Autorizante", code: "{{nome_autorizante}}" },
+  { label: "CPF do Autorizante", code: "{{cpf_autorizante}}" },
+  { label: "Nome do Cliente (Cessionária)", code: "{{nome_cliente}}" },
+  { label: "CNPJ/CPF Cliente", code: "{{cpf_cnpj}}" },
+  { label: "Razão Social Prestador", code: "{{razao_social_prestador}}" },
+  { label: "CNPJ Prestador", code: "{{cnpj_prestador}}" },
+  { label: "Data da Gravação", code: "{{data_gravacao}}" },
+  { label: "Prazo de Uso (anos)", code: "{{prazo_uso}}" },
+  { label: "Valor Total", code: "{{valor_total}}" },
 ];
 
 const QUILL_MODULES = {
@@ -132,26 +145,33 @@ const BLANK = {
   data_fim: "",
   status: "Em Elaboração",
   corpo_contrato: "",
+  nome_autorizante: "",
+  cpf_autorizante: "",
 };
 
 export default function ContractDrawer({ open, onClose, record, tenantId, clients, onSaved }) {
   const [form, setForm] = useState(BLANK);
   const [saving, setSaving] = useState(false);
   const [showVarMenu, setShowVarMenu] = useState(false);
-  const [showModeloMenu, setShowModeloMenu] = useState(false);
+  const [selectedModelo, setSelectedModelo] = useState(null);
   const quillRef = useRef(null);
+
+  const isImagemModel = selectedModelo === "uso_imagem";
 
   useEffect(() => {
     if (open) {
+      setSelectedModelo(null);
       setForm(record ? {
-        titulo:         record.titulo         || "",
-        client_id:      record.client_id      || "",
-        tipo:           record.tipo           || "Avulso",
-        valor:          record.valor          ?? "",
-        data_inicio:    record.data_inicio    || "",
-        data_fim:       record.data_fim       || "",
-        status:         record.status         || "Em Elaboração",
-        corpo_contrato: record.corpo_contrato || "",
+        titulo:           record.titulo           || "",
+        client_id:        record.client_id        || "",
+        tipo:             record.tipo             || "Avulso",
+        valor:            record.valor            ?? "",
+        data_inicio:      record.data_inicio      || "",
+        data_fim:         record.data_fim         || "",
+        status:           record.status           || "Em Elaboração",
+        corpo_contrato:   record.corpo_contrato   || "",
+        nome_autorizante: record.nome_autorizante || "",
+        cpf_autorizante:  record.cpf_autorizante  || "",
       } : BLANK);
     }
   }, [open, record]);
@@ -169,8 +189,10 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
   };
 
   const applyModelo = (modelo) => {
+    setSelectedModelo(modelo.id);
     set("corpo_contrato", modelo.body);
-    setShowModeloMenu(false);
+    // Auto-fill título se vazio
+    if (!form.titulo) set("titulo", modelo.label);
   };
 
   const handleSave = async () => {
@@ -178,12 +200,14 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
     setSaving(true);
     const payload = {
       ...form,
-      valor: form.valor !== "" ? Number(form.valor) : undefined,
-      client_id:      form.client_id      || undefined,
-      data_inicio:    form.data_inicio    || undefined,
-      data_fim:       form.data_fim       || undefined,
-      corpo_contrato: form.corpo_contrato || undefined,
-      inquilino_id:   tenantId,
+      valor: (!isImagemModel && form.valor !== "") ? Number(form.valor) : undefined,
+      client_id:        form.client_id        || undefined,
+      data_inicio:      (!isImagemModel && form.data_inicio) ? form.data_inicio : undefined,
+      data_fim:         form.data_fim         || undefined,
+      corpo_contrato:   form.corpo_contrato   || undefined,
+      nome_autorizante: form.nome_autorizante || undefined,
+      cpf_autorizante:  form.cpf_autorizante  || undefined,
+      inquilino_id:     tenantId,
     };
     if (record?.id) {
       await base44.entities.Contract.update(record.id, payload);
@@ -199,6 +223,8 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
 
   if (!open) return null;
 
+  const variaveis = isImagemModel ? VARIAVEIS_IMAGEM : VARIAVEIS_PADRAO;
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -213,7 +239,7 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* ── Selecionar Modelo (apenas novo contrato) ── */}
+          {/* ── Selecionar Modelo ── */}
           {!record && (
             <div className="relative">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Começar com um Modelo</p>
@@ -222,12 +248,21 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
                   <button
                     key={m.id}
                     onClick={() => applyModelo(m)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium border border-border/50 bg-secondary/30 hover:bg-accent/10 hover:border-accent/40 hover:text-accent transition-colors"
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      selectedModelo === m.id
+                        ? "bg-accent/20 border-accent/50 text-accent"
+                        : "border-border/50 bg-secondary/30 hover:bg-accent/10 hover:border-accent/40 hover:text-accent"
+                    }`}
                   >
                     {m.label}
                   </button>
                 ))}
               </div>
+              {isImagemModel && (
+                <p className="mt-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
+                  ℹ️ Modelo de Autorização de Imagem: campos financeiros ocultados. Preencha os dados do autorizante abaixo.
+                </p>
+              )}
             </div>
           )}
 
@@ -238,9 +273,9 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
               <Input value={form.titulo} onChange={e => set("titulo", e.target.value)} placeholder="Ex: Contrato Anual de Social Media" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid gap-3 ${isImagemModel ? "grid-cols-1" : "grid-cols-2"}`}>
               <div className="space-y-1.5">
-                <Label>Cliente</Label>
+                <Label>{isImagemModel ? "Beneficiário (Cliente / Cessionária)" : "Cliente"}</Label>
                 <Select value={form.client_id} onValueChange={v => set("client_id", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                   <SelectContent>
@@ -248,40 +283,68 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Tipo</Label>
-                <Select value={form.tipo} onValueChange={v => set("tipo", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Avulso">Avulso</SelectItem>
-                    <SelectItem value="Recorrente">Recorrente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {!isImagemModel && (
+                <div className="space-y-1.5">
+                  <Label>Tipo</Label>
+                  <Select value={form.tipo} onValueChange={v => set("tipo", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Avulso">Avulso</SelectItem>
+                      <SelectItem value="Recorrente">Recorrente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label>Status</Label>
-                <Select value={form.status} onValueChange={v => set("status", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Em Elaboração">Em Elaboração</SelectItem>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Finalizado">Finalizado</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Campos exclusivos de Autorização de Imagem */}
+            {isImagemModel && (
+              <div className="grid grid-cols-2 gap-3 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                <p className="col-span-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">Dados do Autorizante</p>
+                <div className="space-y-1.5">
+                  <Label>Nome do Autorizante *</Label>
+                  <Input
+                    value={form.nome_autorizante}
+                    onChange={e => set("nome_autorizante", e.target.value)}
+                    placeholder="Nome completo"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>CPF do Autorizante *</Label>
+                  <Input
+                    value={form.cpf_autorizante}
+                    onChange={e => set("cpf_autorizante", e.target.value)}
+                    placeholder="000.000.000-00"
+                  />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>Valor (R$)</Label>
-                <Input type="number" step="0.01" value={form.valor} onChange={e => set("valor", e.target.value)} placeholder="0,00" />
+            )}
+
+            {/* Campos financeiros — ocultos no modelo de imagem */}
+            {!isImagemModel && (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={v => set("status", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Em Elaboração">Em Elaboração</SelectItem>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Finalizado">Finalizado</SelectItem>
+                      <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Valor (R$)</Label>
+                  <Input type="number" step="0.01" value={form.valor} onChange={e => set("valor", e.target.value)} placeholder="0,00" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Data Início</Label>
+                  <Input type="date" value={form.data_inicio} onChange={e => set("data_inicio", e.target.value)} />
+                </div>
               </div>
-              <div className="space-y-1.5 col-span-1">
-                <Label>Data Início</Label>
-                <Input type="date" value={form.data_inicio} onChange={e => set("data_inicio", e.target.value)} />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* ── Editor Rich Text ── */}
@@ -298,8 +361,8 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
                   {"{{ }}"} Variáveis <ChevronDown className="w-3 h-3" />
                 </button>
                 {showVarMenu && (
-                  <div className="absolute right-0 top-8 z-20 bg-popover border border-border/50 rounded-xl shadow-xl w-56 py-1">
-                    {VARIAVEIS.map(v => (
+                  <div className="absolute right-0 top-8 z-20 bg-popover border border-border/50 rounded-xl shadow-xl w-60 py-1 max-h-64 overflow-y-auto">
+                    {variaveis.map(v => (
                       <button
                         key={v.code}
                         onClick={() => insertVar(v.code)}
@@ -327,7 +390,10 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Use <span className="font-mono text-accent">{"{{nome_cliente}}"}</span>, <span className="font-mono text-accent">{"{{valor_total}}"}</span> etc. — serão substituídos pelos dados reais ao imprimir.
+              {isImagemModel
+                ? <>Use <span className="font-mono text-accent">{"{{nome_autorizante}}"}</span>, <span className="font-mono text-accent">{"{{cpf_autorizante}}"}</span> etc. para dados do autorizante.</>
+                : <>Use <span className="font-mono text-accent">{"{{nome_cliente}}"}</span>, <span className="font-mono text-accent">{"{{valor_total}}"}</span> etc. — serão substituídos pelos dados reais ao imprimir.</>
+              }
             </p>
           </div>
         </div>

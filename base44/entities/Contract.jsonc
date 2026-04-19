@@ -52,6 +52,14 @@
       "type": "string",
       "description": "ID da Proposta de origem (se gerado via aprova\u00e7\u00e3o)"
     },
+    "nome_autorizante": {
+      "type": "string",
+      "description": "Nome completo do autorizante (usado em Autoriza\u00e7\u00e3o de Uso de Imagem)"
+    },
+    "cpf_autorizante": {
+      "type": "string",
+      "description": "CPF do autorizante (usado em Autoriza\u00e7\u00e3o de Uso de Imagem)"
+    },
     "inquilino_id": {
       "type": "string",
       "description": "ID do Tenant"

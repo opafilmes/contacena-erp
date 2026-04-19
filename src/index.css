@@ -149,6 +149,19 @@
 }
 
 @media print {
+  /* ── Rodapé fixo na impressão ── */
+  .print-footer-fixed {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    text-align: center !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: white !important;
+  }
+  #print-container { padding-bottom: 50px !important; }
+
   /* ── Instrução 1: zera margens do navegador (oculta URL, data, título) ── */
   @page {
     size: A4 portrait;

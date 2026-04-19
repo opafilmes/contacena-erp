@@ -398,7 +398,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                       <span className="text-muted-foreground print:text-[#64748b]">
                         Desconto ({proposalState.desconto_valor}{proposalState.desconto_tipo === "%" ? "%" : " R$"})
                       </span>
-                      <span className="text-destructive print:text-red-600 whitespace-nowrap">−{formatBRL(descontoReais)}</span>
+                      <span className="font-bold whitespace-nowrap" style={{ color: '#16a34a' }}>−{formatBRL(descontoReais)}</span>
                     </div>
                   )}
                   {/* Separador */}
@@ -430,9 +430,9 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               )}
 
               {/* ══════════════════════════════════════
-                  RODAPÉ (visível apenas na impressão)
+                  RODAPÉ (fixo na impressão via CSS)
               ══════════════════════════════════════ */}
-              <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">
+              <div className="print-footer-fixed hidden print:block">
                 <p className="text-[9px] text-gray-400">Proposta gerada pelo sistema ContaCena ERP</p>
               </div>
             </div>

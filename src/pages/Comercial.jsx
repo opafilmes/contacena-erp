@@ -7,15 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2,
-  XCircle, Eye, Pencil, ArrowUpDown, Search
+  XCircle, Eye, Pencil, ArrowUpDown, Search, Mail, Trash2
 } from "lucide-react";
 import ProposalModal from "@/components/comercial/ProposalModal";
 import ProposalManagement from "@/components/comercial/ProposalManagement";
 import { motion } from "framer-motion";
-import { format, startOfMonth, endOfMonth, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import BackButton from "@/components/shared/BackButton";
 import ContractDrawer from "@/components/comercial/ContractDrawer";
+import ContractViewModal from "@/components/comercial/ContractViewModal";
+import EnviarEmailModal from "@/components/comercial/EnviarEmailModal";
 import { formatBRL } from "@/utils/format";
 
 const PROPOSAL_STATUS = {
@@ -82,7 +84,13 @@ export default function Comercial() {
   const [tab, setTab] = useState("propostas");
   const [proposalModal, setProposalModal] = useState({ open: false, record: null });
   const [contractDrawer, setContractDrawer] = useState({ open: false, record: null });
+  const [contractView, setContractView] = useState(null);
+  const [contractEmail, setContractEmail] = useState(null);
   const [managingProposal, setManagingProposal] = useState(null);
+
+  // ── Filtros Contratos ──
+  const [contractSearch, setContractSearch] = useState("");
+  const [contractDateStart, setContractDateStart] = useState("");
 
   // ── Filtros & Busca ──
   const [searchCliente, setSearchCliente] = useState("");
@@ -125,9 +133,14 @@ export default function Comercial() {
   const pendentes = proposalsMes.filter(p => p.status === "Pendente").length;
   const conversao = totalMes > 0 ? Math.round((aprovadas / totalMes) * 100) : 0;
 
-  // ── Contracts grouped ──
-  const avulsas     = contracts.filter(c => c.tipo === "Avulso");
-  const recorrentes = contracts.filter(c => c.tipo === "Recorrente");
+  // ── Contracts grouped & filtered ──
+  const filteredContracts = contracts.filter(r => {
+    const nameMatch = !contractSearch.trim() || r.titulo?.toLowerCase().includes(contractSearch.toLowerCase()) || getClientName(r.client_id).toLowerCase().includes(contractSearch.toLowerCase());
+    const dateMatch = !contractDateStart || (r.data_inicio && r.data_inicio >= contractDateStart);
+    return nameMatch && dateMatch;
+  });
+  const avulsas     = filteredContracts.filter(c => c.tipo === "Avulso");
+  const recorrentes = filteredContracts.filter(c => c.tipo === "Recorrente");
 
   const handleDeleteProposal = async (row) => {
     await base44.entities.Proposal.delete(row.id);
@@ -386,6 +399,29 @@ export default function Comercial() {
 
           {/* ── ABA CONTRATOS ── */}
           <TabsContent value="contratos">
+            {/* Barra de filtros */}
+            <div className="flex flex-wrap gap-3 mb-4 p-4 rounded-xl border border-border/30 bg-secondary/20">
+              <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  placeholder="Buscar por título ou cliente..."
+                  value={contractSearch}
+                  onChange={e => setContractSearch(e.target.value)}
+                  className="h-8 text-sm bg-transparent border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Início a partir de:</span>
+                <Input type="date" value={contractDateStart} onChange={e => setContractDateStart(e.target.value)} className="h-8 w-36 text-xs" />
+              </div>
+              {(contractSearch || contractDateStart) && (
+                <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => { setContractSearch(""); setContractDateStart(""); }}>
+                  Limpar
+                </Button>
+              )}
+            </div>
+
             {contracts.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <Handshake className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -393,6 +429,11 @@ export default function Comercial() {
                 <Button size="sm" variant="outline" className="mt-4" onClick={() => setContractDrawer({ open: true, record: null })}>
                   <Plus className="w-4 h-4 mr-1" /> Criar primeiro contrato
                 </Button>
+              </div>
+            ) : filteredContracts.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Nenhum contrato encontrado com esses filtros.</p>
               </div>
             ) : (
               <div className="space-y-8">
@@ -402,7 +443,13 @@ export default function Comercial() {
                       <span className="w-2 h-2 rounded-full bg-violet-400 inline-block" />
                       Recorrentes ({recorrentes.length})
                     </h3>
-                    <ContractTable rows={recorrentes} clients={clients} onEdit={r => setContractDrawer({ open: true, record: r })} onDelete={handleDeleteContract} />
+                    <ContractTable
+                      rows={recorrentes} clients={clients}
+                      onView={r => setContractView(r)}
+                      onEdit={r => setContractDrawer({ open: true, record: r })}
+                      onEmail={r => setContractEmail(r)}
+                      onDelete={handleDeleteContract}
+                    />
                   </div>
                 )}
                 {avulsas.length > 0 && (
@@ -411,7 +458,13 @@ export default function Comercial() {
                       <span className="w-2 h-2 rounded-full bg-sky-400 inline-block" />
                       Avulsos ({avulsas.length})
                     </h3>
-                    <ContractTable rows={avulsas} clients={clients} onEdit={r => setContractDrawer({ open: true, record: r })} onDelete={handleDeleteContract} />
+                    <ContractTable
+                      rows={avulsas} clients={clients}
+                      onView={r => setContractView(r)}
+                      onEdit={r => setContractDrawer({ open: true, record: r })}
+                      onEmail={r => setContractEmail(r)}
+                      onDelete={handleDeleteContract}
+                    />
                   </div>
                 )}
               </div>
@@ -454,11 +507,29 @@ export default function Comercial() {
         clients={clients}
         onSaved={loadAll}
       />
+
+      {contractView && (
+        <ContractViewModal
+          contract={contractView}
+          client={clients.find(c => c.id === contractView.client_id)}
+          tenant={tenant}
+          onClose={() => setContractView(null)}
+        />
+      )}
+
+      {contractEmail && (
+        <EnviarEmailModal
+          proposal={{ titulo: contractEmail.titulo, numero_proposta: null }}
+          client={clients.find(c => c.id === contractEmail.client_id)}
+          tenant={tenant}
+          onClose={() => setContractEmail(null)}
+        />
+      )}
     </div>
   );
 }
 
-function ContractTable({ rows, clients, onEdit, onDelete }) {
+function ContractTable({ rows, clients, onView, onEdit, onEmail, onDelete }) {
   const getClientName = (id) => clients.find(c => c.id === id)?.nome_fantasia || "—";
   return (
     <div className="rounded-xl border border-border/50 overflow-hidden">
@@ -470,15 +541,14 @@ function ContractTable({ rows, clients, onEdit, onDelete }) {
             <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Valor</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vigência</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-            <th className="px-4 py-3" />
+            <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ações</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, idx) => (
             <tr
               key={r.id}
-              onClick={() => onEdit(r)}
-              className={`border-b border-border/30 cursor-pointer hover:bg-secondary/40 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}
+              className={`border-b border-border/30 hover:bg-secondary/40 transition-colors ${idx % 2 === 1 ? "bg-secondary/10" : ""}`}
             >
               <td className="px-4 py-3 font-medium text-foreground">{r.titulo}</td>
               <td className="px-4 py-3 text-muted-foreground">{getClientName(r.client_id)}</td>
@@ -493,9 +563,19 @@ function ContractTable({ rows, clients, onEdit, onDelete }) {
                 </span>
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2 justify-end">
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={e => { e.stopPropagation(); onDelete(r); }}>
-                    <XCircle className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 justify-end">
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Visualizar / Imprimir" onClick={e => { e.stopPropagation(); onView(r); }}>
+                    <Eye className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Editar" onClick={e => { e.stopPropagation(); onEdit(r); }}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Enviar por E-mail" onClick={e => { e.stopPropagation(); onEmail(r); }}>
+                    <Mail className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir"
+                    onClick={e => { e.stopPropagation(); onDelete(r); }}>
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </td>
