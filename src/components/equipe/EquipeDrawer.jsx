@@ -16,7 +16,7 @@ const BLANK = {
   perm_comercial: false,
   perm_financeiro: false,
   perm_studio_atividades: true,
-  perm_studio_inventario: true,
+  perm_studio_equipamentos: true,
 };
 
 const ROLE_PERMS = {
