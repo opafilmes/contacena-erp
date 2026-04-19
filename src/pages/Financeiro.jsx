@@ -112,21 +112,21 @@ export default function Financeiro() {
   const getJobName = (id) => jobs.find(j => j.id === id)?.titulo || "—";
 
   const receivableCols = [
-    { key: "descricao", label: "Descrição" },
-    { key: "client_id", label: "Cliente", render: row => getClientName(row.client_id) },
+    { key: "descricao", label: "Descrição", sortable: true },
+    { key: "client_id", label: "Cliente", render: row => getClientName(row.client_id), sortable: true, sortValue: row => getClientName(row.client_id) },
     { key: "job_id", label: "Job", render: row => getJobName(row.job_id) },
-    { key: "valor", label: "Valor", render: row => <span className="text-green-400 font-medium">{formatBRL(row.valor)}</span> },
-    { key: "data_vencimento", label: "Vencimento", render: row => row.data_vencimento ? format(new Date(row.data_vencimento), "dd/MM/yyyy") : "—" },
-    { key: "status", label: "Status", render: row => <StatusPill status={row.status} /> },
+    { key: "valor", label: "Valor", sortable: true, render: row => <span className="text-green-400 font-medium">{formatBRL(row.valor)}</span> },
+    { key: "data_vencimento", label: "Vencimento", sortable: true, render: row => row.data_vencimento ? format(new Date(row.data_vencimento), "dd/MM/yyyy") : "—" },
+    { key: "status", label: "Status", sortable: true, render: row => <StatusPill status={row.status} /> },
   ];
 
   const payableCols = [
-    { key: "descricao", label: "Descrição" },
-    { key: "supplier_id", label: "Fornecedor", render: row => getSupplierName(row.supplier_id) },
-    { key: "category_id", label: "Categoria", render: row => getCategoryName(row.category_id) },
-    { key: "valor", label: "Valor", render: row => <span className="text-red-400 font-medium">{formatBRL(row.valor)}</span> },
-    { key: "data_vencimento", label: "Vencimento", render: row => row.data_vencimento ? format(new Date(row.data_vencimento), "dd/MM/yyyy") : "—" },
-    { key: "status", label: "Status", render: row => <StatusPill status={row.status} /> },
+    { key: "descricao", label: "Descrição", sortable: true },
+    { key: "supplier_id", label: "Fornecedor", render: row => getSupplierName(row.supplier_id), sortable: true, sortValue: row => getSupplierName(row.supplier_id) },
+    { key: "category_id", label: "Categoria", render: row => getCategoryName(row.category_id), sortable: true, sortValue: row => getCategoryName(row.category_id) },
+    { key: "valor", label: "Valor", sortable: true, render: row => <span className="text-red-400 font-medium">{formatBRL(row.valor)}</span> },
+    { key: "data_vencimento", label: "Vencimento", sortable: true, render: row => row.data_vencimento ? format(new Date(row.data_vencimento), "dd/MM/yyyy") : "—" },
+    { key: "status", label: "Status", sortable: true, render: row => <StatusPill status={row.status} /> },
   ];
 
 
@@ -174,6 +174,10 @@ export default function Financeiro() {
               receivables={receivables}
               payables={payables}
               filters={filters}
+              onConciliar={(entry) => {
+                if (entry._kind === "receber") setReceivableDrawer({ open: true, record: entry });
+                else setPayableDrawer({ open: true, record: entry });
+              }}
             />
           </TabsContent>
 
@@ -188,6 +192,7 @@ export default function Financeiro() {
             <DataTable
               columns={receivableCols}
               rows={filteredReceivables}
+              searchValue={filters.search}
               onEdit={row => setReceivableDrawer({ open: true, record: row })}
               onDelete={async row => { await base44.entities.AccountReceivable.delete(row.id); load("AccountReceivable", setReceivables); }}
               emptyMessage="Nenhuma conta a receber."
@@ -205,6 +210,7 @@ export default function Financeiro() {
             <DataTable
               columns={payableCols}
               rows={filteredPayables}
+              searchValue={filters.search}
               onEdit={row => setPayableDrawer({ open: true, record: row })}
               onDelete={async row => { await base44.entities.AccountPayable.delete(row.id); load("AccountPayable", setPayables); }}
               emptyMessage="Nenhuma conta a pagar."
