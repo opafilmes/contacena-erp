@@ -113,7 +113,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
       masterId = created.id;
     }
 
-    // Create recurring occurrences (next 10) for new tasks only
+    // Create recurring occurrences (1 year cycle) for new tasks only
     if (!isEditMode && form.repeticao !== "Nenhuma" && baseDate) {
       const occurrences = [];
       for (let i = 1; i <= 10; i++) {
