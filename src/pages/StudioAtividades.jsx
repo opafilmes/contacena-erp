@@ -8,7 +8,7 @@ import BackButton from "@/components/shared/BackButton";
 import TaskDrawer from "@/components/studio/TaskDrawer";
 import TaskListView from "@/components/studio/TaskListView";
 import TaskCalendarView from "@/components/studio/TaskCalendarView";
-import TaskActivityChart from "@/components/studio/TaskActivityChart";
+import TaskDashboard from "@/components/studio/TaskDashboard";
 
 export default function StudioAtividades() {
   const { tenant, usuario } = useOutletContext();
@@ -98,7 +98,7 @@ export default function StudioAtividades() {
                   }>
                   
                   {c.logo ?
-                  <img src={c.logo} alt={c.nome_fantasia} className="w-5 h-5 rounded-full object-cover shrink-0 border border-border/30" /> :
+                  <img src={c.logo} alt={c.nome_fantasia} className="w-5 h-5 rounded-full object-cover shrink-0 bg-white p-0.5" /> :
 
                   <Building2 className="w-3.5 h-3.5 shrink-0 opacity-70" />
                   }
@@ -159,8 +159,8 @@ export default function StudioAtividades() {
             </div>
           </div>
 
-          {/* Chart */}
-          <TaskActivityChart tasks={filteredTasks} />
+          {/* Dashboard */}
+          <TaskDashboard tasks={filteredTasks} usuarios={usuarios} />
 
           {/* Views */}
           <motion.div key={view} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>

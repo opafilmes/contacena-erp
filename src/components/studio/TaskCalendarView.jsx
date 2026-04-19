@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay,
   addMonths, subMonths, startOfWeek, endOfWeek, addWeeks, subWeeks,
-  addDays, subDays, eachHourOfInterval, startOfDay, endOfDay, isSameMonth
+  addDays, subDays, isSameMonth
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,7 +18,6 @@ const PRIO_DOT = {
 };
 
 const DAYS_PT = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 /* ─── Month view ─── */
 function MonthView({ reference, tasks, onEdit }) {
@@ -65,86 +64,78 @@ function MonthView({ reference, tasks, onEdit }) {
   );
 }
 
-/* ─── Week view ─── */
+/* ─── Week view (NO time grid — day blocks only) ─── */
 function WeekView({ reference, tasks, onEdit }) {
   const weekStart = startOfWeek(reference, { locale: ptBR });
   const weekDays  = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const tasksWithDate = tasks.filter(t => t.data_vencimento);
 
   return (
-    <div className="overflow-x-auto">
-      {/* Header row */}
-      <div className="grid grid-cols-8 border-b border-border/20">
-        <div className="py-2 px-2 text-xs text-muted-foreground/40 text-center">Hora</div>
+    <div>
+      <div className="grid grid-cols-7 border-b border-border/20">
         {weekDays.map(day => {
           const isToday = isSameDay(day, new Date());
           return (
-            <div key={day.toISOString()} className={`py-2 text-center ${isToday ? "bg-accent/10" : ""}`}>
+            <div key={day.toISOString()} className={`py-3 px-2 text-center border-r border-border/10 last:border-0 ${isToday ? "bg-accent/5" : ""}`}>
               <p className="text-xs text-muted-foreground/60 uppercase">{format(day,"EEE",{locale:ptBR})}</p>
-              <p className={`text-sm font-semibold ${isToday ? "text-accent" : "text-foreground"}`}>{format(day,"d")}</p>
+              <p className={`text-sm font-semibold mt-0.5 ${isToday ? "text-accent" : "text-foreground"}`}>{format(day,"d")}</p>
             </div>
           );
         })}
       </div>
-      {/* Time slots */}
-      <div className="max-h-[520px] overflow-y-auto">
-        {HOURS.map(h => (
-          <div key={h} className="grid grid-cols-8 border-b border-border/10 min-h-[48px]">
-            <div className="px-2 pt-1 text-[10px] text-muted-foreground/40 text-right pr-3">{String(h).padStart(2,"0")}:00</div>
-            {weekDays.map(day => {
-              const slotTasks = tasksWithDate.filter(t => {
-                const d = new Date(t.data_vencimento);
-                return isSameDay(d, day) && d.getHours() === h;
-              });
-              return (
-                <div key={day.toISOString()} className="border-l border-border/10 p-0.5 space-y-0.5">
-                  {slotTasks.map(task => (
-                    <button key={task.id} onClick={() => onEdit(task)} title={task.titulo}
-                      className={`w-full text-left px-1.5 py-0.5 rounded text-[10px] font-medium truncate ${STATUS_COLORS[task.status] || "bg-primary/60 text-white"} hover:opacity-90`}>
-                      {task.titulo}
-                    </button>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Day view ─── */
-function DayView({ reference, tasks, onEdit }) {
-  const tasksWithDate = tasks.filter(t => t.data_vencimento && isSameDay(new Date(t.data_vencimento), reference));
-
-  return (
-    <div className="max-h-[560px] overflow-y-auto">
-      {HOURS.map(h => {
-        const slotTasks = tasksWithDate.filter(t => new Date(t.data_vencimento).getHours() === h);
-        return (
-          <div key={h} className="flex gap-3 border-b border-border/10 min-h-[52px] px-4 py-1">
-            <span className="text-[11px] text-muted-foreground/50 w-12 pt-1 shrink-0 text-right">{String(h).padStart(2,"0")}:00</span>
-            <div className="flex-1 space-y-1 py-0.5">
-              {slotTasks.map(task => (
-                <button key={task.id} onClick={() => onEdit(task)}
-                  className={`w-full text-left px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-2 ${STATUS_COLORS[task.status] || "bg-primary/60 text-white"} hover:opacity-90`}>
+      <div className="grid grid-cols-7 min-h-[300px]">
+        {weekDays.map(day => {
+          const dayTasks = tasks.filter(t => t.data_vencimento && isSameDay(new Date(t.data_vencimento), day));
+          const isToday = isSameDay(day, new Date());
+          return (
+            <div key={day.toISOString()} className={`border-r border-border/10 last:border-0 p-1.5 space-y-1 ${isToday ? "bg-accent/[0.03]" : ""}`}>
+              {dayTasks.map(task => (
+                <button key={task.id} onClick={() => onEdit(task)} title={task.titulo}
+                  className={`w-full text-left px-2 py-1 rounded text-[10px] font-medium truncate flex items-center gap-1 ${STATUS_COLORS[task.status] || "bg-primary/60 text-white"} hover:opacity-90`}>
                   {task.prioridade && task.prioridade !== "Normal" && (
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIO_DOT[task.prioridade]}`} />
                   )}
                   {task.titulo}
                 </button>
               ))}
+              {dayTasks.length === 0 && <div className="h-4" />}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Day view (NO time grid — tasks as blocks) ─── */
+function DayView({ reference, tasks, onEdit }) {
+  const dayTasks = tasks.filter(t => t.data_vencimento && isSameDay(new Date(t.data_vencimento), reference));
+
+  if (dayTasks.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
+        Nenhuma tarefa para este dia.
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 space-y-2">
+      {dayTasks.map(task => (
+        <button key={task.id} onClick={() => onEdit(task)}
+          className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 ${STATUS_COLORS[task.status] || "bg-primary/60 text-white"} hover:opacity-90 transition-opacity`}>
+          {task.prioridade && task.prioridade !== "Normal" && (
+            <span className={`w-2 h-2 rounded-full shrink-0 ${PRIO_DOT[task.prioridade]}`} />
+          )}
+          <span className="flex-1 truncate">{task.titulo}</span>
+          <span className="text-xs opacity-70 shrink-0 capitalize">{task.prioridade}</span>
+        </button>
+      ))}
     </div>
   );
 }
 
 /* ─── Main export ─── */
-export default function TaskCalendarView({ tasks, onEdit, calView = "semana" }) {
+export default function TaskCalendarView({ tasks, onEdit, calView = "mes" }) {
   const [reference, setReference] = useState(new Date());
 
   const navigate = (dir) => {

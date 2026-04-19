@@ -36,7 +36,7 @@ export default function TopBar({ tenant, usuario, tenantId }) {
             <img
               src={tenant.logo}
               alt={tenant.nome_fantasia}
-              className="h-8 w-8 rounded-lg object-cover" /> :
+              className="h-8 w-8 rounded-lg object-cover bg-white p-0.5" /> :
 
 
             <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">

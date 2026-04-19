@@ -167,7 +167,7 @@ export default function ProposalView({ proposal, clients, tenant, onClose, onApp
         {/* 1. Cabeçalho Dividido (Split Header) */}
         <div className="flex justify-between items-start pb-6 border-b border-gray-200 mb-8">
           <div className="flex flex-col gap-1 max-w-[50%]">
-            {tenant?.logo && <img src={tenant.logo} alt="Logo" className="max-h-12 object-contain mb-2" />}
+            {tenant?.logo && <img src={tenant.logo} alt="Logo" className="max-h-12 object-contain mb-2 bg-white p-1 rounded" />}
             <h2 className="text-xl font-bold text-black">{tenant?.razao_social || tenant?.nome_fantasia || "Nome da Produtora"}</h2>
             {tenant?.cnpj && <p className="text-sm text-gray-600">CNPJ: {tenant.cnpj}</p>}
             {tenant?.email_corporativo && <p className="text-sm text-gray-600">{tenant.email_corporativo}</p>}
