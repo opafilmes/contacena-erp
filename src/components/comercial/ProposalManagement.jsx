@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   X, Printer, FileCheck2, DollarSign, CreditCard,
-  CheckCircle2, Loader2, Building2, Pencil
+  CheckCircle2, Loader2, Building2, Pencil, Mail, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { formatBRL } from "@/utils/format";
+import GerarFinanceiroModal from "@/components/comercial/GerarFinanceiroModal";
+import EnviarEmailModal from "@/components/comercial/EnviarEmailModal";
 
 const STATUS_STYLE = {
   Pendente: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
@@ -19,114 +17,38 @@ const STATUS_STYLE = {
   Recusada: "bg-red-500/15 text-red-400 border-red-500/30",
 };
 
-// ── Modal de Contas a Receber ──────────────────────────────────────
-function ContasReceberModal({ proposal, items, client, tenantId, onClose, onDone }) {
-  const total = items.reduce((a, i) => a + (i.valor_total || 0), 0) || proposal.valor_total || 0;
-  const [parcelas, setParcelas] = useState(1);
-  const [vencimento, setVencimento] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [saving, setSaving] = useState(false);
-
-  const valorParcela = parcelas > 0 ? total / parcelas : total;
-
-  const handleLancar = async () => {
-    setSaving(true);
-    const promises = [];
-    for (let i = 0; i < parcelas; i++) {
-      const d = new Date(vencimento + "T12:00:00");
-      d.setMonth(d.getMonth() + i);
-      promises.push(
-        base44.entities.AccountReceivable.create({
-          descricao: `${client?.nome_fantasia || "Proposta"} – Parcela ${i + 1}/${parcelas}`,
-          client_id: proposal.client_id || undefined,
-          valor: valorParcela,
-          data_vencimento: d.toISOString().split("T")[0],
-          status: "Pendente",
-          inquilino_id: tenantId,
-        })
-      );
-    }
-    await Promise.all(promises);
-    toast.success(`${parcelas} parcela(s) lançada(s) no Financeiro!`);
-    setSaving(false);
-    onDone();
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-card border border-border/50 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading font-bold text-lg">💰 Contas a Receber</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="flex justify-between items-center px-4 py-3 rounded-xl bg-accent/10 border border-accent/20">
-          <span className="text-sm font-semibold text-accent">Valor Total</span>
-          <span className="text-xl font-heading font-bold text-accent">{formatBRL(total)}</span>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Número de Parcelas</Label>
-          <Select value={String(parcelas)} onValueChange={v => setParcelas(Number(v))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 6, 12].map(n => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}x de {formatBRL(total / n)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Primeiro Vencimento</Label>
-          <Input type="date" value={vencimento} onChange={e => setVencimento(e.target.value)} />
-        </div>
-
-        <div className="text-xs text-muted-foreground bg-secondary/30 rounded-lg p-3">
-          Serão criadas <strong>{parcelas}</strong> conta(s) a receber de <strong>{formatBRL(valorParcela)}</strong> cada, com vencimentos mensais a partir de <strong>{vencimento ? format(new Date(vencimento + "T12:00:00"), "dd/MM/yyyy") : "—"}</strong>.
-        </div>
-
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={handleLancar} disabled={saving} className="flex-1 gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
-            {saving ? "Lançando..." : "Lançar no Financeiro"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Management Panel Principal ─────────────────────────────────────
 export default function ProposalManagement({ proposal, clients, tenant, tenantId, onClose, onApproved, onEdit }) {
   const [items, setItems] = useState([]);
   const [approving, setApproving] = useState(false);
-  const [showContasModal, setShowContasModal] = useState(false);
+  const [showFinanceiroModal, setShowFinanceiroModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [gerandoBoletos, setGerandoBoletos] = useState(false);
+  const [proposalState, setProposalState] = useState(proposal);
 
-  const client = clients?.find(c => c.id === proposal?.client_id);
+  const client = clients?.find(c => c.id === proposalState?.client_id);
 
   useEffect(() => {
-    if (proposal?.id) {
-      base44.entities.ProposalItem.filter({ proposal_id: proposal.id }).then(setItems);
+    setProposalState(proposal);
+  }, [proposal]);
+
+  useEffect(() => {
+    if (proposalState?.id) {
+      base44.entities.ProposalItem.filter({ proposal_id: proposalState.id }).then(setItems);
     }
-  }, [proposal?.id]);
+  }, [proposalState?.id]);
 
   const subtotalItems = items.reduce((a, i) => a + (i.valor_total || 0), 0);
-  const descontoReais = proposal.desconto_tipo === "%"
-    ? subtotalItems * (proposal.desconto_valor || 0) / 100
-    : (proposal.desconto_valor || 0);
-  const total = proposal.valor_total || Math.max(0, subtotalItems - descontoReais);
+  const descontoReais = proposalState.desconto_tipo === "%"
+    ? subtotalItems * (proposalState.desconto_valor || 0) / 100
+    : (proposalState.desconto_valor || 0);
+  const total = proposalState.valor_total || Math.max(0, subtotalItems - descontoReais);
 
   const handleApprove = async () => {
     if (!window.confirm("Aprovar esta proposta? Isso criará automaticamente um Contrato e um Projeto no Studio.")) return;
     setApproving(true);
     try {
-      const res = await base44.functions.invoke("approveProposal", { proposalId: proposal.id });
+      const res = await base44.functions.invoke("approveProposal", { proposalId: proposalState.id });
       if (res.data?.ok) {
         toast.success("Proposta aprovada! Contrato e Projeto criados.");
         onApproved();
@@ -141,11 +63,34 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   };
 
   const handlePrint = () => window.print();
-  const handleGerarBoleto = () => toast.info("Integração de boleto em breve! Configure sua conta de pagamento nas configurações.");
 
-  const propNum = proposal.numero_proposta ? `PROP-${proposal.numero_proposta}` : `PROP-${proposal.id?.slice(-4).toUpperCase()}`;
+  const handleGerarBoletos = async () => {
+    if (!proposalState.financeiro_gerado) return;
+    setGerandoBoletos(true);
+    const contas = await base44.entities.AccountReceivable.filter({ inquilino_id: tenantId });
+    // Filtra as contas desta proposta pela descrição (não temos proposal_id direto no AccountReceivable)
+    const contasProposta = contas.filter(c =>
+      c.descricao?.includes(client?.nome_fantasia || proposalState.titulo || "")
+    );
+    if (contasProposta.length === 0) {
+      toast.info("Nenhuma conta a receber encontrada para esta proposta.");
+      setGerandoBoletos(false);
+      return;
+    }
+    toast.promise(
+      new Promise(res => setTimeout(res, 1500)),
+      {
+        loading: `Gerando boletos para ${contasProposta.length} parcela(s)...`,
+        success: `${contasProposta.length} boleto(s) gerado(s) com sucesso!`,
+        error: "Erro ao gerar boletos.",
+      }
+    );
+    setGerandoBoletos(false);
+  };
 
-  if (!proposal) return null;
+  const propNum = proposalState.numero_proposta ? `PROP-${proposalState.numero_proposta}` : `PROP-${proposalState.id?.slice(-4).toUpperCase()}`;
+
+  if (!proposalState) return null;
 
   return (
     <>
@@ -181,9 +126,14 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Painel de Gestão</h3>
 
               <div className="flex items-center gap-2 mb-4">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${STATUS_STYLE[proposal.status] || ""}`}>
-                  {proposal.status}
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${STATUS_STYLE[proposalState.status] || ""}`}>
+                  {proposalState.status}
                 </span>
+                {proposalState.financeiro_gerado && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/30">
+                    💰 Fin. Gerado
+                  </span>
+                )}
               </div>
 
               <div className="space-y-2 text-sm border border-border/30 rounded-xl p-3 bg-secondary/20">
@@ -193,46 +143,46 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                     <span className="text-foreground font-medium truncate max-w-[140px]">{client.nome_fantasia}</span>
                   </div>
                 )}
-                {proposal.numero_proposta && (
+                {proposalState.numero_proposta && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nº Proposta</span>
                     <span className="text-foreground font-mono font-semibold">{propNum}</span>
                   </div>
                 )}
-                {proposal.tipo_proposta && (
+                {proposalState.tipo_proposta && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tipo</span>
-                    <span className="text-foreground">{proposal.tipo_proposta}</span>
+                    <span className="text-foreground">{proposalState.tipo_proposta}</span>
                   </div>
                 )}
-                {proposal.data_emissao && (
+                {proposalState.data_emissao && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Emissão</span>
-                    <span className="text-foreground">{format(new Date(proposal.data_emissao + "T12:00:00"), "dd/MM/yyyy")}</span>
+                    <span className="text-foreground">{format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}</span>
                   </div>
                 )}
-                {proposal.validade && (
+                {proposalState.validade && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Válida até</span>
-                    <span className="text-foreground">{format(new Date(proposal.validade + "T12:00:00"), "dd/MM/yyyy")}</span>
+                    <span className="text-foreground">{format(new Date(proposalState.validade + "T12:00:00"), "dd/MM/yyyy")}</span>
                   </div>
                 )}
-                {proposal.tipo_proposta === "Recorrente" && proposal.vigencia_meses && (
+                {proposalState.tipo_proposta === "Recorrente" && proposalState.vigencia_meses && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Vigência</span>
-                    <span className="text-foreground">{proposal.vigencia_meses} meses</span>
+                    <span className="text-foreground">{proposalState.vigencia_meses} meses</span>
                   </div>
                 )}
-                {proposal.tipo_proposta === "Recorrente" && proposal.dia_vencimento && (
+                {proposalState.tipo_proposta === "Recorrente" && proposalState.dia_vencimento && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Vencimento</span>
-                    <span className="text-foreground">Dia {proposal.dia_vencimento}</span>
+                    <span className="text-foreground">Dia {proposalState.dia_vencimento}</span>
                   </div>
                 )}
-                {proposal.metodo_pagamento && (
+                {proposalState.metodo_pagamento && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Pagamento</span>
-                    <span className="text-foreground">{proposal.metodo_pagamento}</span>
+                    <span className="text-foreground">{proposalState.metodo_pagamento}</span>
                   </div>
                 )}
               </div>
@@ -244,14 +194,39 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 <Button variant="outline" className="w-full justify-start gap-2.5 text-sm" onClick={handlePrint}>
                   <Printer className="w-4 h-4" /> 🖨️ Imprimir / PDF
                 </Button>
-                <Button variant="outline" className="w-full justify-start gap-2.5 text-sm" onClick={() => setShowContasModal(true)}>
-                  <DollarSign className="w-4 h-4" /> 💰 Contas a Receber
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2.5 text-sm" onClick={handleGerarBoleto}>
-                  <CreditCard className="w-4 h-4" /> 🎫 Gerar Boleto
+
+                {/* Gerar Financeiro */}
+                <Button
+                  variant="outline"
+                  className={`w-full justify-start gap-2.5 text-sm ${proposalState.financeiro_gerado ? "border-green-500/40 text-green-400" : ""}`}
+                  onClick={() => setShowFinanceiroModal(true)}
+                >
+                  <DollarSign className="w-4 h-4" />
+                  {proposalState.financeiro_gerado ? "✅ Financeiro Gerado" : "💰 Gerar Financeiro"}
                 </Button>
 
-                {proposal.status === "Pendente" && (
+                {/* Gerar Boletos — desabilitado se financeiro não foi gerado */}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2.5 text-sm"
+                  onClick={handleGerarBoletos}
+                  disabled={!proposalState.financeiro_gerado || gerandoBoletos}
+                  title={!proposalState.financeiro_gerado ? "Gere o financeiro primeiro para habilitar os boletos" : ""}
+                >
+                  {gerandoBoletos ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+                  🎫 Gerar Boletos
+                </Button>
+
+                {/* Enviar por E-mail */}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2.5 text-sm"
+                  onClick={() => setShowEmailModal(true)}
+                >
+                  <Mail className="w-4 h-4" /> ✉️ Enviar por E-mail
+                </Button>
+
+                {proposalState.status === "Pendente" && (
                   <Button
                     className="w-full justify-start gap-2.5 text-sm bg-green-600 hover:bg-green-500 text-white mt-2"
                     onClick={handleApprove}
@@ -262,7 +237,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   </Button>
                 )}
 
-                {proposal.status === "Aprovada" && (
+                {proposalState.status === "Aprovada" && (
                   <Button variant="outline" className="w-full justify-start gap-2.5 text-sm border-green-500/40 text-green-400" onClick={() => toast.info("Contrato já gerado. Acesse a aba Contratos.")}>
                     <FileCheck2 className="w-4 h-4" /> 📄 Ver Contrato
                   </Button>
@@ -277,6 +252,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   CABEÇALHO DO DOCUMENTO (V1 CLASSIC)
               ══════════════════════════════════════ */}
               <div className="flex items-start justify-between mb-6 pb-5 border-b-2 border-gray-200 print:border-gray-300">
+
                 {/* Esquerda: Logo + dados do tenant */}
                 <div className="flex items-start gap-3">
                   {tenant?.logo ? (
@@ -293,9 +269,9 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   )}
                   <div className="ml-1">
                     <p className="font-heading font-bold text-foreground text-sm print:text-black">{tenant?.razao_social || tenant?.nome_fantasia || "—"}</p>
-                    {tenant?.cnpj && <p className="text-xs text-muted-foreground print:text-gray-600">CNPJ: {tenant.cnpj}</p>}
-                    {tenant?.email_corporativo && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant.email_corporativo}</p>}
-                    {tenant?.telefone && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant.telefone}</p>}
+                    {tenant?.cnpj && <p className="text-xs text-muted-foreground print:text-gray-600">CNPJ: {tenant?.cnpj}</p>}
+                    {tenant?.email_corporativo && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant?.email_corporativo}</p>}
+                    {tenant?.telefone && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant?.telefone}</p>}
                   </div>
                 </div>
 
@@ -303,9 +279,9 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 <div className="text-right">
                   <h1 className="font-heading font-bold text-xl text-foreground print:text-black tracking-wider uppercase">Proposta Comercial</h1>
                   <p className="text-sm font-mono font-semibold text-accent print:text-gray-700 mt-1">{propNum}</p>
-                  {proposal.data_emissao && (
+                  {proposalState.data_emissao && (
                     <p className="text-xs text-muted-foreground print:text-gray-500 mt-0.5">
-                      Emitida em {format(new Date(proposal.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
+                      Emitida em {format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
                     </p>
                   )}
                 </div>
@@ -334,28 +310,28 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 <div className="rounded-xl border border-border/30 p-4 bg-secondary/10 print:border-gray-200 print:bg-gray-50">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 print:text-gray-500">Detalhes da Proposta</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                    {proposal.data_emissao && (
+                    {proposalState.data_emissao && (
                       <div>
                         <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Emissão</p>
-                        <p className="text-xs font-medium text-foreground print:text-black">{format(new Date(proposal.data_emissao + "T12:00:00"), "dd/MM/yyyy")}</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">{format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}</p>
                       </div>
                     )}
-                    {proposal.validade && (
+                    {proposalState.validade && (
                       <div>
                         <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Válida até</p>
-                        <p className="text-xs font-medium text-foreground print:text-black">{format(new Date(proposal.validade + "T12:00:00"), "dd/MM/yyyy")}</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">{format(new Date(proposalState.validade + "T12:00:00"), "dd/MM/yyyy")}</p>
                       </div>
                     )}
-                    {proposal.tipo_proposta === "Recorrente" && proposal.vigencia_meses && (
+                    {proposalState.tipo_proposta === "Recorrente" && proposalState.vigencia_meses && (
                       <div>
                         <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Vigência</p>
-                        <p className="text-xs font-medium text-foreground print:text-black">{proposal.vigencia_meses} meses</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">{proposalState.vigencia_meses} meses</p>
                       </div>
                     )}
-                    {proposal.tipo_proposta === "Recorrente" && proposal.dia_vencimento && (
+                    {proposalState.tipo_proposta === "Recorrente" && proposalState.dia_vencimento && (
                       <div>
                         <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider print:text-gray-400">Vencimento Mensal</p>
-                        <p className="text-xs font-medium text-foreground print:text-black">Dia {proposal.dia_vencimento}</p>
+                        <p className="text-xs font-medium text-foreground print:text-black">Dia {proposalState.dia_vencimento}</p>
                       </div>
                     )}
                   </div>
@@ -411,16 +387,16 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               ══════════════════════════════════════ */}
               <div className="flex flex-col items-end pt-6 mb-6">
                 <div className="w-80 space-y-2">
-                  {subtotalItems > 0 && proposal.desconto_valor > 0 && (
+                  {subtotalItems > 0 && proposalState.desconto_valor > 0 && (
                     <div className="flex justify-between text-sm px-1">
                       <span className="text-muted-foreground print:text-[#64748b]">Subtotal</span>
                       <span className="text-foreground print:text-[#111827] whitespace-nowrap">{formatBRL(subtotalItems)}</span>
                     </div>
                   )}
-                  {proposal.desconto_valor > 0 && (
+                  {proposalState.desconto_valor > 0 && (
                     <div className="flex justify-between text-sm px-1">
                       <span className="text-muted-foreground print:text-[#64748b]">
-                        Desconto ({proposal.desconto_valor}{proposal.desconto_tipo === "%" ? "%" : " R$"})
+                        Desconto ({proposalState.desconto_valor}{proposalState.desconto_tipo === "%" ? "%" : " R$"})
                       </span>
                       <span className="text-destructive print:text-red-600 whitespace-nowrap">−{formatBRL(descontoReais)}</span>
                     </div>
@@ -429,7 +405,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   <div className="border-t border-border/30 print:border-[#e2e8f0] pt-3 mt-1">
                     <div className="flex justify-between items-center px-5 py-4 rounded-xl bg-accent/10 border border-accent/20 print:bg-white print:border-[#e2e8f0]">
                       <span className="font-semibold text-sm text-muted-foreground print:text-[#374151]">
-                        {proposal.tipo_proposta === "Recorrente" ? "Valor Mensal" : "Valor Total"}
+                        {proposalState.tipo_proposta === "Recorrente" ? "Valor Mensal" : "Valor Total"}
                       </span>
                       <span className="text-2xl font-heading font-bold text-accent print:text-black whitespace-nowrap">
                         {formatBRL(total)}
@@ -442,13 +418,13 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               {/* ══════════════════════════════════════
                   OBSERVAÇÕES / TERMOS
               ══════════════════════════════════════ */}
-              {proposal.observacoes && proposal.observacoes !== "<p><br></p>" && (
+              {proposalState.observacoes && proposalState.observacoes !== "<p><br></p>" && (
                 <div className="space-y-2 mb-6" style={{ pageBreakInside: "avoid" }}>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest print:text-gray-500">
-                    {proposal.metodo_pagamento ? `Forma de Pagamento: ${proposal.metodo_pagamento} · ` : ""}Observações e Termos
+                    {proposalState.metodo_pagamento ? `Forma de Pagamento: ${proposalState.metodo_pagamento} · ` : ""}Observações e Termos
                   </p>
                   <div className="text-xs text-muted-foreground print:text-gray-700 bg-secondary/20 print:bg-gray-50 rounded-xl p-4 border border-border/30 print:border-gray-200">
-                    <div dangerouslySetInnerHTML={{ __html: proposal.observacoes }} />
+                    <div dangerouslySetInnerHTML={{ __html: proposalState.observacoes }} />
                   </div>
                 </div>
               )}
@@ -464,14 +440,23 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
         </div>
       </div>
 
-      {showContasModal && (
-        <ContasReceberModal
-          proposal={proposal}
+      {showFinanceiroModal && (
+        <GerarFinanceiroModal
+          proposal={proposalState}
           items={items}
           client={client}
           tenantId={tenantId}
-          onClose={() => setShowContasModal(false)}
-          onDone={() => {}}
+          onClose={() => setShowFinanceiroModal(false)}
+          onDone={() => setProposalState(p => ({ ...p, financeiro_gerado: true }))}
+        />
+      )}
+
+      {showEmailModal && (
+        <EnviarEmailModal
+          proposal={proposalState}
+          client={client}
+          tenant={tenant}
+          onClose={() => setShowEmailModal(false)}
         />
       )}
     </>

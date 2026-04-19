@@ -69,6 +69,10 @@
       ],
       "description": "M\u00e9todo de pagamento (apenas Recorrente)"
     },
+    "forma_pagamento": {
+      "type": "string",
+      "description": "Forma de pagamento livre (ex: Pix, Boleto, A Combinar)"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -78,6 +82,11 @@
       ],
       "default": "Pendente",
       "description": "Status atual da proposta"
+    },
+    "financeiro_gerado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se as contas a receber j\u00e1 foram geradas para esta proposta"
     },
     "tenant_id": {
       "type": "string",
