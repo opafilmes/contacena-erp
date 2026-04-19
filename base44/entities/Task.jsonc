@@ -66,6 +66,10 @@
       "type": "string",
       "description": "ID da Tarefa Mestre (self-reference)"
     },
+    "recurrence_group_id": {
+      "type": "string",
+      "description": "ID do grupo de recorr\u00eancia (igual para todas as ocorr\u00eancias da mesma s\u00e9rie)"
+    },
     "inquilino_id": {
       "type": "string",
       "description": "ID do Tenant"
