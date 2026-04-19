@@ -1,53 +1,94 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import Stripe from 'npm:stripe@14';
+
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
 Deno.serve(async (req) => {
-  // Only accept POST
   if (req.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
-  const body = await req.json();
+  const body = await req.text();
+  const sig  = req.headers.get('stripe-signature');
+  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+
+  let event;
+  try {
+    event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+  } catch (err) {
+    return Response.json({ error: `Webhook signature invalid: ${err.message}` }, { status: 400 });
+  }
+
   const base44 = createClientFromRequest(req);
 
-  // Validate shared secret to ensure this is a trusted source
-  const secret = req.headers.get('x-webhook-secret');
-  const expectedSecret = Deno.env.get('BILLING_WEBHOOK_SECRET');
-  if (expectedSecret && secret !== expectedSecret) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Helper to find tenant by stripe_customer_id
+  const getTenant = async (customerId) => {
+    const all = await base44.asServiceRole.entities.Tenant.filter({ stripe_customer_id: customerId });
+    return all?.[0] || null;
+  };
 
-  const { event_type, tenant_id, plan_tier, stripe_customer_id } = body;
+  const { type, data } = event;
 
-  if (!tenant_id) {
-    return Response.json({ error: 'Missing tenant_id' }, { status: 400 });
-  }
+  if (type === 'checkout.session.completed') {
+    const session = data.object;
+    const tenantId  = session.metadata?.tenant_id;
+    const planTier  = session.metadata?.plan_tier;
+    const customerId = session.customer;
 
-  const validEvents = ['payment_success', 'subscription_updated', 'subscription_canceled', 'payment_failed'];
-  if (!validEvents.includes(event_type)) {
-    return Response.json({ message: 'Event ignored' }, { status: 200 });
-  }
+    if (!tenantId) return Response.json({ message: 'No tenant_id in metadata' });
 
-  const tenants = await base44.asServiceRole.entities.Tenant.filter({ id: tenant_id });
-  if (!tenants?.[0]) {
-    return Response.json({ error: 'Tenant not found' }, { status: 404 });
-  }
-
-  const tenant = tenants[0];
-  let updatePayload = {};
-
-  if (event_type === 'payment_success' || event_type === 'subscription_updated') {
-    updatePayload = {
-      plan_tier: plan_tier || tenant.plan_tier,
+    await base44.asServiceRole.entities.Tenant.update(tenantId, {
+      stripe_customer_id:  customerId,
+      plan_tier:           planTier || 'Essencial',
       subscription_status: 'Active',
-    };
-    if (stripe_customer_id) updatePayload.stripe_customer_id = stripe_customer_id;
-  } else if (event_type === 'subscription_canceled') {
-    updatePayload = { subscription_status: 'Canceled' };
-  } else if (event_type === 'payment_failed') {
-    updatePayload = { subscription_status: 'Past_Due' };
+    });
   }
 
-  await base44.asServiceRole.entities.Tenant.update(tenant.id, updatePayload);
+  else if (type === 'invoice.paid') {
+    const invoice    = data.object;
+    const customerId = invoice.customer;
+    const tenant     = await getTenant(customerId);
+    if (tenant) {
+      await base44.asServiceRole.entities.Tenant.update(tenant.id, {
+        subscription_status: 'Active',
+      });
+    }
+  }
 
-  return Response.json({ success: true, updated: updatePayload });
+  else if (type === 'invoice.payment_failed') {
+    const invoice    = data.object;
+    const customerId = invoice.customer;
+    const tenant     = await getTenant(customerId);
+    if (tenant) {
+      await base44.asServiceRole.entities.Tenant.update(tenant.id, {
+        subscription_status: 'Past_Due',
+      });
+    }
+  }
+
+  else if (type === 'customer.subscription.updated') {
+    const sub        = data.object;
+    const customerId = sub.customer;
+    const tenant     = await getTenant(customerId);
+    if (tenant) {
+      const status = sub.status === 'active' ? 'Active'
+                   : sub.status === 'past_due' ? 'Past_Due'
+                   : sub.status === 'canceled' ? 'Canceled'
+                   : tenant.subscription_status;
+      await base44.asServiceRole.entities.Tenant.update(tenant.id, { subscription_status: status });
+    }
+  }
+
+  else if (type === 'customer.subscription.deleted') {
+    const sub        = data.object;
+    const customerId = sub.customer;
+    const tenant     = await getTenant(customerId);
+    if (tenant) {
+      await base44.asServiceRole.entities.Tenant.update(tenant.id, {
+        subscription_status: 'Canceled',
+      });
+    }
+  }
+
+  return Response.json({ received: true });
 });
