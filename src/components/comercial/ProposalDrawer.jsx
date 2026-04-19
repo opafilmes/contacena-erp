@@ -13,8 +13,11 @@ import ClientDrawer from "@/components/cadastros/ClientDrawer";
 
 const QUILL_MODULES = { toolbar: [["bold", "italic", "underline"], [{ list: "bullet" }], ["link"], ["clean"]] };
 
-const BLANK_FORM = { titulo: "", client_id: "", tipo_proposta: "Projeto", validade: "", status: "Pendente" };
-const BLANK_ITEM = () => ({ _key: Date.now() + Math.random(), titulo: "", quantidade: 1, valor_unitario: 0, descricao_detalhada: "", expanded: false });
+// 1. Adicionado o forma_pagamento no formulário em branco
+const BLANK_FORM = { titulo: "", client_id: "", tipo_proposta: "Projeto", validade: "", status: "Pendente", forma_pagamento: "A Combinar" };
+
+// 2. Alterado expanded para TRUE por padrão
+const BLANK_ITEM = () => ({ _key: Date.now() + Math.random(), titulo: "", quantidade: 1, valor_unitario: 0, descricao_detalhada: "", expanded: true });
 
 function formatBRLInput(num) {
   return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -41,6 +44,7 @@ export default function ProposalDrawer({ open, onClose, record, tenantId, client
         tipo_proposta: record.tipo_proposta || "Projeto",
         validade: record.validade || "",
         status: record.status || "Pendente",
+        forma_pagamento: record.forma_pagamento || "A Combinar", // Puxa do banco se existir
       });
       // Load existing items
       loadItems(record.id);
@@ -59,7 +63,7 @@ export default function ProposalDrawer({ open, onClose, record, tenantId, client
       quantidade: it.quantidade || 1,
       valor_unitario: it.valor_unitario || 0,
       descricao_detalhada: it.descricao_detalhada || "",
-      expanded: false,
+      expanded: true, // 3. Itens que já vem do banco também abrem expandidos
     })));
   };
 
@@ -72,16 +76,14 @@ export default function ProposalDrawer({ open, onClose, record, tenantId, client
   const valorTotal = items.reduce((acc, i) => acc + (Number(i.quantidade) || 0) * (Number(i.valor_unitario) || 0), 0);
 
   const handleClientSaved = async () => {
-    // Reload clients and select the newest one
     const updated = await base44.entities.Client.filter({ tenant_id: tenantId });
     setClients(updated);
-    // Select the most recently created client
     if (updated.length > 0) {
       const newest = updated.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
       setForm(f => ({ ...f, client_id: newest.id }));
     }
     setClientDrawerOpen(false);
-    onSaved(); // refresh parent
+    onSaved(); 
   };
 
   const handleSave = async () => {
@@ -94,6 +96,7 @@ export default function ProposalDrawer({ open, onClose, record, tenantId, client
       tipo_proposta: form.tipo_proposta,
       validade: form.validade || undefined,
       status: form.status,
+      forma_pagamento: form.forma_pagamento || undefined, // 4. Salva a forma de pagamento no banco
       valor_total: valorTotal || undefined,
       tenant_id: tenantId,
     };
@@ -184,17 +187,34 @@ export default function ProposalDrawer({ open, onClose, record, tenantId, client
               </div>
             </div>
 
-            {/* Status */}
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pendente">Pendente</SelectItem>
-                  <SelectItem value="Aprovada">Aprovada</SelectItem>
-                  <SelectItem value="Recusada">Recusada</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Status + Forma de Pagamento */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Aprovada">Aprovada</SelectItem>
+                    <SelectItem value="Recusada">Recusada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* 5. Novo Campo Forma de Pagamento adicionado aqui */}
+              <div className="space-y-1.5">
+                <Label>Forma de Pagamento</Label>
+                <Select value={form.forma_pagamento} onValueChange={v => setForm(f => ({ ...f, forma_pagamento: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pix">Pix (À vista)</SelectItem>
+                    <SelectItem value="Boleto Bancário">Boleto Bancário</SelectItem>
+                    <SelectItem value="Transferência Bancária">Transferência (TED/DOC)</SelectItem>
+                    <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                    <SelectItem value="A Combinar">A Combinar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* ── ITENS DA PROPOSTA ── */}
@@ -240,7 +260,7 @@ export default function ProposalDrawer({ open, onClose, record, tenantId, client
                         onChange={e => updateItem(item._key, "valor_unitario", e.target.value)}
                         step="0.01"
                       />
-                      <button type="button" onClick={() => toggleExpand(item._key)} className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors">
+                      <button type="button" onClick={() => toggleExpand(item._key)} className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors" title="Mostrar/Ocultar Detalhes">
                         {item.expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
                       <button type="button" onClick={() => removeItem(item._key)} className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors">
