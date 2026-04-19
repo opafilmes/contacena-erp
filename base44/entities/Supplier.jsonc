@@ -6,6 +6,14 @@
       "type": "string",
       "description": "Nome do fornecedor"
     },
+    "razao_social": {
+      "type": "string",
+      "description": "Raz\u00e3o social"
+    },
+    "cnpj_cpf": {
+      "type": "string",
+      "description": "CNPJ ou CPF do fornecedor"
+    },
     "categoria": {
       "type": "string",
       "description": "Categoria do fornecedor (ex: Equipamento, Loca\u00e7\u00e3o, Servi\u00e7o)"
@@ -13,6 +21,32 @@
     "telefone": {
       "type": "string",
       "description": "Telefone de contato do fornecedor"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email de contato"
+    },
+    "contato": {
+      "type": "string",
+      "description": "Nome do contato principal"
+    },
+    "logradouro": {
+      "type": "string"
+    },
+    "numero": {
+      "type": "string"
+    },
+    "bairro": {
+      "type": "string"
+    },
+    "cidade": {
+      "type": "string"
+    },
+    "uf": {
+      "type": "string"
+    },
+    "cep": {
+      "type": "string"
     },
     "tenant_id": {
       "type": "string",
