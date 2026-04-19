@@ -13,10 +13,10 @@ export default function MeuPerfil() {
   const fileRef = useRef(null);
 
   const [form, setForm] = useState({
-    nome:       usuario?.nome       || "",
-    foto_perfil: usuario?.foto_perfil || "",
+    nome: usuario?.nome || "",
+    foto_perfil: usuario?.foto_perfil || ""
   });
-  const [saving, setSaving]     = useState(false);
+  const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const handlePhotoUpload = async (e) => {
@@ -24,7 +24,7 @@ export default function MeuPerfil() {
     if (!file) return;
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    setForm(f => ({ ...f, foto_perfil: file_url }));
+    setForm((f) => ({ ...f, foto_perfil: file_url }));
     setUploading(false);
     toast.success("Foto enviada!");
   };
@@ -32,20 +32,20 @@ export default function MeuPerfil() {
   const handleSave = async () => {
     if (!usuario?.id) return;
     setSaving(true);
-    
+
     try {
       // 1. Salva no banco de dados
       await base44.entities.Usuarios.update(usuario.id, form);
-      
+
       // 2. Dispara o aviso verde
       toast.success("Perfil atualizado com sucesso!");
-      
+
       // 3. Aguarda 1 segundo para o usuário ler o aviso e recarrega a página 
       // para que o nome novo apareça no topo da tela e no menu.
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-      
+
     } catch (error) {
       // Se algo der errado, dispara o aviso vermelho
       toast.error("Erro ao atualizar o perfil. Tente novamente.");
@@ -55,9 +55,9 @@ export default function MeuPerfil() {
     }
   };
 
-  const initials = usuario?.nome
-    ? usuario.nome.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
-    : "U";
+  const initials = usuario?.nome ?
+  usuario.nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() :
+  "U";
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
@@ -72,34 +72,34 @@ export default function MeuPerfil() {
         {/* Avatar upload */}
         <div className="flex flex-col items-center gap-3 pb-4 border-b border-border/30">
           <div className="relative">
-            {form.foto_perfil ? (
-              <img
-                src={form.foto_perfil}
-                alt="Foto de perfil"
-                className="w-24 h-24 rounded-full object-cover border-2 border-primary/30"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary font-heading font-bold text-2xl border-2 border-primary/30">
+            {form.foto_perfil ?
+            <img
+              src={form.foto_perfil}
+              alt="Foto de perfil"
+              className="w-24 h-24 rounded-full object-cover border-2 border-primary/30" /> :
+
+
+            <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary font-heading font-bold text-2xl border-2 border-primary/30">
                 {initials}
               </div>
-            )}
+            }
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white shadow-lg hover:bg-accent/90 transition-colors"
-            >
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white shadow-lg hover:bg-accent/90 transition-colors">
+              
               {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
             </button>
           </div>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-          <p className="text-xs text-muted-foreground">
-            Clique no ícone para alterar. Foto de uso exclusivo do sistema — não aparece em PDFs.
+          <p className="text-xs text-muted-foreground">Clique no ícone para alterar.
+
           </p>
         </div>
 
         <div className="space-y-2">
           <Label>Nome</Label>
-          <Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Seu nome completo" />
+          <Input value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} placeholder="Seu nome completo" />
         </div>
         <div className="space-y-2">
           <Label>Email</Label>
@@ -115,6 +115,6 @@ export default function MeuPerfil() {
           {saving ? "Salvando..." : "Salvar Perfil"}
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 }
