@@ -10,6 +10,20 @@
       "type": "string",
       "description": "ID do cliente (Client) relacionado"
     },
+    "tipo_proposta": {
+      "type": "string",
+      "enum": [
+        "Projeto",
+        "Recorrente"
+      ],
+      "default": "Projeto",
+      "description": "Tipo da proposta"
+    },
+    "validade": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade da proposta"
+    },
     "valor_total": {
       "type": "number",
       "description": "Valor total da proposta em BRL"

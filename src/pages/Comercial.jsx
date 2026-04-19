@@ -3,7 +3,8 @@ import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, FileText, Handshake, TrendingUp, Clock, CheckCircle2, XCircle, Eye } from "lucide-react";
+import ProposalView from "@/components/comercial/ProposalView";
 import { motion } from "framer-motion";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -57,6 +58,7 @@ export default function Comercial() {
   const [tab, setTab] = useState("propostas");
   const [proposalDrawer, setProposalDrawer] = useState({ open: false, record: null });
   const [contractDrawer, setContractDrawer] = useState({ open: false, record: null });
+  const [viewingProposal, setViewingProposal] = useState(null);
 
   const loadAll = useCallback(async () => {
     if (!tenantId) return;
@@ -172,11 +174,14 @@ export default function Comercial() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2 justify-end">
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setProposalDrawer({ open: true, record: p })}>Editar</Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProposal(p)}>
-                              <XCircle className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
+                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setViewingProposal(p)}>
+                               <Eye className="w-3 h-3" /> Ver
+                             </Button>
+                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setProposalDrawer({ open: true, record: p })}>Editar</Button>
+                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProposal(p)}>
+                               <XCircle className="w-3.5 h-3.5" />
+                             </Button>
+                           </div>
                         </td>
                       </tr>
                     ))}
@@ -232,6 +237,16 @@ export default function Comercial() {
         clients={clients}
         onSaved={loadAll}
       />
+
+      {viewingProposal && (
+        <ProposalView
+          proposal={viewingProposal}
+          clients={clients}
+          tenant={tenant}
+          onClose={() => setViewingProposal(null)}
+          onApproved={loadAll}
+        />
+      )}
 
       <ContractDrawer
         open={contractDrawer.open}

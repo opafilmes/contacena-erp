@@ -1,0 +1,40 @@
+{
+  "name": "ProposalItem",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do item"
+    },
+    "descricao_detalhada": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada em Rich Text (HTML)"
+    },
+    "quantidade": {
+      "type": "number",
+      "default": 1,
+      "description": "Quantidade"
+    },
+    "valor_unitario": {
+      "type": "number",
+      "description": "Valor unit\u00e1rio em BRL"
+    },
+    "valor_total": {
+      "type": "number",
+      "description": "Valor total calculado (qtd \u00d7 unit)"
+    },
+    "proposal_id": {
+      "type": "string",
+      "description": "ID da Proposta relacionada"
+    },
+    "inquilino_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    }
+  },
+  "required": [
+    "titulo",
+    "proposal_id",
+    "inquilino_id"
+  ]
+}
