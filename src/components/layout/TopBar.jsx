@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, Settings, User, Database, Users } from "lucide-react";
+import { LogOut, Settings, User, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   DropdownMenu,
@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
+import CadastrosGlobal from "./CadastrosGlobal";
 
-export default function TopBar({ tenant, usuario }) {
+export default function TopBar({ tenant, usuario, tenantId }) {
   const handleLogout = () => {
     base44.auth.logout();
   };
@@ -49,6 +50,10 @@ export default function TopBar({ tenant, usuario }) {
           </span>
         </Link>
 
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          <CadastrosGlobal tenantId={tenantId} />
+
         {/* Avatar Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -83,12 +88,6 @@ export default function TopBar({ tenant, usuario }) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/cadastros" className="cursor-pointer">
-                <Database className="mr-2 h-4 w-4" />
-                Cadastros Base
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
               <Link to="/meu-perfil" className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
                 Meu Perfil
@@ -101,6 +100,7 @@ export default function TopBar({ tenant, usuario }) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </header>
 

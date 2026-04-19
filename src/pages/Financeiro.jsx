@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import BackButton from "@/components/shared/BackButton";
 import DataTable from "@/components/shared/DataTable";
 import StatusPill from "@/components/financeiro/StatusPill";
@@ -19,7 +19,12 @@ import OFXImport from "@/components/financeiro/OFXImport";
 import { formatBRL } from "@/utils/format";
 import { TrendingUp, TrendingDown, ArrowUpCircle, ArrowDownCircle, Wallet } from "lucide-react";
 
-const EMPTY_FILTERS = { dateFrom: "", dateTo: "", accountId: "", categoryId: "", status: "" };
+const now = new Date();
+const MONTH_FILTERS = {
+  dateFrom: format(startOfMonth(now), "yyyy-MM-dd"),
+  dateTo: format(endOfMonth(now), "yyyy-MM-dd"),
+  tipo: "", accountId: "", categoryId: "", status: ""
+};
 
 function SummaryCard({ label, value, icon: Icon, colorClass }) {
   return (
@@ -46,7 +51,7 @@ export default function Financeiro() {
   const [clients, setClients] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [jobs, setJobs] = useState([]);
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [filters, setFilters] = useState(MONTH_FILTERS);
 
   const [receivableDrawer, setReceivableDrawer] = useState({ open: false, record: null });
   const [payableDrawer, setPayableDrawer] = useState({ open: false, record: null });
@@ -72,22 +77,24 @@ export default function Financeiro() {
   useEffect(() => { loadAll(); }, [loadAll]);
 
   // Reactive dashboard calculations based on active filters
-  const filteredReceivables = useMemo(() => {
-    let r = receivables;
+  const applyCommonFilters = (list) => {
+    let r = list;
     if (filters.dateFrom) r = r.filter(e => e.data_vencimento && e.data_vencimento >= filters.dateFrom);
     if (filters.dateTo)   r = r.filter(e => e.data_vencimento && e.data_vencimento <= filters.dateTo);
     if (filters.categoryId) r = r.filter(e => e.category_id === filters.categoryId);
     if (filters.status) r = r.filter(e => e.status === filters.status);
+    if (filters.accountId) r = r.filter(e => e.bank_account_id === filters.accountId);
     return r;
+  };
+
+  const filteredReceivables = useMemo(() => {
+    if (filters.tipo === "Despesa") return [];
+    return applyCommonFilters(receivables);
   }, [receivables, filters]);
 
   const filteredPayables = useMemo(() => {
-    let p = payables;
-    if (filters.dateFrom) p = p.filter(e => e.data_vencimento && e.data_vencimento >= filters.dateFrom);
-    if (filters.dateTo)   p = p.filter(e => e.data_vencimento && e.data_vencimento <= filters.dateTo);
-    if (filters.categoryId) p = p.filter(e => e.category_id === filters.categoryId);
-    if (filters.status) p = p.filter(e => e.status === filters.status);
-    return p;
+    if (filters.tipo === "Receita") return [];
+    return applyCommonFilters(payables);
   }, [payables, filters]);
 
   const totalReceber = useMemo(() =>
@@ -261,7 +268,8 @@ export default function Financeiro() {
         categories={categories}
         clients={clients}
         jobs={jobs}
-        onSaved={() => load("AccountReceivable", setReceivables)}
+        bankAccounts={bankAccounts}
+        onSaved={() => { load("AccountReceivable", setReceivables); load("Client", setClients, "tenant_id"); load("FinancialCategory", setCategories); }}
       />
       <AccountPayableDrawer
         open={payableDrawer.open}
@@ -270,7 +278,8 @@ export default function Financeiro() {
         tenantId={tenantId}
         categories={categories}
         suppliers={suppliers}
-        onSaved={() => load("AccountPayable", setPayables)}
+        bankAccounts={bankAccounts}
+        onSaved={() => { load("AccountPayable", setPayables); load("Supplier", setSuppliers, "tenant_id"); load("FinancialCategory", setCategories); }}
       />
       <BankAccountDrawer
         open={bankDrawer.open}
