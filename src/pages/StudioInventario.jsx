@@ -57,7 +57,7 @@ export default function StudioInventario() {
 
         <div className="flex items-center justify-between mt-4 mb-8">
           <div>
-            <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">🎥 Inventário de Equipamentos</h1>
+            <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">🎥 Equipamentos</h1>
             <p className="text-muted-foreground text-sm mt-1">Ativos, reservas e controle de conflitos</p>
           </div>
           <div className="flex gap-2">
