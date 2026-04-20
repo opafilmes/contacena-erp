@@ -26,9 +26,34 @@ import StudioAtividades from './pages/StudioAtividades';
 import StudioInventario from './pages/StudioInventario';
 import GestaoEquipe from './pages/GestaoEquipe';
 import SuperAdmin from './pages/SuperAdmin';
+import { useNavigate } from 'react-router-dom';
+import AuthRedirect from './components/AuthRedirect';
+
+const RootGuard = ({ isAuthenticated, isLoading }) => {
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: "linear-gradient(145deg, #0f0f1a 0%, #1a1228 50%, #0d1117 100%)" }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin"></div>
+          <span className="text-white/40 text-xs font-medium tracking-widest uppercase">ContaCena ERP</span>
+        </div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? null : <LandingPage />;
+};
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -56,7 +81,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<RootGuard isAuthenticated={isAuthenticated} isLoading={isLoadingAuth || isLoadingPublicSettings} />} />
       <Route path="/signup" element={<SignupFlow />} />
       <Route path="/trial-expirado" element={<TrialExpirado />} />
       <Route element={<AppLayout />}>
@@ -72,7 +97,7 @@ const AuthenticatedApp = () => {
         <Route path="/financeiro" element={<RoleGuard blockedRoles={["Producao"]}><Financeiro /></RoleGuard>} />
         <Route path="/gestao-equipe" element={<GestaoEquipe />} />
       </Route>
-      <Route path="/super-admin" element={<SuperAdmin />} />
+      <Route path="/super-admin" element={<AuthRedirect />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

@@ -1,6 +1,7 @@
 import React from "react";
 import { LogOut, Settings, User, Users, Shield } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,13 @@ import { Link } from "react-router-dom";
 import CadastrosGlobal from "./CadastrosGlobal";
 
 export default function TopBar({ tenant, usuario, tenantId }) {
+  const navigate = useNavigate();
+  
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    navigate('/login');
+  };
+
   const handleLogout = () => {
     base44.auth.logout();
   };
@@ -31,7 +39,7 @@ export default function TopBar({ tenant, usuario, tenantId }) {
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="bg-transparent px-6 flex items-center justify-between h-full">
         {/* Logo / Tenant */}
-        <Link to="/login" className="flex items-center gap-3">
+        <button onClick={handleLogoClick} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           {tenant?.logo ?
             <img
               src={tenant.logo}
@@ -48,7 +56,7 @@ export default function TopBar({ tenant, usuario, tenantId }) {
           <span className="font-heading font-semibold text-foreground text-lg tracking-tight">
             {tenant?.nome_fantasia || "ConTaCena"}
           </span>
-        </Link>
+        </button>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
