@@ -185,19 +185,6 @@ export default function BookingDrawer({ open, record, inquilinoId, equipments, j
             </div>
           </div>
 
-          {/* Projeto */}
-          <div className="space-y-1.5">
-            <Label>Projeto</Label>
-            <Select value={form.job_id} onValueChange={v => setForm(f => ({ ...f, job_id: v }))}>
-              <SelectTrigger><SelectValue placeholder="Selecionar projeto..." /></SelectTrigger>
-              <SelectContent>
-                {clientJobs.map(j => (
-                  <SelectItem key={j.id} value={j.id}>{j.titulo}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Datas */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
