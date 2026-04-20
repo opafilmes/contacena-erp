@@ -108,16 +108,14 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-           <div className="space-y-1.5">
-  <Label>Quantidade Total</Label>
-  <Input 
-    type="number" 
-    min="1"
-    value={form.quantidade || form.quantidade_total || 1} 
-    onChange={(e) => setForm({ ...form, quantidade: Number(e.target.value) })} 
-    className="w-full"
-  />
-</div>
+            <div className="space-y-1.5">
+              <Label>Quantidade Total</Label>
+              <div className="flex items-center border border-input rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  className="px-2 h-9 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  onClick={() => setForm(f => ({ ...f, qtd_total: Math.max(1, (f.qtd_total || 1) - 1) }))}
+                >
                   <ChevronDown className="w-4 h-4" />
                 </button>
                 <input
