@@ -27,7 +27,6 @@ import GestaoEquipe from './pages/GestaoEquipe';
 import SuperAdmin from './pages/SuperAdmin';
 import { useNavigate } from 'react-router-dom';
 import AuthRedirect from './components/AuthRedirect';
-import OnboardingGuard from './components/OnboardingGuard';
 
 const RootGuard = ({ isAuthenticated, isLoading }) => {
   const navigate = useNavigate();
@@ -80,7 +79,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={<RootGuard isLoading={isLoadingAuth || isLoadingPublicSettings} />} />
-      <Route element={<OnboardingGuard><AppLayout /></OnboardingGuard>}>
+      <Route element={<AppLayout />}>
         <Route path="/login" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import TopBar from "./TopBar";
-import EscolhaPlano from "@/pages/EscolhaPlano";
-import TrialExpirado from "@/pages/TrialExpirado";
 
 export default function AppLayout() {
   const [tenant, setTenant] = useState(null);
@@ -43,18 +41,6 @@ export default function AppLayout() {
         </div>
       </div>
     );
-  }
-
-  // Paywall: trial expired
-  const isTrialExpired = (() => {
-    if (!tenant) return false;
-    if (tenant.subscription_status !== 'Trial') return false;
-    if (!tenant.trial_ends_at) return false;
-    return new Date() > new Date(tenant.trial_ends_at);
-  })();
-
-  if (isTrialExpired) {
-    return <TrialExpirado tenant={tenant} />;
   }
 
   return (
