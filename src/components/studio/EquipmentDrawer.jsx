@@ -110,7 +110,12 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Quantidade Total</Label>
-              <Input type="number" placeholder="1" value={form.qtd_total} onChange={e => setForm(f => ({ ...f, qtd_total: e.target.value }))} />
+             <Input 
+  type="number" 
+  min="1"
+  value={form.quantidade} 
+  onChange={(e) => setForm({ ...form, quantidade: Number(e.target.value) })} 
+/>
             </div>
             <div className="space-y-1.5">
               <Label>Valor de Compra (R$)</Label>
