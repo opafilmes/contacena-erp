@@ -27,24 +27,29 @@ export default function ContractViewModal({ contract, client, tenant, onClose })
 
         {/* Conteúdo imprimível */}
         <div className="p-8" id="print-container">
-          {/* Cabeçalho do documento */}
-          <div className="flex items-start justify-between mb-6 pb-4 border-b border-gray-200">
+          {/* Cabeçalho do documento — dados da empresa */}
+          <div className="flex items-start gap-3 pb-4 border-b border-border/30 print:border-gray-200">
             <div>
               {tenant?.logo && (
                 <img src={tenant.logo} alt="logo" style={{ maxHeight: 50, maxWidth: 140 }} className="object-contain mb-1" />
               )}
               <p className="font-bold text-sm print:text-black">{tenant?.razao_social || tenant?.nome_fantasia}</p>
               {tenant?.cnpj && <p className="text-xs text-muted-foreground print:text-gray-600">CNPJ: {tenant.cnpj}</p>}
+              {tenant?.email_corporativo && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant.email_corporativo}</p>}
+              {tenant?.telefone && <p className="text-xs text-muted-foreground print:text-gray-600">{tenant.telefone}</p>}
             </div>
-            <div className="text-right">
-              <p className="font-heading font-bold text-lg uppercase tracking-wider print:text-black">{contract.titulo}</p>
-              {contract.data_inicio && (
-                <p className="text-xs text-muted-foreground print:text-gray-500 mt-1">
-                  Início: {format(new Date(contract.data_inicio), "dd/MM/yyyy")}
-                </p>
-              )}
-              {client && <p className="text-xs text-muted-foreground print:text-gray-500">Cliente: {client.nome_fantasia}</p>}
-            </div>
+          </div>
+
+          {/* Título do contrato — centralizado abaixo do cabeçalho */}
+          <div className="text-center mt-8 mb-8">
+            <h1 className="font-heading font-bold text-xl uppercase tracking-widest text-foreground print:text-black">
+              {contract.titulo}
+            </h1>
+            {contract.data_inicio && (
+              <p className="text-xs text-muted-foreground print:text-gray-500 mt-1">
+                Início: {format(new Date(contract.data_inicio), "dd/MM/yyyy")}
+              </p>
+            )}
           </div>
 
           {/* Corpo do contrato */}
