@@ -149,6 +149,38 @@
 }
 
 @media print {
+  /* ── DARK MODE OVERRIDE: força cores para impressão ── */
+  body, #root, main {
+    background-color: white !important;
+    color: black !important;
+  }
+  #print-container,
+  #print-container * {
+    color: black !important;
+    background-color: white !important;
+    border-color: #d1d5db !important;
+  }
+  #print-container table,
+  #print-container th,
+  #print-container td {
+    border-color: #000 !important;
+  }
+  /* Libera overflow/height para quebra natural de páginas */
+  .overflow-hidden, .overflow-y-auto, .overflow-x-auto {
+    overflow: visible !important;
+  }
+  [class*="h-screen"], [class*="max-h-screen"] {
+    height: auto !important;
+    max-height: none !important;
+  }
+  /* Oculta interface não-essencial */
+  .no-print,
+  nav, aside, header,
+  [data-sidebar],
+  [role="navigation"] {
+    display: none !important;
+  }
+
   /* ── Rodapé fixo na impressão ── */
   .print-footer-fixed {
     position: fixed !important;

@@ -173,6 +173,7 @@ export default function StudioInventario() {
                   bookings={bookings}
                   equipments={equipments}
                   clients={clients}
+                  tenant={tenant}
                   onEdit={bk => setBkDrawer({ open: true, record: bk })}
                   onDelete={handleDeleteBk}
                   onDevolver={bk => setDevolucao({ open: true, booking: bk })}

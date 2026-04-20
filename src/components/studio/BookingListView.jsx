@@ -5,15 +5,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, CheckCircle2, Search } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Pencil, Trash2, CheckCircle2, Search, Printer } from "lucide-react";
 import BookingStatusBadge from "./BookingStatusBadge";
+import BookingChecklistPrint from "./BookingChecklistPrint";
 
 const fmtDt = v => v ? format(new Date(v), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
 
-export default function BookingListView({ bookings, equipments, clients, onEdit, onDelete, onDevolver }) {
+export default function BookingListView({ bookings, equipments, clients, tenant, onEdit, onDelete, onDevolver }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterClient, setFilterClient] = useState("todos");
+  const [checklistBooking, setChecklistBooking] = useState(null);
 
   const getEqNames = (b) => {
     const ids = b.equipment_ids?.length ? b.equipment_ids : b.equipment_id ? [b.equipment_id] : [];
@@ -98,17 +101,20 @@ export default function BookingListView({ bookings, equipments, clients, onEdit,
                   <td className="px-4 py-3"><BookingStatusBadge status={b.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
-                      {b.status !== "Concluída" && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-500/10" title="Devolver" onClick={() => onDevolver(b)}>
-                          <CheckCircle2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(b)}>
-                        <Pencil className="w-4 h-4" />
+                    {b.status !== "Concluída" && (
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-500/10" title="Devolver" onClick={() => onDevolver(b)}>
+                        <CheckCircle2 className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(b)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10" title="Imprimir Checklist" onClick={() => setChecklistBooking(b)}>
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(b)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(b)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                     </div>
                   </td>
                 </tr>
@@ -118,5 +124,18 @@ export default function BookingListView({ bookings, equipments, clients, onEdit,
         </div>
       )}
     </div>
+
+    {/* Checklist Print Dialog */}
+    <Dialog open={!!checklistBooking} onOpenChange={() => setChecklistBooking(null)}>
+      <DialogContent className="max-w-3xl bg-white text-black overflow-y-auto max-h-[90vh]">
+        <BookingChecklistPrint
+          booking={checklistBooking}
+          equipments={equipments}
+          clients={clients}
+          tenant={tenant}
+          onClose={() => setChecklistBooking(null)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
