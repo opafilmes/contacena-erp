@@ -71,14 +71,6 @@ export default function OnboardingEmpresa() {
         perm_studio_inventario: true,
       });
 
-      // Atualizar perfil do usuário com tenant_id de forma síncrona
-      await base44.auth.updateMe({
-        tenant_id: newTenant.id,
-      });
-
-      // Force refresh da instância de auth
-      await refreshUser();
-
       toast.success('Empresa criada com sucesso!');
       
       // Limpar cache de sessão antes do redirecionamento
@@ -92,11 +84,12 @@ export default function OnboardingEmpresa() {
         }
       });
 
-      // Forçar recarregamento completo da página (não apenas navegação)
-      // assign() limpa estado anterior e força novo acesso como primeiro carregamento
+      // Forçar recarregamento COMPLETO da página (não apenas navegação)
+      // window.location.reload() limpa TODOS os estados React e recarrega a aplicação do zero
+      // Isso força checkAppState() a ser executado novamente com o novo tenant_id
       setTimeout(() => {
-        window.location.assign('/login');
-      }, 1000);
+        window.location.reload();
+      }, 800);
     } catch (err) {
       console.error('Erro ao criar empresa:', err);
       setError(err.message || 'Erro ao criar empresa. Tente novamente.');
