@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import {
-  X, Printer, FileCheck2, DollarSign, CreditCard,
-  CheckCircle2, Loader2, Building2, Pencil, Mail, Ticket,
-  Link2, Send
+  X, Printer, FileCheck2, DollarSign,
+  CheckCircle2, Loader2, Building2, Pencil, Mail,
+  Link2
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -24,9 +24,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   const [approving, setApproving] = useState(false);
   const [showFinanceiroModal, setShowFinanceiroModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [gerandoBoletos, setGerandoBoletos] = useState(false);
   const [gerandoStripe, setGerandoStripe] = useState(false);
-  const [enviandoCarne, setEnviandoCarne] = useState(false);
   const [proposalState, setProposalState] = useState(proposal);
 
   const client = clients?.find(c => c.id === proposalState?.client_id);
@@ -66,30 +64,6 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   };
 
   const handlePrint = () => window.print();
-
-  const handleGerarBoletos = async () => {
-    if (!proposalState.financeiro_gerado) return;
-    setGerandoBoletos(true);
-    const contas = await base44.entities.AccountReceivable.filter({ inquilino_id: tenantId });
-    // Filtra as contas desta proposta pela descrição (não temos proposal_id direto no AccountReceivable)
-    const contasProposta = contas.filter(c =>
-      c.descricao?.includes(client?.nome_fantasia || proposalState.titulo || "")
-    );
-    if (contasProposta.length === 0) {
-      toast.info("Nenhuma conta a receber encontrada para esta proposta.");
-      setGerandoBoletos(false);
-      return;
-    }
-    toast.promise(
-      new Promise(res => setTimeout(res, 1500)),
-      {
-        loading: `Gerando boletos para ${contasProposta.length} parcela(s)...`,
-        success: `${contasProposta.length} boleto(s) gerado(s) com sucesso!`,
-        error: "Erro ao gerar boletos.",
-      }
-    );
-    setGerandoBoletos(false);
-  };
 
   const propNum = proposalState.numero_proposta ? `PROP-${proposalState.numero_proposta}` : `PROP-${proposalState.id?.slice(-4).toUpperCase()}`;
 
@@ -208,18 +182,6 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   {proposalState.financeiro_gerado ? "✅ Financeiro Gerado" : "💰 Gerar Financeiro"}
                 </Button>
 
-                {/* Gerar Boletos — desabilitado se financeiro não foi gerado */}
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2.5 text-sm"
-                  onClick={handleGerarBoletos}
-                  disabled={!proposalState.financeiro_gerado || gerandoBoletos}
-                  title={!proposalState.financeiro_gerado ? "Gere o financeiro primeiro para habilitar os boletos" : ""}
-                >
-                  {gerandoBoletos ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
-                  🎫 Gerar Boletos
-                </Button>
-
                 {/* Enviar por E-mail */}
                 <Button
                   variant="outline"
@@ -253,28 +215,6 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   >
                     {gerandoStripe ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
                     {gerandoStripe ? "Gerando..." : "⚡ Gerar Cobranças Stripe"}
-                  </Button>
-                )}
-
-                {/* Enviar Carnê */}
-                {proposalState.financeiro_gerado && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2.5 text-sm"
-                    disabled={enviandoCarne}
-                    onClick={async () => {
-                      setEnviandoCarne(true);
-                      const res = await base44.functions.invoke("enviarCarne", { proposalId: proposalState.id });
-                      if (res.data?.ok) {
-                        toast.success(`Carnê enviado para ${res.data.enviado_para}!`);
-                      } else {
-                        toast.error(res.data?.error || "Erro ao enviar carnê.");
-                      }
-                      setEnviandoCarne(false);
-                    }}
-                  >
-                    {enviandoCarne ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {enviandoCarne ? "Enviando..." : "📨 Enviar Carnê por E-mail"}
                   </Button>
                 )}
 
