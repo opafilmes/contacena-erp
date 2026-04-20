@@ -71,19 +71,32 @@ export default function OnboardingEmpresa() {
         perm_studio_inventario: true,
       });
 
+      // Atualizar perfil do usuário com tenant_id de forma síncrona
+      await base44.auth.updateMe({
+        tenant_id: newTenant.id,
+      });
+
+      // Force refresh da instância de auth
+      await refreshUser();
+
       toast.success('Empresa criada com sucesso!');
       
-      // Forçar refresh do usuário no contexto global
-      try {
-        await refreshUser();
-      } catch (refreshErr) {
-        console.error('Erro ao atualizar sessão:', refreshErr);
-      }
+      // Limpar cache de sessão antes do redirecionamento
+      const cacheKeys = ['tenant_id', 'company_data', 'user_tenant', 'onboarding_status'];
+      cacheKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        } catch (e) {
+          console.warn(`Could not clear cache key: ${key}`);
+        }
+      });
 
-      // Recarregar página completa para sincronizar tudo
+      // Forçar recarregamento completo da página (não apenas navegação)
+      // assign() limpa estado anterior e força novo acesso como primeiro carregamento
       setTimeout(() => {
-        window.location.href = '/login';
-      }, 1500);
+        window.location.assign('/login');
+      }, 1000);
     } catch (err) {
       console.error('Erro ao criar empresa:', err);
       setError(err.message || 'Erro ao criar empresa. Tente novamente.');
