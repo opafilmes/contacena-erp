@@ -35,12 +35,32 @@
         "Atrasado",
         "Aguardando Concilia\u00e7\u00e3o"
       ],
-      "default": "Pendente",
-      "description": "Status do recebimento"
+      "default": "Pendente"
     },
     "bank_account_id": {
       "type": "string",
       "description": "ID da conta banc\u00e1ria relacionada"
+    },
+    "stripe_payment_link": {
+      "type": "string",
+      "description": "URL do link de pagamento Stripe gerado"
+    },
+    "stripe_checkout_session_id": {
+      "type": "string",
+      "description": "ID da Checkout Session do Stripe"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "description": "ID do PaymentIntent do Stripe"
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data efetiva do pagamento"
+    },
+    "metodo_pagamento_recebido": {
+      "type": "string",
+      "description": "M\u00e9todo efetivamente utilizado: card, boleto ou pix"
     },
     "inquilino_id": {
       "type": "string",

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Building2, Users, Crown, Zap, Star, RefreshCw, Shield } from "lucide-react";
+import { Plus, Building2, Users, Crown, Zap, Star, RefreshCw, Shield, Percent, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +29,8 @@ export default function SuperAdmin() {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [spreadTaxa, setSpreadTaxa] = useState("");
+  const [savingSpread, setSavingSpread] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -44,6 +47,8 @@ export default function SuperAdmin() {
     ]);
     setTenants(t);
     setUsuarios(u);
+    // spread_taxa global: lê do primeiro tenant (o do super admin) ou padrão 2%
+    if (t.length > 0) setSpreadTaxa(String(t[0].spread_taxa ?? 2));
     setLoading(false);
   }, []);
 
@@ -103,6 +108,50 @@ export default function SuperAdmin() {
       </div>
 
       <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+        {/* ── Configuração Global de Spread ── */}
+        <div className="bg-card/40 border border-border/40 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-9 h-9 rounded-xl bg-violet-500/20 flex items-center justify-center">
+              <Percent className="w-4 h-4 text-violet-400" />
+            </div>
+            <div>
+              <p className="font-heading font-semibold text-foreground text-sm">Spread Global de Cobranças</p>
+              <p className="text-xs text-muted-foreground">Taxa aplicada sobre cada cobrança gerada pelos Tenants via Stripe Connect. Receita da plataforma.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-28">
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="20"
+                value={spreadTaxa}
+                onChange={e => setSpreadTaxa(e.target.value)}
+                className="pr-8 text-right"
+              />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
+            </div>
+            <Button
+              size="sm"
+              disabled={savingSpread}
+              onClick={async () => {
+                setSavingSpread(true);
+                // Aplica spread_taxa em todos os tenants
+                await Promise.all(tenants.map(t =>
+                  base44.entities.Tenant.update(t.id, { spread_taxa: Number(spreadTaxa) })
+                ));
+                setSavingSpread(false);
+                toast.success(`Spread de ${spreadTaxa}% aplicado a todos os tenants.`);
+              }}
+              className="gap-1.5 bg-violet-600 hover:bg-violet-500"
+            >
+              {savingSpread ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              Salvar
+            </Button>
+          </div>
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {SUMMARY.map((s, i) => (

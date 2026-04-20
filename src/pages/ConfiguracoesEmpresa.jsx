@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, CreditCard, ExternalLink, Zap, Star, Crown, Search, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, Save, CreditCard, ExternalLink, Zap, Star, Crown, Search, Loader2, Upload, Link2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,6 +56,7 @@ export default function ConfiguracoesEmpresa() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [stripeConnecting, setStripeConnecting] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -110,6 +111,33 @@ export default function ConfiguracoesEmpresa() {
     });
     toast.success("Configurações salvas com sucesso!");
     setSaving(false);
+  };
+
+  // Detecta retorno do onboarding Stripe Connect
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stripeStatus = params.get("stripe");
+    const tId = params.get("tenantId");
+    if (stripeStatus === "success" && tId) {
+      base44.functions.invoke("stripeConnectCallback", { tenantId: tId })
+        .then(res => {
+          if (res.data?.complete) toast.success("Stripe Connect ativado com sucesso!");
+          else toast.info("Onboarding iniciado. Complete as informações no Stripe.");
+        });
+      // Limpa URL
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (stripeStatus === "refresh") {
+      toast.warning("Onboarding interrompido. Clique em Conectar Stripe para retomar.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const handleStripeConnect = async () => {
+    if (!tenant?.id) return;
+    setStripeConnecting(true);
+    const res = await base44.functions.invoke("stripeConnect", { tenantId: tenant.id });
+    if (res.data?.url) window.location.href = res.data.url;
+    else { toast.error("Erro ao iniciar conexão com Stripe."); setStripeConnecting(false); }
   };
 
   const handleManagePlan = async () => {
@@ -271,6 +299,48 @@ export default function ConfiguracoesEmpresa() {
         <Save className="w-4 h-4 mr-2" />
         {saving ? "Salvando..." : "Salvar Alterações"}
       </Button>
+
+      {/* ── Stripe Connect ── */}
+      <div className="space-y-4 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 mb-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Link2 className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-heading font-semibold text-foreground text-base">Recebimentos via Stripe</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Conecte sua conta Stripe para receber pagamentos de clientes via <strong className="text-foreground">Cartão, Boleto e Pix</strong> diretamente no módulo Financeiro.
+        </p>
+
+        {tenant?.stripe_onboarding_complete ? (
+          <div className="flex items-center gap-3 rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3">
+            <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-300">Stripe Connect ativo</p>
+              <p className="text-xs text-muted-foreground font-mono">{tenant.stripe_account_id}</p>
+            </div>
+          </div>
+        ) : tenant?.stripe_account_id ? (
+          <div className="flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-300">Onboarding incompleto</p>
+              <p className="text-xs text-muted-foreground">Clique abaixo para retomar o cadastro no Stripe.</p>
+            </div>
+          </div>
+        ) : null}
+
+        <Button
+          onClick={handleStripeConnect}
+          disabled={stripeConnecting || tenant?.stripe_onboarding_complete}
+          className="w-full bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
+        >
+          {stripeConnecting
+            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Conectando...</>
+            : tenant?.stripe_onboarding_complete
+            ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Stripe Conectado</>
+            : <><Link2 className="w-4 h-4 mr-2" /> Conectar Stripe</>
+          }
+        </Button>
+      </div>
 
       {/* ── Billing ── */}
       <div className="space-y-5 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">

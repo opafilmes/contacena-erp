@@ -16,7 +16,7 @@
     },
     "logo": {
       "type": "string",
-      "description": "URL da logo da empresa (usada em PDFs e exporta\u00e7\u00f5es)"
+      "description": "URL da logo da empresa"
     },
     "logradouro": {
       "type": "string"
@@ -53,12 +53,10 @@
         "Empresa de Pequeno Porte",
         "Lucro Presumido",
         "Lucro Real"
-      ],
-      "description": "Porte da empresa"
+      ]
     },
     "faturamento_anual": {
-      "type": "number",
-      "description": "Faturamento anual em BRL"
+      "type": "number"
     },
     "plan_tier": {
       "type": "string",
@@ -85,6 +83,20 @@
     },
     "stripe_customer_id": {
       "type": "string"
+    },
+    "stripe_account_id": {
+      "type": "string",
+      "description": "ID da conta conectada no Stripe Connect"
+    },
+    "stripe_onboarding_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "true quando o onboarding Stripe Connect foi conclu\u00eddo"
+    },
+    "spread_taxa": {
+      "type": "number",
+      "default": 2,
+      "description": "Taxa de spread (%) cobrada pelo sistema em cada cobran\u00e7a gerada (s\u00f3 para Super Admin)"
     }
   },
   "required": [
