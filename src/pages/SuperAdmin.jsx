@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Building2, Users, Crown, Zap, Star, RefreshCw, Shield, Percent, Save } from "lucide-react";
+import { Plus, Building2, Users, Crown, Zap, Star, RefreshCw, Shield, Percent, Save, Pencil, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import NovaEmpresaDrawer from "@/components/superadmin/NovaEmpresaDrawer";
+import EmpresaDrawer from "@/components/superadmin/EmpresaDrawer";
+import GerenciarEquipeModal from "@/components/superadmin/GerenciarEquipeModal";
 import { toast } from "sonner";
 
 const PLAN_META = {
@@ -28,6 +29,8 @@ export default function SuperAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingTenant, setEditingTenant] = useState(null);
+  const [equipeModal, setEquipeModal] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [spreadTaxa, setSpreadTaxa] = useState("");
   const [savingSpread, setSavingSpread] = useState(false);
@@ -180,6 +183,7 @@ export default function SuperAdmin() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Status</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Usuários</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Criado em</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-widest text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,20 +218,73 @@ export default function SuperAdmin() {
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${status.cls}`}>{status.label}</span>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <button
+                          onClick={() => setEquipeModal(t)}
+                          className="flex items-center gap-1.5 text-muted-foreground hover:text-accent transition-colors"
+                        >
                           <Users className="w-3.5 h-3.5" />
                           <span className="text-sm">{tenantUsers.length}</span>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-4 py-4 text-xs text-muted-foreground">
                         {t.created_date ? format(new Date(t.created_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-1 justify-end">
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            title="Editar empresa"
+                            onClick={() => setEditingTenant(t)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Excluir empresa"
+                            onClick={async () => {
+                              if (!window.confirm(`Excluir a empresa "${t.nome_fantasia}" e TODOS os seus dados? Esta ação é irreversível.`)) return;
+                              // Hard delete em cascata
+                              const [clientes, usuarios_, recebiveis, pagaveis, jobs, propostas, contratos, equipe, categorias, contas] = await Promise.all([
+                                base44.entities.Client.filter({ tenant_id: t.id }),
+                                base44.entities.Usuarios.filter({ tenant_id: t.id }),
+                                base44.entities.AccountReceivable.filter({ inquilino_id: t.id }),
+                                base44.entities.AccountPayable.filter({ inquilino_id: t.id }),
+                                base44.entities.Job.filter({ tenant_id: t.id }),
+                                base44.entities.Proposal.filter({ tenant_id: t.id }),
+                                base44.entities.Contract.filter({ inquilino_id: t.id }),
+                                base44.entities.Crew.filter({ tenant_id: t.id }),
+                                base44.entities.FinancialCategory.filter({ inquilino_id: t.id }),
+                                base44.entities.BankAccount.filter({ inquilino_id: t.id }),
+                              ]);
+                              await Promise.all([
+                                ...clientes.map(r => base44.entities.Client.delete(r.id)),
+                                ...usuarios_.map(r => base44.entities.Usuarios.delete(r.id)),
+                                ...recebiveis.map(r => base44.entities.AccountReceivable.delete(r.id)),
+                                ...pagaveis.map(r => base44.entities.AccountPayable.delete(r.id)),
+                                ...jobs.map(r => base44.entities.Job.delete(r.id)),
+                                ...propostas.map(r => base44.entities.Proposal.delete(r.id)),
+                                ...contratos.map(r => base44.entities.Contract.delete(r.id)),
+                                ...equipe.map(r => base44.entities.Crew.delete(r.id)),
+                                ...categorias.map(r => base44.entities.FinancialCategory.delete(r.id)),
+                                ...contas.map(r => base44.entities.BankAccount.delete(r.id)),
+                              ]);
+                              await base44.entities.Tenant.delete(t.id);
+                              toast.success(`Empresa "${t.nome_fantasia}" excluída com todos os dados.`);
+                              loadData();
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
                 {tenants.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground text-sm">
+                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground text-sm">
                       Nenhuma empresa cadastrada ainda.
                     </td>
                   </tr>
@@ -288,7 +345,20 @@ export default function SuperAdmin() {
         </div>
       </div>
 
-      <NovaEmpresaDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSaved={loadData} />
+      <EmpresaDrawer
+        open={drawerOpen || !!editingTenant}
+        onClose={() => { setDrawerOpen(false); setEditingTenant(null); }}
+        onSaved={loadData}
+        tenant={editingTenant}
+      />
+
+      {equipeModal && (
+        <GerenciarEquipeModal
+          tenant={equipeModal}
+          onClose={() => setEquipeModal(null)}
+          onRefresh={loadData}
+        />
+      )}
     </div>
   );
 }

@@ -143,6 +143,16 @@ export default function Comercial() {
   const recorrentes = filteredContracts.filter(c => c.tipo === "Recorrente");
 
   const handleDeleteProposal = async (row) => {
+    const confirmed = window.confirm(
+      "Atenção: excluir esta proposta também removerá todos os lançamentos financeiros gerados por ela. Deseja continuar?"
+    );
+    if (!confirmed) return;
+
+    // Exclui lançamentos financeiros vinculados (via proposal_id ou pelo campo inquilino_id+descricao)
+    const contasVinculadas = await base44.entities.AccountReceivable.filter({ inquilino_id: tenantId });
+    const paraExcluir = contasVinculadas.filter(c => c.proposal_id === row.id);
+    await Promise.all(paraExcluir.map(c => base44.entities.AccountReceivable.delete(c.id)));
+
     await base44.entities.Proposal.delete(row.id);
     loadAll();
   };
