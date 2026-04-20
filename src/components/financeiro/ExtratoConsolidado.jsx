@@ -50,7 +50,8 @@ export default function ExtratoConsolidado({ receivables, payables, filters, onC
   const entries = useMemo(() => {
     const r = receivables.map(r => ({ ...r, _kind: "receber" }));
     const p = payables.map(p => ({ ...p, _kind: "pagar" }));
-    let all = [...r, ...p];
+    // Exclude staging entries — only show confirmed/paid/pending records
+    let all = [...r, ...p].filter(e => e.status !== "Aguardando Conciliação");
 
     if (dateFrom) all = all.filter(e => e.data_vencimento && e.data_vencimento >= dateFrom);
     if (dateTo)   all = all.filter(e => e.data_vencimento && e.data_vencimento <= dateTo);

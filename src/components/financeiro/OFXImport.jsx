@@ -2,11 +2,10 @@ import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Upload, X, ArrowUpCircle, ArrowDownCircle, Check, Link2 } from "lucide-react";
+import { Upload, X, ArrowUpCircle, ArrowDownCircle, Check } from "lucide-react";
 import { formatBRL } from "@/utils/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import ConciliacaoModal from "@/components/financeiro/ConciliacaoModal";
 
 function parseOFX(text) {
   const entries = [];
@@ -78,15 +77,13 @@ function BankAccountStep({ bankAccounts, onConfirm, onCancel }) {
 }
 
 // ─── Step 2: Lista de lançamentos ────────────────────────────────────────────
-export default function OFXImport({ tenantId, bankAccounts = [], receivables = [], payables = [], onImported }) {
+export default function OFXImport({ tenantId, bankAccounts = [], onImported }) {
   const inputRef = useRef();
-  const [step, setStep] = useState("idle"); // idle | selectAccount | review | done
+  const [step, setStep] = useState("idle"); // idle | selectAccount | review
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [entries, setEntries] = useState([]);
   const [selected, setSelected] = useState({});
   const [importing, setImporting] = useState(false);
-  const [importedEntries, setImportedEntries] = useState([]);
-  const [conciliacaoEntry, setConciliacaoEntry] = useState(null);
 
   const handleOpenClick = () => setStep("selectAccount");
 
@@ -121,35 +118,28 @@ export default function OFXImport({ tenantId, bankAccounts = [], receivables = [
         descricao: e.memo || "Importado OFX",
         valor: Math.abs(e.amount),
         data_vencimento: e.date,
-        status: "Pendente",
+        status: "Aguardando Conciliação",
         bank_account_id: selectedAccountId,
         inquilino_id: tenantId,
       };
       if (e.type === "receber") {
-        const r = await base44.entities.AccountReceivable.create(base);
+        const r = await base44.entities.AccountReceivable.create({ ...base, type: "receber" });
         created.push({ ...e, entityId: r.id, entityType: "receber" });
       } else {
-        const r = await base44.entities.AccountPayable.create(base);
+        const r = await base44.entities.AccountPayable.create({ ...base, type: "pagar" });
         created.push({ ...e, entityId: r.id, entityType: "pagar" });
       }
     }
     setImporting(false);
-    setImportedEntries(created);
-    setStep("done");
-    toast.success(`${created.length} lançamento(s) importado(s) como Pendente!`);
+    toast.success(`${created.length} lançamento(s) salvo(s)! Redirecionando para Central de Conciliação...`);
     onImported();
+    setStep("idle");
   };
 
   const toggleAll = (v) => {
     const s = {};
     entries.forEach(e => { s[e._id] = v; });
     setSelected(s);
-  };
-
-  const handleConciliacaoDone = (entryId) => {
-    setImportedEntries(prev => prev.map(e => e._id === entryId ? { ...e, conciliado: true } : e));
-    setConciliacaoEntry(null);
-    onImported();
   };
 
   const accountName = bankAccounts.find(a => a.id === selectedAccountId)?.nome_conta || "";
@@ -238,68 +228,6 @@ export default function OFXImport({ tenantId, bankAccounts = [], receivables = [
           </div>
         </div>
       </div>
-    );
-  }
-
-  // ── DONE: lista com botão Conciliar ──
-  if (step === "done") {
-    return (
-      <>
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-popover border border-border rounded-2xl w-full max-w-xl max-h-[80vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-border/50">
-              <div>
-                <p className="font-heading font-semibold text-foreground">Lançamentos Importados</p>
-                <p className="text-xs text-muted-foreground">{importedEntries.length} lançamento(s) · Concilie com os registros do sistema</p>
-              </div>
-              <button onClick={() => setStep("idle")} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-1.5">
-              {importedEntries.map(e => (
-                <div key={e._id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${e.conciliado ? "border-green-500/30 bg-green-500/5" : "border-border/40 bg-white/[0.02]"}`}>
-                  {e.type === "receber"
-                    ? <ArrowUpCircle className="w-4 h-4 text-green-400 shrink-0" />
-                    : <ArrowDownCircle className="w-4 h-4 text-red-400 shrink-0" />
-                  }
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate text-foreground/85">{e.memo}</p>
-                    <p className="text-xs text-muted-foreground">{e.date}</p>
-                  </div>
-                  <span className={`text-sm font-semibold tabular-nums mr-2 ${e.type === "receber" ? "text-green-400" : "text-red-400"}`}>
-                    {formatBRL(Math.abs(e.amount))}
-                  </span>
-                  {e.conciliado ? (
-                    <span className="text-xs text-green-400 flex items-center gap-1"><Check className="w-3 h-3" /> Conciliado</span>
-                  ) : (
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs gap-1 border-violet-500/30 text-violet-400 hover:bg-violet-500/10"
-                      onClick={() => setConciliacaoEntry(e)}>
-                      <Link2 className="w-3 h-3" /> Conciliar
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="p-4 border-t border-border/50 flex justify-end">
-              <Button size="sm" onClick={() => setStep("idle")}>Fechar</Button>
-            </div>
-          </div>
-        </div>
-
-        {conciliacaoEntry && (
-          <ConciliacaoModal
-            entry={conciliacaoEntry}
-            receivables={receivables}
-            payables={payables}
-            tenantId={tenantId}
-            onClose={() => setConciliacaoEntry(null)}
-            onDone={() => handleConciliacaoDone(conciliacaoEntry._id)}
-          />
-        )}
-      </>
     );
   }
 

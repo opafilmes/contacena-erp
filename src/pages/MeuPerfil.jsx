@@ -29,80 +29,15 @@ export default function MeuPerfil() {
     toast.success("Foto enviada!");
   };
 
- const handleSave = async () => {
+  const handleSave = async () => {
+    if (!usuario?.id) { toast.error("Sessão inválida. Recarregue a página."); return; }
     setSaving(true);
-    
     try {
-      let salvoNoBanco = false;
-
-      // 1. TENTATIVA 1: Usar o motor de Autenticação padrão (Se existir)
-      if (base44.auth && typeof base44.auth.updateUser === 'function') {
-        try {
-          await base44.auth.updateUser({ nome: form.nome, foto_perfil: form.foto_perfil });
-          salvoNoBanco = true;
-        } catch(e) {}
-      }
-
-      // 2. TENTATIVA 2: O FAREJADOR DE TABELAS
-      if (!salvoNoBanco && usuario?.email && base44.entities) {
-        let userId = usuario?.id || usuario?._id || usuario?.uid;
-        let tabelaCorreta = null;
-
-        // Pega os nomes de absolutamente todas as tabelas do seu sistema
-        const todasAsTabelas = Object.keys(base44.entities);
-        
-        for (const tabela of todasAsTabelas) {
-          try {
-            const busca = await base44.entities[tabela].filter({ email: usuario.email });
-            if (busca && busca.length > 0) {
-              userId = busca[0].id || busca[0]._id;
-              tabelaCorreta = tabela;
-              break; // Encontrou a tabela certa!
-            }
-          } catch(e) {
-            // Ignora tabelas soltas
-          }
-        }
-
-        // Se encontrou a tabela e o ID, salva para sempre!
-        if (userId && tabelaCorreta) {
-          await base44.entities[tabelaCorreta].update(userId, { 
-            nome: form.nome, 
-            foto_perfil: form.foto_perfil 
-          });
-          salvoNoBanco = true;
-        }
-      }
-
-      if (!salvoNoBanco) {
-        toast.error("Erro: Não achamos a tabela de usuários no banco.");
-        setSaving(false);
-        return;
-      }
-
-      // 3. ATUALIZA A TELA IMEDIATAMENTE
-      const chavesLocais = ['user', 'usuario', '@user', '@usuario', 'base44-user', 'auth'];
-      chavesLocais.forEach(chave => {
-        const salvo = localStorage.getItem(chave);
-        if (salvo) {
-          try {
-            const obj = JSON.parse(salvo);
-            obj.nome = form.nome; // Injeta o novo nome
-            localStorage.setItem(chave, JSON.stringify(obj));
-          } catch(e) {}
-        }
-      });
-
-      toast.success("Perfil salvo permanentemente!");
-      
-      // Recarrega a página para atualizar o cabeçalho
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
-    } catch (error) {
-      toast.error("Erro interno ao salvar.");
-      console.error("Erro fatal:", error);
+      await base44.entities.Usuarios.update(usuario.id, { nome: form.nome, foto_perfil: form.foto_perfil });
+      toast.success("Perfil atualizado com sucesso!");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch {
+      toast.error("Erro ao atualizar o perfil. Tente novamente.");
     } finally {
       setSaving(false);
     }

@@ -16,6 +16,7 @@ import CategoryDrawer from "@/components/financeiro/CategoryDrawer";
 import ExtratoConsolidado from "@/components/financeiro/ExtratoConsolidado";
 import FinancialFilters from "@/components/financeiro/FinancialFilters";
 import OFXImport from "@/components/financeiro/OFXImport";
+import CentralDeConciliacao from "@/components/financeiro/CentralDeConciliacao";
 import { formatBRL } from "@/utils/format";
 import { ArrowUpCircle, ArrowDownCircle, Wallet } from "lucide-react";
 
@@ -140,8 +141,6 @@ export default function Financeiro() {
           <OFXImport
             tenantId={tenantId}
             bankAccounts={bankAccounts}
-            receivables={receivables}
-            payables={payables}
             onImported={loadAll}
           />
         </div>
@@ -166,6 +165,14 @@ export default function Financeiro() {
             <TabsTrigger value="extrato">Extrato</TabsTrigger>
             <TabsTrigger value="receber">A Receber</TabsTrigger>
             <TabsTrigger value="pagar">A Pagar</TabsTrigger>
+            <TabsTrigger value="conciliacao" className="data-[state=active]:bg-violet-600/30 data-[state=active]:text-violet-300">
+              ⚡ Central de Conciliação
+              {receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-violet-500/30 text-violet-300 text-[10px] font-bold">
+                  {receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* EXTRATO CONSOLIDADO */}
@@ -217,6 +224,19 @@ export default function Financeiro() {
             />
           </TabsContent>
 
+          {/* CENTRAL DE CONCILIAÇÃO */}
+          <TabsContent value="conciliacao">
+            <CentralDeConciliacao
+              staging={[
+                ...receivables.filter(r => r.status === "Aguardando Conciliação").map(r => ({ ...r, type: "receber" })),
+                ...payables.filter(p => p.status === "Aguardando Conciliação").map(p => ({ ...p, type: "pagar" })),
+              ]}
+              receivables={receivables}
+              payables={payables}
+              tenantId={tenantId}
+              onRefresh={loadAll}
+            />
+          </TabsContent>
 
         </Tabs>
       </motion.div>
