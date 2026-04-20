@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import TopBar from "./TopBar";
 import EscolhaPlano from "@/pages/EscolhaPlano";
+import TrialExpirado from "@/pages/TrialExpirado";
 
 export default function AppLayout() {
   const [tenant, setTenant] = useState(null);
@@ -53,7 +54,7 @@ export default function AppLayout() {
   })();
 
   if (isTrialExpired) {
-    return <EscolhaPlano tenant={tenant} />;
+    return <TrialExpirado tenant={tenant} />;
   }
 
   return (

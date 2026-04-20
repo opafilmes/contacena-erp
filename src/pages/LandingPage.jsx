@@ -111,7 +111,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             <Link
-              to="/login"
+              to="/signup"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm transition-colors"
             >
               Começar Agora <ArrowRight className="w-4 h-4" />
@@ -235,7 +235,7 @@ export default function LandingPage() {
               Comece gratuitamente. Sem cartão de crédito. Cancele quando quiser.
             </p>
             <Link
-              to="/login"
+              to="/signup"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition-colors"
             >
               Começar Agora <ArrowRight className="w-4 h-4" />

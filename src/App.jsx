@@ -10,6 +10,8 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
 import LandingPage from './pages/LandingPage';
+import SignupFlow from './components/SignupFlow';
+import TrialExpirado from './pages/TrialExpirado';
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
@@ -55,6 +57,8 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/signup" element={<SignupFlow />} />
+      <Route path="/trial-expirado" element={<TrialExpirado />} />
       <Route element={<AppLayout />}>
         <Route path="/login" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
