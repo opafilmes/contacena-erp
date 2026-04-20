@@ -94,28 +94,14 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
 
-      // Verificar se o email está autorizado
-      const usuarios = await base44.entities.Usuarios.filter({ email: currentUser.email });
-      
-      if (!usuarios || usuarios.length === 0) {
-        console.warn('Unauthorized email:', currentUser.email);
-        setIsAuthenticated(false);
-        setAuthError({
-          type: 'user_not_registered',
-          message: 'Acesso não autorizado.'
-        });
-        base44.auth.logout();
-        return;
-      }
-
       setUser(currentUser);
       setIsAuthenticated(true);
-      setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsAuthenticated(false);
       setAuthChecked(true);
+    } finally {
       setIsLoadingAuth(false);
     }
   };
