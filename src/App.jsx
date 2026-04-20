@@ -1,3 +1,4 @@
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
