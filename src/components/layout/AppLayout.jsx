@@ -10,24 +10,34 @@ export default function AppLayout() {
 
   useEffect(() => {
     async function loadContext() {
-      const me = await base44.auth.me();
+      try {
+        const me = await base44.auth.me();
 
-      // Try to find user's Usuarios record
-      const usuarios = await base44.entities.Usuarios.filter({ email: me.email });
-      const currentUser = usuarios?.[0];
-      setUsuario(currentUser || { nome: me.full_name, email: me.email, role: me.role || "Admin" });
+        // Try to find user's Usuarios record
+        const usuarios = await base44.entities.Usuarios.filter({ email: me.email });
+        const currentUser = usuarios?.[0];
+        setUsuario(currentUser || { nome: me.full_name, email: me.email, role: me.role || "Admin" });
 
-      // Load tenant if user has tenant_id
-      if (currentUser?.tenant_id) {
-        const tenants = await base44.entities.Tenant.filter({ id: currentUser.tenant_id });
-        if (tenants?.[0]) setTenant(tenants[0]);
-      } else {
-        // Fallback: load first tenant the user created
-        const allTenants = await base44.entities.Tenant.list("-created_date", 1);
-        if (allTenants?.[0]) setTenant(allTenants[0]);
+        // Load tenant if user has tenant_id
+        if (currentUser?.tenant_id) {
+          try {
+            const tenant = await base44.entities.Tenant.get(currentUser.tenant_id);
+            setTenant(tenant);
+          } catch (err) {
+            console.warn('Tenant not found:', currentUser.tenant_id);
+            setTenant(null);
+          }
+        } else {
+          // Fallback: load first tenant the user created
+          const allTenants = await base44.entities.Tenant.list("-created_date", 1);
+          if (allTenants?.[0]) setTenant(allTenants[0]);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading context:', err);
+        setLoading(false);
       }
-
-      setLoading(false);
     }
     loadContext();
   }, []);
