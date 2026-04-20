@@ -42,7 +42,7 @@ export default function BookingListView({ bookings, equipments, clients, tenant,
   }, [bookings, search, filterStatus, filterClient]);
 
   return (
-    <div className="space-y-4">
+    <>
       {/* Filtros */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[180px]">
@@ -123,7 +123,6 @@ export default function BookingListView({ bookings, equipments, clients, tenant,
           </table>
         </div>
       )}
-    </div>
 
     {/* Checklist Print Dialog */}
     <Dialog open={!!checklistBooking} onOpenChange={() => setChecklistBooking(null)}>
@@ -137,5 +136,6 @@ export default function BookingListView({ bookings, equipments, clients, tenant,
         />
       </DialogContent>
     </Dialog>
+    </>
   );
 }
