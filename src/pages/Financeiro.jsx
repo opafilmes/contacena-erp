@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, BarChart2, ArrowDownCircle as PayIcon, ArrowUpCircle as RecIcon, FileText, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import BackButton from "@/components/shared/BackButton";
@@ -20,6 +19,14 @@ import CentralDeConciliacao from "@/components/financeiro/CentralDeConciliacao";
 import RelatoriosFinanceiros from "@/components/financeiro/RelatoriosFinanceiros";
 import { formatBRL } from "@/utils/format";
 import { ArrowUpCircle, ArrowDownCircle, Wallet } from "lucide-react";
+
+const NAV_ITEMS = [
+  { key: "relatorios", label: "Relatórios", icon: BarChart2 },
+  { key: "extrato", label: "Extrato", icon: FileText },
+  { key: "receber", label: "A Receber", icon: RecIcon },
+  { key: "pagar", label: "A Pagar", icon: PayIcon },
+  { key: "conciliacao", label: "Conciliação", icon: Zap, accent: true },
+];
 
 const now = new Date();
 const MONTH_FILTERS = {
@@ -135,7 +142,7 @@ export default function Financeiro() {
 
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-7xl mx-auto">
+    <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-[90rem] mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <BackButton />
         <div className="flex items-center justify-between mb-6">
@@ -154,111 +161,135 @@ export default function Financeiro() {
           <SummaryCard label="Saldo Projetado" value={saldo} icon={Wallet} colorClass={saldo >= 0 ? "bg-violet-500/15 text-violet-400" : "bg-amber-500/15 text-amber-400"} />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4 bg-muted/50 border border-border/50 flex-wrap h-auto gap-1">
-            <TabsTrigger value="relatorios">📊 Relatórios</TabsTrigger>
-            <TabsTrigger value="extrato">Extrato</TabsTrigger>
-            <TabsTrigger value="receber">A Receber</TabsTrigger>
-            <TabsTrigger value="pagar">A Pagar</TabsTrigger>
-            <TabsTrigger value="conciliacao" className="data-[state=active]:bg-violet-600/30 data-[state=active]:text-violet-300">
-              ⚡ Central de Conciliação
-              {receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-violet-500/30 text-violet-300 text-[10px] font-bold">
-                  {receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        {/* Layout: Sidebar + Conteúdo */}
+        <div className="flex gap-4 items-start">
 
-          {/* FILTROS — ocultos na aba Relatórios */}
-          {activeTab !== "relatorios" && (
-            <FinancialFilters
-              filters={filters}
-              setFilters={setFilters}
-              bankAccounts={bankAccounts}
-              categories={categories}
-            />
-          )}
+          {/* Menu lateral */}
+          <nav className="w-52 shrink-0 rounded-2xl bg-white/[0.04] border border-border/30 p-2 flex flex-col gap-0.5">
+            {NAV_ITEMS.map(({ key, label, icon: NavIcon, accent }) => {
+              const conciliCount = key === "conciliacao"
+                ? receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length
+                : 0;
+              const isActive = activeTab === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all w-full text-left
+                    ${isActive
+                      ? accent
+                        ? "bg-violet-600/25 text-violet-300"
+                        : "bg-accent/20 text-accent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                    }`}
+                >
+                  <NavIcon className={`w-4 h-4 shrink-0 ${isActive ? (accent ? "text-violet-400" : "text-accent") : ""}`} />
+                  <span className="flex-1">{label}</span>
+                  {conciliCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-violet-500/30 text-violet-300 text-[10px] font-bold">{conciliCount}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* EXTRATO CONSOLIDADO */}
-          <TabsContent value="extrato">
-            <ExtratoConsolidado
-              receivables={receivables}
-              payables={payables}
-              filters={filters}
-              onConciliar={(entry) => {
-                if (entry._kind === "receber") setReceivableDrawer({ open: true, record: entry });
-                else setPayableDrawer({ open: true, record: entry });
-              }}
-            />
-          </TabsContent>
+          {/* Área de conteúdo */}
+          <div className="flex-1 min-w-0">
+            {/* FILTROS — ocultos em Relatórios */}
+            {activeTab !== "relatorios" && (
+              <div className="mb-4">
+                <FinancialFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  bankAccounts={bankAccounts}
+                  categories={categories}
+                />
+              </div>
+            )}
 
-          {/* A RECEBER */}
-          <TabsContent value="receber">
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-muted-foreground text-sm">{filteredReceivables.length} lançamento(s)</p>
-              <Button size="sm" onClick={() => setReceivableDrawer({ open: true, record: null })}>
-                <Plus className="w-4 h-4 mr-1" /> Nova Receita
-              </Button>
-            </div>
-            <DataTable
-              columns={receivableCols}
-              rows={filteredReceivables}
-              searchValue={filters.search}
-              onEdit={row => setReceivableDrawer({ open: true, record: row })}
-              onDelete={async row => { await base44.entities.AccountReceivable.delete(row.id); load("AccountReceivable", setReceivables); }}
-              emptyMessage="Nenhuma conta a receber."
-            />
-          </TabsContent>
+            {/* RELATÓRIOS */}
+            {activeTab === "relatorios" && (
+              <RelatoriosFinanceiros
+                receivables={receivables}
+                payables={payables}
+                categories={categories}
+                clients={clients}
+              />
+            )}
 
-          {/* A PAGAR */}
-          <TabsContent value="pagar">
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-muted-foreground text-sm">{filteredPayables.length} lançamento(s)</p>
-              <Button size="sm" onClick={() => setPayableDrawer({ open: true, record: null })}>
-                <Plus className="w-4 h-4 mr-1" /> Nova Despesa
-              </Button>
-            </div>
-            <DataTable
-              columns={payableCols}
-              rows={filteredPayables}
-              searchValue={filters.search}
-              onEdit={row => setPayableDrawer({ open: true, record: row })}
-              onDelete={async row => { await base44.entities.AccountPayable.delete(row.id); load("AccountPayable", setPayables); }}
-              emptyMessage="Nenhuma conta a pagar."
-            />
-          </TabsContent>
+            {/* EXTRATO */}
+            {activeTab === "extrato" && (
+              <ExtratoConsolidado
+                receivables={receivables}
+                payables={payables}
+                filters={filters}
+                onConciliar={(entry) => {
+                  if (entry._kind === "receber") setReceivableDrawer({ open: true, record: entry });
+                  else setPayableDrawer({ open: true, record: entry });
+                }}
+              />
+            )}
 
-          {/* RELATÓRIOS */}
-          <TabsContent value="relatorios">
-            <RelatoriosFinanceiros
-              receivables={receivables}
-              payables={payables}
-              categories={categories}
-              clients={clients}
-            />
-          </TabsContent>
+            {/* A RECEBER */}
+            {activeTab === "receber" && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-muted-foreground text-sm">{filteredReceivables.length} lançamento(s)</p>
+                  <Button size="sm" onClick={() => setReceivableDrawer({ open: true, record: null })}>
+                    <Plus className="w-4 h-4 mr-1" /> Nova Receita
+                  </Button>
+                </div>
+                <DataTable
+                  columns={receivableCols}
+                  rows={filteredReceivables}
+                  searchValue={filters.search}
+                  onEdit={row => setReceivableDrawer({ open: true, record: row })}
+                  onDelete={async row => { await base44.entities.AccountReceivable.delete(row.id); load("AccountReceivable", setReceivables); }}
+                  emptyMessage="Nenhuma conta a receber."
+                />
+              </>
+            )}
 
-          {/* CENTRAL DE CONCILIAÇÃO */}
-          <TabsContent value="conciliacao">
-            <CentralDeConciliacao
-              staging={[
-                ...receivables.filter(r => r.status === "Aguardando Conciliação").map(r => ({ ...r, type: "receber" })),
-                ...payables.filter(p => p.status === "Aguardando Conciliação").map(p => ({ ...p, type: "pagar" })),
-              ]}
-              receivables={receivables}
-              payables={payables}
-              tenantId={tenantId}
-              onRefresh={loadAll}
-              categories={categories}
-              clients={clients}
-              suppliers={suppliers}
-              jobs={jobs}
-              bankAccounts={bankAccounts}
-            />
-          </TabsContent>
+            {/* A PAGAR */}
+            {activeTab === "pagar" && (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-muted-foreground text-sm">{filteredPayables.length} lançamento(s)</p>
+                  <Button size="sm" onClick={() => setPayableDrawer({ open: true, record: null })}>
+                    <Plus className="w-4 h-4 mr-1" /> Nova Despesa
+                  </Button>
+                </div>
+                <DataTable
+                  columns={payableCols}
+                  rows={filteredPayables}
+                  searchValue={filters.search}
+                  onEdit={row => setPayableDrawer({ open: true, record: row })}
+                  onDelete={async row => { await base44.entities.AccountPayable.delete(row.id); load("AccountPayable", setPayables); }}
+                  emptyMessage="Nenhuma conta a pagar."
+                />
+              </>
+            )}
 
-        </Tabs>
+            {/* CENTRAL DE CONCILIAÇÃO */}
+            {activeTab === "conciliacao" && (
+              <CentralDeConciliacao
+                staging={[
+                  ...receivables.filter(r => r.status === "Aguardando Conciliação").map(r => ({ ...r, type: "receber" })),
+                  ...payables.filter(p => p.status === "Aguardando Conciliação").map(p => ({ ...p, type: "pagar" })),
+                ]}
+                receivables={receivables}
+                payables={payables}
+                tenantId={tenantId}
+                onRefresh={loadAll}
+                categories={categories}
+                clients={clients}
+                suppliers={suppliers}
+                jobs={jobs}
+                bankAccounts={bankAccounts}
+              />
+            )}
+          </div>
+        </div>
       </motion.div>
 
       <AccountReceivableDrawer
