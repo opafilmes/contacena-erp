@@ -162,11 +162,21 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     
+    // Limpar localStorage/sessionStorage de onboarding
+    const cacheKeys = ['tenant_id', 'company_data', 'user_tenant', 'onboarding_status', 'onboarding_incomplete'];
+    cacheKeys.forEach(key => {
+      try {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      } catch (e) {
+        console.warn(`Could not clear cache key: ${key}`);
+      }
+    });
+    
     if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
+      // Sempre redirecionar para /login após logout
+      base44.auth.logout('/login');
     } else {
-      // Just remove the token without redirect
       base44.auth.logout();
     }
   };

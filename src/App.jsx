@@ -68,13 +68,10 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
+  // Handle authentication errors - redirecionar sempre para login
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to /login instead of root
-      base44.auth.redirectToLogin(window.location.href);
+    if (authError.type === 'user_not_registered' || authError.type === 'auth_required') {
+      base44.auth.redirectToLogin('/login');
       return null;
     }
   }

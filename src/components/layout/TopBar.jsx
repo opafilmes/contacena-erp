@@ -22,7 +22,18 @@ export default function TopBar({ tenant, usuario, tenantId }) {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    // Limpar localStorage/sessionStorage de onboarding
+    const cacheKeys = ['tenant_id', 'company_data', 'user_tenant', 'onboarding_status', 'onboarding_incomplete'];
+    cacheKeys.forEach(key => {
+      try {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      } catch (e) {
+        console.warn(`Could not clear cache key: ${key}`);
+      }
+    });
+    
+    base44.auth.logout('/login');
   };
 
   const initials = usuario?.nome ?
