@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, Settings, User, Users, Shield } from "lucide-react";
+import { LogOut, Settings, User, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   DropdownMenu,
@@ -93,14 +93,6 @@ export default function TopBar({ tenant, usuario, tenantId }) {
                 Meu Perfil
               </Link>
             </DropdownMenuItem>
-            {usuario?.role === "Admin" && (
-              <DropdownMenuItem asChild>
-                <Link to="/super-admin" className="cursor-pointer">
-                  <Shield className="mr-2 h-4 w-4 text-violet-400" />
-                  Painel Master
-                </Link>
-              </DropdownMenuItem>
-            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />

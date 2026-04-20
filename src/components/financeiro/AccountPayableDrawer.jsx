@@ -152,14 +152,12 @@ export default function AccountPayableDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="bg-popover/95 backdrop-blur-xl border-border/50 w-full sm:max-w-lg flex flex-col h-full p-0">
-        <div className="px-6 pt-6 pb-4 border-b border-border/30">
-          <SheetHeader>
-            <SheetTitle className="font-heading">{record ? "Editar" : "Nova"} Conta a Pagar</SheetTitle>
-          </SheetHeader>
-        </div>
+      <SheetContent className="bg-popover/95 backdrop-blur-xl border-border/50 w-full sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="font-heading">{record ? "Editar" : "Nova"} Conta a Pagar</SheetTitle>
+        </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        <div className="space-y-4 mt-6">
 
           {/* Fornecedor */}
           <div className="space-y-1.5">
@@ -318,11 +316,7 @@ export default function AccountPayableDrawer({
             <input ref={anexoRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleAnexoUpload} />
           </div>
 
-        </div>
-
-        {/* Footer fixo */}
-        <div className="sticky bottom-0 bg-popover border-t border-border/40 px-6 py-4 z-10">
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-4">
             <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} className="flex-1">{saving ? "Salvando..." : "Salvar"}</Button>
           </div>
