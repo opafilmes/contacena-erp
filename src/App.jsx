@@ -10,9 +10,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
-import LandingPage from './pages/LandingPage';
-import SignupFlow from './components/SignupFlow';
-import TrialExpirado from './pages/TrialExpirado';
+
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
@@ -30,16 +28,16 @@ import SuperAdmin from './pages/SuperAdmin';
 import { useNavigate } from 'react-router-dom';
 import AuthRedirect from './components/AuthRedirect';
 import OnboardingGuard from './components/OnboardingGuard';
-import OnboardingEmpresa from './pages/OnboardingEmpresa';
 
 const RootGuard = ({ isAuthenticated, isLoading }) => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading) {
+      // CAMADA 1: Rota raiz sempre redireciona para login
       navigate('/login', { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isLoading, navigate]);
 
   if (isLoading) {
     return (
@@ -52,7 +50,7 @@ const RootGuard = ({ isAuthenticated, isLoading }) => {
     );
   }
 
-  return isAuthenticated ? null : <LandingPage />;
+  return null;
 };
 
 const AuthenticatedApp = () => {
@@ -84,10 +82,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <Route path="/" element={<RootGuard isAuthenticated={isAuthenticated} isLoading={isLoadingAuth || isLoadingPublicSettings} />} />
-      <Route path="/signup" element={<SignupFlow />} />
-      <Route path="/onboarding-empresa" element={<OnboardingEmpresa />} />
-      <Route path="/trial-expirado" element={<TrialExpirado />} />
+      <Route path="/" element={<RootGuard isLoading={isLoadingAuth || isLoadingPublicSettings} />} />
       <Route element={<OnboardingGuard><AppLayout /></OnboardingGuard>}>
         <Route path="/login" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />

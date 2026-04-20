@@ -91,20 +91,42 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
 
-      // Verificação de tenant_id via API Guard
+      // CAMADA 2: Verificar se o email está autorizado (cadastrado no banco de Usuarios)
       try {
-        await base44.functions.invoke('apiGuard', {});
-      } catch (guardError) {
-        if (guardError.response?.status === 403 && guardError.response?.data?.extra_data?.reason === 'incomplete_onboarding') {
-          // Usuário não tem tenant_id - será redirecionado para onboarding via OnboardingGuard
-          console.log('User requires onboarding');
+        const usuarios = await base44.entities.Usuarios.filter({ email: currentUser.email });
+        
+        if (!usuarios || usuarios.length === 0) {
+          // Email não está cadastrado - acesso negado
+          console.warn('Unauthorized email:', currentUser.email);
+          setIsLoadingAuth(false);
+          setIsAuthenticated(false);
+          setAuthChecked(true);
+          setAuthError({
+            type: 'user_not_registered',
+            message: 'Acesso não autorizado. Entre em contato com a administração para obter um convite.'
+          });
+          
+          // Fazer logout automático
+          base44.auth.logout(window.location.href);
+          return;
         }
+
+        // Email está autorizado
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } catch (checkError) {
+        console.error('Error checking user authorization:', checkError);
+        // Se não conseguir verificar, nega acesso por segurança
+        setIsAuthenticated(false);
+        setAuthError({
+          type: 'user_not_registered',
+          message: 'Acesso não autorizado. Entre em contato com a administração para obter um convite.'
+        });
+        base44.auth.logout(window.location.href);
+        return;
       }
 
       setIsLoadingAuth(false);
@@ -115,7 +137,6 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setAuthChecked(true);
       
-      // If user auth fails, it might be an expired token
       if (error.status === 401 || error.status === 403) {
         setAuthError({
           type: 'auth_required',
