@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { X, Upload, Loader2 } from "lucide-react";
+import { X, Upload, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 
 const CATEGORIAS = ["Câmera","Lente","Iluminação","Áudio","Tripé/Suporte","Monitor","Estabilizador","Drone","Acessório","Outros"];
-const BLANK = { nome_item: "", num_serie: "", qtd_total: "", valor_compra: "", marca: "", categoria: "", status_manutencao: false, fotos: [] };
+const BLANK = { nome_item: "", num_serie: "", qtd_total: 1, valor_compra: "", marca: "", categoria: "", status_manutencao: false, fotos: [] };
 
 export default function EquipmentDrawer({ open, record, tenantId, onClose, onSaved }) {
   const [form, setForm] = useState(BLANK);
@@ -23,7 +23,7 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
       setForm(record ? {
         nome_item:         record.nome_item        || "",
         num_serie:         record.num_serie        || "",
-        qtd_total:         record.qtd_total        ?? "",
+        qtd_total:         record.qtd_total        ?? 1,
         valor_compra:      record.valor_compra     ?? "",
         marca:             record.marca            || "",
         categoria:         record.categoria        || "",
@@ -110,12 +110,29 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Quantidade Total</Label>
-             <Input 
-  type="number" 
-  min="1"
-  value={form.quantidade} 
-  onChange={(e) => setForm({ ...form, quantidade: Number(e.target.value) })} 
-/>
+              <div className="flex items-center border border-input rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  className="px-2 h-9 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  onClick={() => setForm(f => ({ ...f, qtd_total: Math.max(1, (f.qtd_total || 1) - 1) }))}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  className="flex-1 h-9 text-center bg-transparent text-sm focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  value={form.qtd_total}
+                  onChange={e => setForm(f => ({ ...f, qtd_total: Math.max(1, Number(e.target.value) || 1) }))}
+                />
+                <button
+                  type="button"
+                  className="px-2 h-9 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+                  onClick={() => setForm(f => ({ ...f, qtd_total: (f.qtd_total || 1) + 1 }))}
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Valor de Compra (R$)</Label>
