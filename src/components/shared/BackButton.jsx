@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-export default function BackButton({ to = "/", label = "Voltar ao Hub" }) {
+export default function BackButton({ to = "/login", label = "Voltar ao Hub" }) {
   return (
     <Link
       to={to}

@@ -31,7 +31,7 @@ export default function TopBar({ tenant, usuario, tenantId }) {
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="bg-transparent px-6 flex items-center justify-between h-full">
         {/* Logo / Tenant */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/login" className="flex items-center gap-3">
           {tenant?.logo ?
             <img
               src={tenant.logo}
