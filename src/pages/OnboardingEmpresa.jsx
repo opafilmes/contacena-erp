@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,7 @@ const SEGMENTOS = [
 ];
 
 export default function OnboardingEmpresa() {
+  const { refreshUser } = useAuth();
   const [nome, setNome] = useState('');
   const [segmento, setSegmento] = useState('');
   const [loading, setLoading] = useState(false);
@@ -71,10 +73,17 @@ export default function OnboardingEmpresa() {
 
       toast.success('Empresa criada com sucesso!');
       
-      // Recarregar página para sincronizar sessão
+      // Forçar refresh do usuário no contexto global
+      try {
+        await refreshUser();
+      } catch (refreshErr) {
+        console.error('Erro ao atualizar sessão:', refreshErr);
+      }
+
+      // Recarregar página completa para sincronizar tudo
       setTimeout(() => {
         window.location.href = '/login';
-      }, 1000);
+      }, 1500);
     } catch (err) {
       console.error('Erro ao criar empresa:', err);
       setError(err.message || 'Erro ao criar empresa. Tente novamente.');
