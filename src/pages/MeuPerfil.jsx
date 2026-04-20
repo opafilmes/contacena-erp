@@ -30,29 +30,36 @@ export default function MeuPerfil() {
   };
 
   const handleSave = async () => {
-    // 1. Tenta encontrar o ID do usuário em todas as nomenclaturas possíveis
-    const userId = usuario?.id || usuario?._id || usuario?.uid;
-
-    // Se realmente não achar, ele avisa, mas agora imprime no console para podermos investigar
-    if (!userId) {
-      console.log("🚨 ERRO - Dados do usuário carregados:", usuario);
-      toast.error("Erro de identificação. Verifique o console (F12).");
-      return;
-    }
-
     setSaving(true);
     
     try {
-      // 2. Salva no banco de dados usando o ID que encontramos
+      // 1. Pega o ID se existir
+      let userId = usuario?.id || usuario?._id || usuario?.uid;
+
+      // 2. O TRUQUE: Se não tiver o ID, busca no banco de dados pelo seu email!
+      if (!userId && usuario?.email) {
+        const buscaBanco = await base44.entities.Usuarios.filter({ email: usuario.email });
+        if (buscaBanco && buscaBanco.length > 0) {
+          userId = buscaBanco[0].id || buscaBanco[0]._id; // Pega o ID verdadeiro escondido no banco
+        }
+      }
+
+      // 3. Se mesmo assim não achar, ele bloqueia
+      if (!userId) {
+        toast.error("Não foi possível encontrar sua conta no banco de dados.");
+        setSaving(false);
+        return;
+      }
+
+      // 4. Salva no banco de dados usando o ID que descobrimos
       await base44.entities.Usuarios.update(userId, { 
         nome: form.nome, 
         foto_perfil: form.foto_perfil 
       });
       
-      // 3. Dispara o aviso verde
       toast.success("Perfil atualizado com sucesso!");
       
-      // 4. Aguarda 1,5 segundos e recarrega a página para o nome novo subir para o cabeçalho
+      // 5. Recarrega a página para atualizar o nome lá no topo
       setTimeout(() => {
         window.location.reload();
       }, 1500);
