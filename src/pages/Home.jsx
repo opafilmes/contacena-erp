@@ -120,8 +120,8 @@ function BentoCard({ mod, index, locked }) {
 }
 
 export default function Home() {
-  const { usuario } = useOutletContext();
-  const plano = "Profissional"; // Single plan for all users
+  const { tenant, usuario } = useOutletContext();
+  const plano = tenant?.plan_tier || "Básico";
 
   const hasPermission = (mod) => {
     if (mod.to === "/comercial" && usuario?.perm_comercial === false) return false;
@@ -153,7 +153,10 @@ export default function Home() {
           <p className="text-zinc-500 mt-2 text-sm">
             Selecione um módulo para começar.
           </p>
-
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs font-medium text-green-400">Plano {plano}</span>
+          </div>
         </motion.div>
       </div>
 

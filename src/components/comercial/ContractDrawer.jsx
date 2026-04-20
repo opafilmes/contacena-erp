@@ -10,19 +10,11 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { formatBRL } from "@/utils/format";
 
-// ── Tipos de contrato (Camada 2) ────────────────────────────────────
-const TIPOS_CONTRATO = [
-  { value: "social_media", label: "Conteúdos para Redes Sociais" },
-  { value: "institucional", label: "Institucional / Publicidade" },
-  { value: "eventos", label: "Eventos Corporativos / Sociais" },
-  { value: "uso_imagem", label: "Autorização de Uso de Imagem" },
-];
-
 // ── Modelos de contratos audiovisuais ────────────────────────────────
 const MODELOS = [
   {
     id: "social_media",
-    label: "Conteúdos para Redes Sociais",
+    label: "Social Media",
     body: `<h2>CONTRATO DE PRESTAÇÃO DE SERVIÇOS – GESTÃO DE SOCIAL MEDIA</h2>
 <p>Por este instrumento, as partes abaixo qualificadas celebram o presente Contrato de Prestação de Serviços de Social Media:</p>
 <p><strong>CONTRATANTE:</strong> {{nome_cliente}} – CNPJ/CPF: {{cpf_cnpj}}</p>
@@ -43,7 +35,7 @@ const MODELOS = [
   },
   {
     id: "eventos",
-    label: "Eventos Corporativos / Sociais",
+    label: "Eventos e Festas",
     body: `<h2>CONTRATO DE COBERTURA FOTOGRÁFICA E AUDIOVISUAL DE EVENTO</h2>
 <p><strong>CONTRATANTE:</strong> {{nome_cliente}} – CNPJ/CPF: {{cpf_cnpj}}</p>
 <p><strong>CONTRATADA:</strong> {{razao_social_prestador}} – CNPJ: {{cnpj_prestador}}</p>
@@ -65,7 +57,7 @@ const MODELOS = [
   },
   {
     id: "institucional",
-    label: "Institucional / Publicidade",
+    label: "Produção Institucional",
     body: `<h2>CONTRATO DE PRODUÇÃO AUDIOVISUAL INSTITUCIONAL</h2>
 <p><strong>CONTRATANTE:</strong> {{nome_cliente}} – CNPJ/CPF: {{cpf_cnpj}}</p>
 <p><strong>CONTRATADA:</strong> {{razao_social_prestador}} – CNPJ: {{cnpj_prestador}}</p>
@@ -196,14 +188,10 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
     setShowVarMenu(false);
   };
 
-  const applyModelo = (modeloId) => {
-    const modelo = MODELOS.find(m => m.id === modeloId);
-    if (!modelo) return;
-    if (form.corpo_contrato && form.corpo_contrato !== "<p><br></p>" && form.corpo_contrato.trim() !== "") {
-      if (!window.confirm("O editor já possui conteúdo. Deseja substituir pelo template selecionado?")) return;
-    }
+  const applyModelo = (modelo) => {
     setSelectedModelo(modelo.id);
     set("corpo_contrato", modelo.body);
+    // Auto-fill título se vazio
     if (!form.titulo) set("titulo", modelo.label);
   };
 
@@ -251,28 +239,32 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* ── Tipo de Contrato + Template (Camadas 2 e 3) ── */}
-          <div className="space-y-2">
-            <Label>Tipo de Contrato</Label>
-            <Select
-              value={selectedModelo || ""}
-              onValueChange={applyModelo}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar tipo para carregar template..." />
-              </SelectTrigger>
-              <SelectContent>
-                {TIPOS_CONTRATO.map(t => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+          {/* ── Selecionar Modelo ── */}
+          {!record && (
+            <div className="relative">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Começar com um Modelo</p>
+              <div className="flex flex-wrap gap-2">
+                {MODELOS.map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => applyModelo(m)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      selectedModelo === m.id
+                        ? "bg-accent/20 border-accent/50 text-accent"
+                        : "border-border/50 bg-secondary/30 hover:bg-accent/10 hover:border-accent/40 hover:text-accent"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-            {isImagemModel && (
-              <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
-                ℹ️ Modelo de Autorização de Imagem: campos financeiros ocultados. Preencha os dados do autorizante abaixo.
-              </p>
-            )}
-          </div>
+              </div>
+              {isImagemModel && (
+                <p className="mt-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
+                  ℹ️ Modelo de Autorização de Imagem: campos financeiros ocultados. Preencha os dados do autorizante abaixo.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* ── Metadados ── */}
           <div className="grid grid-cols-1 gap-4">
@@ -357,14 +349,6 @@ export default function ContractDrawer({ open, onClose, record, tenantId, client
 
           {/* ── Editor Rich Text ── */}
           <div className="space-y-2">
-            {/* Banner de aviso — Camada 4 */}
-            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/8 text-amber-300">
-              <span className="text-base shrink-0 mt-0.5">⚠️</span>
-              <p className="text-xs leading-relaxed">
-                <span className="font-semibold">IMPORTANTE:</span> Estes modelos são bases sugeridas. É essencial revisar e personalizar todas as cláusulas de acordo com o escopo específico de cada cliente antes de enviar.
-              </p>
-            </div>
-
             <div className="flex items-center justify-between">
               <Label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">Corpo do Contrato</Label>
 

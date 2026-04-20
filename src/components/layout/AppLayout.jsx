@@ -2,28 +2,33 @@ import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import TopBar from "./TopBar";
-
-const TENANT_ID = "default"; // Single tenant for all users
+import EscolhaPlano from "@/pages/EscolhaPlano";
 
 export default function AppLayout() {
+  const [tenant, setTenant] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadContext() {
-      try {
-        const me = await base44.auth.me();
+      const me = await base44.auth.me();
 
-        // Load user's Usuarios record
-        const usuarios = await base44.entities.Usuarios.filter({ email: me.email });
-        const currentUser = usuarios?.[0];
-        setUsuario(currentUser || { nome: me.full_name, email: me.email, role: "user" });
+      // Try to find user's Usuarios record
+      const usuarios = await base44.entities.Usuarios.filter({ email: me.email });
+      const currentUser = usuarios?.[0];
+      setUsuario(currentUser || { nome: me.full_name, email: me.email, role: me.role || "Admin" });
 
-        setLoading(false);
-      } catch (err) {
-        console.error('Error loading context:', err);
-        setLoading(false);
+      // Load tenant if user has tenant_id
+      if (currentUser?.tenant_id) {
+        const tenants = await base44.entities.Tenant.filter({ id: currentUser.tenant_id });
+        if (tenants?.[0]) setTenant(tenants[0]);
+      } else {
+        // Fallback: load first tenant the user created
+        const allTenants = await base44.entities.Tenant.list("-created_date", 1);
+        if (allTenants?.[0]) setTenant(allTenants[0]);
       }
+
+      setLoading(false);
     }
     loadContext();
   }, []);
@@ -39,11 +44,23 @@ export default function AppLayout() {
     );
   }
 
+  // Paywall: trial expired
+  const isTrialExpired = (() => {
+    if (!tenant) return false;
+    if (tenant.subscription_status !== 'Trial') return false;
+    if (!tenant.trial_ends_at) return false;
+    return new Date() > new Date(tenant.trial_ends_at);
+  })();
+
+  if (isTrialExpired) {
+    return <EscolhaPlano tenant={tenant} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <TopBar usuario={usuario} />
+      <TopBar tenant={tenant} usuario={usuario} tenantId={tenant?.id} />
       <main className="pt-16">
-        <Outlet context={{ usuario, tenantId: TENANT_ID }} />
+        <Outlet context={{ tenant, usuario }} />
       </main>
     </div>
   );

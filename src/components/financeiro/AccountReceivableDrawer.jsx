@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { formatBRL } from "@/utils/format";
-import { Plus, Upload, Loader2, X, Link2, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Plus, Upload, Loader2, X } from "lucide-react";
 import { addDays } from "date-fns";
 
 const STATUSES = ["Pendente", "Recebido", "Atrasado"];
@@ -27,7 +27,6 @@ export default function AccountReceivableDrawer({
   const [displayValor, setDisplayValor] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploadingAnexo, setUploadingAnexo] = useState(false);
-  const [generatingLink, setGeneratingLink] = useState(false);
 
   // Inline quick-create
   const [showNewClient, setShowNewClient] = useState(false);
@@ -315,50 +314,6 @@ export default function AccountReceivableDrawer({
           </div>
 
         </div>
-
-        {/* Stripe Payment Link — só exibe quando editando registro existente */}
-        {record?.id && (
-          <div className="px-6 pb-2">
-            <div className="rounded-xl bg-violet-500/10 border border-violet-500/20 p-4 space-y-2.5">
-              <p className="text-xs font-semibold text-violet-300 uppercase tracking-widest">Cobrança via Stripe</p>
-              {record.stripe_payment_link ? (
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-                  <p className="text-xs text-muted-foreground flex-1">Link gerado</p>
-                  <a href={record.stripe_payment_link} target="_blank" rel="noreferrer"
-                    className="flex items-center gap-1 text-xs text-violet-300 hover:underline">
-                    Abrir <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">Gere um link de pagamento (Cartão, Boleto ou Pix) para enviar ao cliente.</p>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-violet-500/30 text-violet-300 hover:bg-violet-500/10 gap-2"
-                disabled={generatingLink || record.status === "Recebido"}
-                onClick={async () => {
-                  setGeneratingLink(true);
-                  const res = await base44.functions.invoke("createPaymentLink", { receivableId: record.id });
-                  if (res.data?.url) {
-                    toast.success("Link gerado! Abrindo...");
-                    window.open(res.data.url, "_blank");
-                    onSaved();
-                  } else {
-                    toast.error(res.data?.error || "Erro ao gerar link. Verifique se o Stripe Connect está ativo.");
-                  }
-                  setGeneratingLink(false);
-                }}
-              >
-                {generatingLink
-                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</>
-                  : <><Link2 className="w-3.5 h-3.5" /> {record.stripe_payment_link ? "Regenerar Link" : "Gerar Link de Pagamento"}</>
-                }
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Footer fixo */}
         <div className="sticky bottom-0 bg-popover border-t border-border/40 px-6 py-4 z-10">

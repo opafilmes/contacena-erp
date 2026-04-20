@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import {
-  X, Printer, FileCheck2, DollarSign,
-  CheckCircle2, Loader2, Building2, Pencil, Mail,
-  Link2
+  X, Printer, FileCheck2, DollarSign, CreditCard,
+  CheckCircle2, Loader2, Building2, Pencil, Mail, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -24,7 +23,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   const [approving, setApproving] = useState(false);
   const [showFinanceiroModal, setShowFinanceiroModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [gerandoStripe, setGerandoStripe] = useState(false);
+  const [gerandoBoletos, setGerandoBoletos] = useState(false);
   const [proposalState, setProposalState] = useState(proposal);
 
   const client = clients?.find(c => c.id === proposalState?.client_id);
@@ -35,7 +34,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
 
   useEffect(() => {
     if (proposalState?.id) {
-      base44.entities.ProposalItem.filter({ proposal_id: proposalState.id }, "created_date").then(setItems);
+      base44.entities.ProposalItem.filter({ proposal_id: proposalState.id }).then(setItems);
     }
   }, [proposalState?.id]);
 
@@ -64,6 +63,30 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   };
 
   const handlePrint = () => window.print();
+
+  const handleGerarBoletos = async () => {
+    if (!proposalState.financeiro_gerado) return;
+    setGerandoBoletos(true);
+    const contas = await base44.entities.AccountReceivable.filter({ inquilino_id: tenantId });
+    // Filtra as contas desta proposta pela descrição (não temos proposal_id direto no AccountReceivable)
+    const contasProposta = contas.filter(c =>
+      c.descricao?.includes(client?.nome_fantasia || proposalState.titulo || "")
+    );
+    if (contasProposta.length === 0) {
+      toast.info("Nenhuma conta a receber encontrada para esta proposta.");
+      setGerandoBoletos(false);
+      return;
+    }
+    toast.promise(
+      new Promise(res => setTimeout(res, 1500)),
+      {
+        loading: `Gerando boletos para ${contasProposta.length} parcela(s)...`,
+        success: `${contasProposta.length} boleto(s) gerado(s) com sucesso!`,
+        error: "Erro ao gerar boletos.",
+      }
+    );
+    setGerandoBoletos(false);
+  };
 
   const propNum = proposalState.numero_proposta ? `PROP-${proposalState.numero_proposta}` : `PROP-${proposalState.id?.slice(-4).toUpperCase()}`;
 
@@ -177,11 +200,21 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   variant="outline"
                   className={`w-full justify-start gap-2.5 text-sm ${proposalState.financeiro_gerado ? "border-green-500/40 text-green-400" : ""}`}
                   onClick={() => setShowFinanceiroModal(true)}
-                  disabled={proposalState.status !== "Aprovada"}
-                  title={proposalState.status !== "Aprovada" ? "Aprove a proposta primeiro" : ""}
                 >
                   <DollarSign className="w-4 h-4" />
                   {proposalState.financeiro_gerado ? "✅ Financeiro Gerado" : "💰 Gerar Financeiro"}
+                </Button>
+
+                {/* Gerar Boletos — desabilitado se financeiro não foi gerado */}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2.5 text-sm"
+                  onClick={handleGerarBoletos}
+                  disabled={!proposalState.financeiro_gerado || gerandoBoletos}
+                  title={!proposalState.financeiro_gerado ? "Gere o financeiro primeiro para habilitar os boletos" : ""}
+                >
+                  {gerandoBoletos ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+                  🎫 Gerar Boletos
                 </Button>
 
                 {/* Enviar por E-mail */}
@@ -192,33 +225,6 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 >
                   <Mail className="w-4 h-4" /> ✉️ Enviar por E-mail
                 </Button>
-
-                {/* Gerar Cobranças Stripe */}
-                {proposalState.financeiro_gerado && proposalState.status === "Aprovada" && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2.5 text-sm border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
-                    disabled={gerandoStripe}
-                    onClick={async () => {
-                      const metodo = window.prompt("Método de pagamento: boleto, pix ou card", "boleto");
-                      if (!metodo) return;
-                      setGerandoStripe(true);
-                      const res = await base44.functions.invoke("generateProposalCharges", {
-                        proposalId: proposalState.id,
-                        paymentMethod: metodo.trim().toLowerCase(),
-                      });
-                      if (res.data?.ok) {
-                        toast.success(`${res.data.total} link(s) gerado(s)!`);
-                      } else {
-                        toast.error(res.data?.error || "Erro ao gerar cobranças.");
-                      }
-                      setGerandoStripe(false);
-                    }}
-                  >
-                    {gerandoStripe ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-                    {gerandoStripe ? "Gerando..." : "⚡ Gerar Cobranças Stripe"}
-                  </Button>
-                )}
 
                 {proposalState.status === "Pendente" && (
                   <Button
@@ -245,9 +251,9 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               {/* ══════════════════════════════════════
                   CABEÇALHO DO DOCUMENTO (V1 CLASSIC)
               ══════════════════════════════════════ */}
-              <div className="mb-6 pb-5 border-b-2 border-gray-200 print:border-gray-300 space-y-4">
+              <div className="flex items-start justify-between mb-6 pb-5 border-b-2 border-gray-200 print:border-gray-300">
 
-                {/* Linha 1: Logo + dados do tenant */}
+                {/* Esquerda: Logo + dados do tenant */}
                 <div className="flex items-start gap-3">
                   {tenant?.logo ? (
                     <img
@@ -269,17 +275,15 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   </div>
                 </div>
 
-                {/* Linha 2: Título do documento — separado abaixo */}
-                <div className="flex items-end justify-between pt-1">
-                  <h1 className="font-heading font-bold text-2xl text-foreground print:text-black tracking-wider uppercase">Proposta Comercial</h1>
-                  <div className="text-right">
-                    <p className="text-sm font-mono font-semibold text-accent print:text-gray-700">{propNum}</p>
-                    {proposalState.data_emissao && (
-                      <p className="text-xs text-muted-foreground print:text-gray-500 mt-0.5">
-                        Emitida em {format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
-                      </p>
-                    )}
-                  </div>
+                {/* Direita: Título do documento */}
+                <div className="text-right">
+                  <h1 className="font-heading font-bold text-xl text-foreground print:text-black tracking-wider uppercase">Proposta Comercial</h1>
+                  <p className="text-sm font-mono font-semibold text-accent print:text-gray-700 mt-1">{propNum}</p>
+                  {proposalState.data_emissao && (
+                    <p className="text-xs text-muted-foreground print:text-gray-500 mt-0.5">
+                      Emitida em {format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -339,23 +343,23 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               ══════════════════════════════════════ */}
               {items.length > 0 && (
                 <div className="mb-2" style={{ pageBreakInside: "avoid" }}>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 print:text-[#5b4fcf]">Serviços</p>
-                  <div className="overflow-hidden border border-border/30 print:border-[#e2e8f0]" style={{ borderRadius: '0.75rem' }}>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 print:text-[#64748b]">Serviços</p>
+                  <div className="rounded-xl overflow-hidden border border-border/40 print:border-[#e2e8f0]">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-accent/8 print:bg-[#f3f0ff] border-b border-border/30 print:border-[#e2e8f0]">
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#5b4fcf]">Descrição</th>
-                          <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#5b4fcf] w-16">Qtd</th>
-                          <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#5b4fcf] w-36">Valor Unit.</th>
-                          <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#5b4fcf] w-36">Total</th>
+                        <tr className="bg-secondary/30 print:bg-[#f8fafc]">
+                          <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b]">Descrição</th>
+                          <th className="text-center px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-16">Qtd</th>
+                          <th className="text-right px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Valor Unit.</th>
+                          <th className="text-right px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {items.map((item, idx) => (
                           <React.Fragment key={item.id}>
-                            <tr className="border-b border-border/20 last:border-b-0 print:border-[#ede9fe]">
-                              <td className="px-4 py-4 text-foreground print:text-black">
-                                <span className="font-bold text-sm">{item.titulo}</span>
+                            <tr className={`border-b border-border/30 last:border-b-0 print:border-[#e2e8f0] ${idx % 2 === 1 ? "bg-secondary/[0.06]" : ""}`}>
+                              <td className="px-4 py-4 font-medium text-foreground print:text-black">
+                                {item.titulo}
                                 {item.descricao_detalhada && item.descricao_detalhada !== "<p><br></p>" && (
                                   <div className="text-xs text-muted-foreground print:text-[#64748b] mt-1 font-normal">
                                     <div dangerouslySetInnerHTML={{ __html: item.descricao_detalhada }} />

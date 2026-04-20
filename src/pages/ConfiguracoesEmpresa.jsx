@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, CreditCard, ExternalLink, Zap, Star, Crown, Search, Loader2, Upload, Link2, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, CreditCard, ExternalLink, Zap, Star, Crown, Search, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,67 +32,30 @@ function formatCNPJ(v) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
-const TENANT_ID = "default"; // Single tenant
-
 export default function ConfiguracoesEmpresa() {
+  const { tenant } = useOutletContext();
   const navigate = useNavigate();
-  const [tenant, setTenant] = useState(null);
   const [form, setForm] = useState({
-    nome_fantasia:   "",
-    razao_social:    "",
-    cnpj:            "",
-    logo:            "",
-    logradouro:      "",
-    numero:          "",
-    bairro:          "",
-    cidade:          "",
-    uf:              "",
-    cep:             "",
-    telefone:        "",
-    email_corporativo: "",
-    website:         "",
-    porte_empresa:   "",
-    faturamento_anual: "",
+    nome_fantasia:   tenant?.nome_fantasia   || "",
+    razao_social:    tenant?.razao_social    || "",
+    cnpj:            tenant?.cnpj            || "",
+    logo:            tenant?.logo            || "",
+    logradouro:      tenant?.logradouro      || "",
+    numero:          tenant?.numero          || "",
+    bairro:          tenant?.bairro          || "",
+    cidade:          tenant?.cidade          || "",
+    uf:              tenant?.uf              || "",
+    cep:             tenant?.cep             || "",
+    telefone:        tenant?.telefone        || "",
+    email_corporativo: tenant?.email_corporativo || "",
+    website:         tenant?.website         || "",
+    porte_empresa:   tenant?.porte_empresa   || "",
+    faturamento_anual: tenant?.faturamento_anual ?? "",
   });
   const [saving, setSaving]           = useState(false);
-  const [loading, setLoading]         = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [stripeConnecting, setStripeConnecting] = useState(false);
-
-  // Load tenant on mount
-  useEffect(() => {
-    const loadTenant = async () => {
-      try {
-        const t = await base44.entities.Tenant.get(TENANT_ID);
-        setTenant(t);
-        setForm({
-          nome_fantasia:   t?.nome_fantasia   || "",
-          razao_social:    t?.razao_social    || "",
-          cnpj:            t?.cnpj            || "",
-          logo:            t?.logo            || "",
-          logradouro:      t?.logradouro      || "",
-          numero:          t?.numero          || "",
-          bairro:          t?.bairro          || "",
-          cidade:          t?.cidade          || "",
-          uf:              t?.uf              || "",
-          cep:             t?.cep             || "",
-          telefone:        t?.telefone        || "",
-          email_corporativo: t?.email_corporativo || "",
-          website:         t?.website         || "",
-          porte_empresa:   t?.porte_empresa   || "",
-          faturamento_anual: t?.faturamento_anual ?? "",
-        });
-      } catch (err) {
-        console.warn('Tenant not found, creating default:', err);
-        setTenant(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadTenant();
-  }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -139,55 +102,14 @@ export default function ConfiguracoesEmpresa() {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const data = {
-        ...form,
-        faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
-      };
-      
-      if (tenant?.id) {
-        // Update existing tenant
-        await base44.entities.Tenant.update(tenant.id, data);
-      } else {
-        // Create new tenant with id "default"
-        const created = await base44.entities.Tenant.create({ id: TENANT_ID, ...data });
-        setTenant(created);
-      }
-      toast.success("Configurações salvas com sucesso!");
-    } catch (err) {
-      toast.error("Erro ao salvar configurações.");
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Detecta retorno do onboarding Stripe Connect
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const stripeStatus = params.get("stripe");
-    const tId = params.get("tenantId");
-    if (stripeStatus === "success" && tId) {
-      base44.functions.invoke("stripeConnectCallback", { tenantId: tId })
-        .then(res => {
-          if (res.data?.complete) toast.success("Stripe Connect ativado com sucesso!");
-          else toast.info("Onboarding iniciado. Complete as informações no Stripe.");
-        });
-      // Limpa URL
-      window.history.replaceState({}, "", window.location.pathname);
-    } else if (stripeStatus === "refresh") {
-      toast.warning("Onboarding interrompido. Clique em Conectar Stripe para retomar.");
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
-
-  const handleStripeConnect = async () => {
     if (!tenant?.id) return;
-    setStripeConnecting(true);
-    const res = await base44.functions.invoke("stripeConnect", { tenantId: tenant.id });
-    if (res.data?.url) window.location.href = res.data.url;
-    else { toast.error("Erro ao iniciar conexão com Stripe."); setStripeConnecting(false); }
+    setSaving(true);
+    await base44.entities.Tenant.update(tenant.id, {
+      ...form,
+      faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
+    });
+    toast.success("Configurações salvas com sucesso!");
+    setSaving(false);
   };
 
   const handleManagePlan = async () => {
@@ -204,16 +126,16 @@ export default function ConfiguracoesEmpresa() {
     finally { setPortalLoading(false); }
   };
 
-  const planTier  = tenant?.plan_tier || "Profissional";
-  const planMeta  = PLAN_META[planTier] || PLAN_META["Profissional"];
+  const planTier  = tenant?.plan_tier || "Básico";
+  const planMeta  = PLAN_META[planTier] || PLAN_META["Básico"];
   const PlanIcon  = planMeta.icon;
-  const subStatus = tenant?.subscription_status || "Active";
-  const statusMeta = STATUS_LABELS[subStatus] || STATUS_LABELS["Active"];
+  const subStatus = tenant?.subscription_status || "Trial";
+  const statusMeta = STATUS_LABELS[subStatus] || STATUS_LABELS["Trial"];
   const trialEndsAt = tenant?.trial_ends_at ? format(new Date(tenant.trial_ends_at), "dd/MM/yyyy", { locale: ptBR }) : null;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
-      <button onClick={() => navigate("/home")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
+      <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm">Voltar ao Hub</span>
       </button>
@@ -349,48 +271,6 @@ export default function ConfiguracoesEmpresa() {
         <Save className="w-4 h-4 mr-2" />
         {saving ? "Salvando..." : "Salvar Alterações"}
       </Button>
-
-      {/* ── Stripe Connect ── */}
-      <div className="space-y-4 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 mb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Link2 className="w-4 h-4 text-muted-foreground" />
-          <h2 className="font-heading font-semibold text-foreground text-base">Recebimentos via Stripe</h2>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Conecte sua conta Stripe para receber pagamentos de clientes via <strong className="text-foreground">Cartão, Boleto e Pix</strong> diretamente no módulo Financeiro.
-        </p>
-
-        {tenant?.stripe_onboarding_complete ? (
-          <div className="flex items-center gap-3 rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3">
-            <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-green-300">Stripe Connect ativo</p>
-              <p className="text-xs text-muted-foreground font-mono">{tenant.stripe_account_id}</p>
-            </div>
-          </div>
-        ) : tenant?.stripe_account_id ? (
-          <div className="flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3">
-            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-300">Onboarding incompleto</p>
-              <p className="text-xs text-muted-foreground">Clique abaixo para retomar o cadastro no Stripe.</p>
-            </div>
-          </div>
-        ) : null}
-
-        <Button
-          onClick={handleStripeConnect}
-          disabled={stripeConnecting || tenant?.stripe_onboarding_complete}
-          className="w-full bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
-        >
-          {stripeConnecting
-            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Conectando...</>
-            : tenant?.stripe_onboarding_complete
-            ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Stripe Conectado</>
-            : <><Link2 className="w-4 h-4 mr-2" /> Conectar Stripe</>
-          }
-        </Button>
-      </div>
 
       {/* ── Billing ── */}
       <div className="space-y-5 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6">

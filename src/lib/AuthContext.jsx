@@ -91,30 +91,26 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
+      // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
-
       setUser(currentUser);
       setIsAuthenticated(true);
+      setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
       console.error('User auth check failed:', error);
+      setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-    } finally {
-      setIsLoadingAuth(false);
-    }
-  };
-
-  const refreshUser = async () => {
-    try {
-      // Force reload user data from server
-      const updatedUser = await base44.auth.me();
-      setUser(updatedUser);
-      return updatedUser;
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
-      throw error;
+      
+      // If user auth fails, it might be an expired token
+      if (error.status === 401 || error.status === 403) {
+        setAuthError({
+          type: 'auth_required',
+          message: 'Authentication required'
+        });
+      }
     }
   };
 
@@ -122,21 +118,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     
-    // Limpar localStorage/sessionStorage de onboarding
-    const cacheKeys = ['tenant_id', 'company_data', 'user_tenant', 'onboarding_status', 'onboarding_incomplete'];
-    cacheKeys.forEach(key => {
-      try {
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
-      } catch (e) {
-        console.warn(`Could not clear cache key: ${key}`);
-      }
-    });
-    
     if (shouldRedirect) {
-      // Redirecionar para login nativo do base44
-      base44.auth.logout();
+      // Use the SDK's logout method which handles token cleanup and redirect
+      base44.auth.logout(window.location.href);
     } else {
+      // Just remove the token without redirect
       base44.auth.logout();
     }
   };
@@ -158,8 +144,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       navigateToLogin,
       checkUserAuth,
-      checkAppState,
-      refreshUser
+      checkAppState
     }}>
       {children}
     </AuthContext.Provider>
