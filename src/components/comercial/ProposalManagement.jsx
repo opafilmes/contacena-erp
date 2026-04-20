@@ -35,7 +35,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
 
   useEffect(() => {
     if (proposalState?.id) {
-      base44.entities.ProposalItem.filter({ proposal_id: proposalState.id }).then(setItems);
+      base44.entities.ProposalItem.filter({ proposal_id: proposalState.id }, "created_date").then(setItems);
     }
   }, [proposalState?.id]);
 
@@ -177,6 +177,8 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   variant="outline"
                   className={`w-full justify-start gap-2.5 text-sm ${proposalState.financeiro_gerado ? "border-green-500/40 text-green-400" : ""}`}
                   onClick={() => setShowFinanceiroModal(true)}
+                  disabled={proposalState.status !== "Aprovada"}
+                  title={proposalState.status !== "Aprovada" ? "Aprove a proposta primeiro" : ""}
                 >
                   <DollarSign className="w-4 h-4" />
                   {proposalState.financeiro_gerado ? "✅ Financeiro Gerado" : "💰 Gerar Financeiro"}
@@ -192,7 +194,7 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 </Button>
 
                 {/* Gerar Cobranças Stripe */}
-                {proposalState.financeiro_gerado && (
+                {proposalState.financeiro_gerado && proposalState.status === "Aprovada" && (
                   <Button
                     variant="outline"
                     className="w-full justify-start gap-2.5 text-sm border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
@@ -243,9 +245,9 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               {/* ══════════════════════════════════════
                   CABEÇALHO DO DOCUMENTO (V1 CLASSIC)
               ══════════════════════════════════════ */}
-              <div className="flex items-start justify-between mb-6 pb-5 border-b-2 border-gray-200 print:border-gray-300">
+              <div className="mb-6 pb-5 border-b-2 border-gray-200 print:border-gray-300 space-y-4">
 
-                {/* Esquerda: Logo + dados do tenant */}
+                {/* Linha 1: Logo + dados do tenant */}
                 <div className="flex items-start gap-3">
                   {tenant?.logo ? (
                     <img
@@ -267,15 +269,17 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                   </div>
                 </div>
 
-                {/* Direita: Título do documento */}
-                <div className="text-right">
-                  <h1 className="font-heading font-bold text-xl text-foreground print:text-black tracking-wider uppercase">Proposta Comercial</h1>
-                  <p className="text-sm font-mono font-semibold text-accent print:text-gray-700 mt-1">{propNum}</p>
-                  {proposalState.data_emissao && (
-                    <p className="text-xs text-muted-foreground print:text-gray-500 mt-0.5">
-                      Emitida em {format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
-                    </p>
-                  )}
+                {/* Linha 2: Título do documento — separado abaixo */}
+                <div className="flex items-end justify-between pt-1">
+                  <h1 className="font-heading font-bold text-2xl text-foreground print:text-black tracking-wider uppercase">Proposta Comercial</h1>
+                  <div className="text-right">
+                    <p className="text-sm font-mono font-semibold text-accent print:text-gray-700">{propNum}</p>
+                    {proposalState.data_emissao && (
+                      <p className="text-xs text-muted-foreground print:text-gray-500 mt-0.5">
+                        Emitida em {format(new Date(proposalState.data_emissao + "T12:00:00"), "dd/MM/yyyy")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -350,8 +354,8 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                         {items.map((item, idx) => (
                           <React.Fragment key={item.id}>
                             <tr className={`border-b border-border/30 last:border-b-0 print:border-[#e2e8f0] ${idx % 2 === 1 ? "bg-secondary/[0.06]" : ""}`}>
-                              <td className="px-4 py-4 font-medium text-foreground print:text-black">
-                                {item.titulo}
+                              <td className="px-4 py-4 text-foreground print:text-black">
+                                <span className="font-bold text-sm">{item.titulo}</span>
                                 {item.descricao_detalhada && item.descricao_detalhada !== "<p><br></p>" && (
                                   <div className="text-xs text-muted-foreground print:text-[#64748b] mt-1 font-normal">
                                     <div dangerouslySetInnerHTML={{ __html: item.descricao_detalhada }} />
