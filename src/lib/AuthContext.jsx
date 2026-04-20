@@ -174,8 +174,8 @@ export const AuthProvider = ({ children }) => {
     });
     
     if (shouldRedirect) {
-      // Sempre redirecionar para /login após logout
-      base44.auth.logout('/login');
+      // Redirecionar para login nativo do base44
+      base44.auth.logout();
     } else {
       base44.auth.logout();
     }

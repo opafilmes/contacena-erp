@@ -32,8 +32,8 @@ const RootGuard = ({ isAuthenticated, isLoading }) => {
 
   React.useEffect(() => {
     if (!isLoading) {
-      // CAMADA 1: Rota raiz sempre redireciona para login
-      navigate('/login', { replace: true });
+      // CAMADA 1: Rota raiz sempre redireciona para home
+      navigate('/home', { replace: true });
     }
   }, [isLoading, navigate]);
 
@@ -79,7 +79,7 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/" element={<RootGuard isLoading={isLoadingAuth || isLoadingPublicSettings} />} />
       <Route element={<AppLayout />}>
-        <Route path="/login" element={<Home />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />
         <Route path="/cadastros" element={<Cadastros />} />

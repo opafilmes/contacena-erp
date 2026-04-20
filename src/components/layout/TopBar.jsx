@@ -18,7 +18,7 @@ export default function TopBar({ tenant, usuario, tenantId }) {
   
   const handleLogoClick = (e) => {
     e.preventDefault();
-    navigate('/login');
+    navigate('/home');
   };
 
   const handleLogout = () => {
@@ -33,7 +33,7 @@ export default function TopBar({ tenant, usuario, tenantId }) {
       }
     });
     
-    base44.auth.logout('/login');
+    base44.auth.logout();
   };
 
   const initials = usuario?.nome ?
