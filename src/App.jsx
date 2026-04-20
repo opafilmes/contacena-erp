@@ -15,7 +15,6 @@ import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
 import Diretorio from './pages/Diretorio';
-import EscolhaPlano from './pages/EscolhaPlano';
 import Comercial from './pages/Comercial';
 import Producao from './pages/Producao';
 import Financeiro from './pages/Financeiro';
