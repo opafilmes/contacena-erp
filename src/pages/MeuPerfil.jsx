@@ -30,17 +30,36 @@ export default function MeuPerfil() {
   };
 
   const handleSave = async () => {
-    if (!usuario?.id) {
-      toast.error("Sessão inválida. Recarregue a página.");
+    // 1. Tenta encontrar o ID do usuário em todas as nomenclaturas possíveis
+    const userId = usuario?.id || usuario?._id || usuario?.uid;
+
+    // Se realmente não achar, ele avisa, mas agora imprime no console para podermos investigar
+    if (!userId) {
+      console.log("🚨 ERRO - Dados do usuário carregados:", usuario);
+      toast.error("Erro de identificação. Verifique o console (F12).");
       return;
     }
+
     setSaving(true);
+    
     try {
-      await base44.entities.Usuarios.update(usuario.id, { nome: form.nome, foto_perfil: form.foto_perfil });
+      // 2. Salva no banco de dados usando o ID que encontramos
+      await base44.entities.Usuarios.update(userId, { 
+        nome: form.nome, 
+        foto_perfil: form.foto_perfil 
+      });
+      
+      // 3. Dispara o aviso verde
       toast.success("Perfil atualizado com sucesso!");
-      setTimeout(() => window.location.reload(), 1500);
+      
+      // 4. Aguarda 1,5 segundos e recarrega a página para o nome novo subir para o cabeçalho
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      
     } catch (error) {
       toast.error("Erro ao atualizar o perfil. Tente novamente.");
+      console.error("Erro no update:", error);
     } finally {
       setSaving(false);
     }
