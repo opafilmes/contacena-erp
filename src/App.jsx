@@ -29,6 +29,8 @@ import GestaoEquipe from './pages/GestaoEquipe';
 import SuperAdmin from './pages/SuperAdmin';
 import { useNavigate } from 'react-router-dom';
 import AuthRedirect from './components/AuthRedirect';
+import OnboardingGuard from './components/OnboardingGuard';
+import OnboardingEmpresa from './pages/OnboardingEmpresa';
 
 const RootGuard = ({ isAuthenticated, isLoading }) => {
   const navigate = useNavigate();
@@ -84,8 +86,9 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route path="/" element={<RootGuard isAuthenticated={isAuthenticated} isLoading={isLoadingAuth || isLoadingPublicSettings} />} />
       <Route path="/signup" element={<SignupFlow />} />
+      <Route path="/onboarding-empresa" element={<OnboardingEmpresa />} />
       <Route path="/trial-expirado" element={<TrialExpirado />} />
-      <Route element={<AppLayout />}>
+      <Route element={<OnboardingGuard><AppLayout /></OnboardingGuard>}>
         <Route path="/login" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />

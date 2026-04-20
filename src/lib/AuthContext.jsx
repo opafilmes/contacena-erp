@@ -96,6 +96,17 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+
+      // Verificação de tenant_id via API Guard
+      try {
+        await base44.functions.invoke('apiGuard', {});
+      } catch (guardError) {
+        if (guardError.response?.status === 403 && guardError.response?.data?.extra_data?.reason === 'incomplete_onboarding') {
+          // Usuário não tem tenant_id - será redirecionado para onboarding via OnboardingGuard
+          console.log('User requires onboarding');
+        }
+      }
+
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
