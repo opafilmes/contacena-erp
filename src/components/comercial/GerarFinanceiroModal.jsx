@@ -79,7 +79,7 @@ export default function GerarFinanceiroModal({ proposal, items, client, tenantId
     : Array.from({ length: 12 }, (_, i) => i + 1);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-card border border-border/50 rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border/30">
@@ -108,7 +108,7 @@ export default function GerarFinanceiroModal({ proposal, items, client, tenantId
             <Label>{isRecorrente ? "Quantidade de Meses" : "Número de Parcelas"}</Label>
             <Select value={String(parcelas)} onValueChange={v => setParcelas(Number(v))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[300]">
                 {parcelaOptions.map(n => (
                   <SelectItem key={n} value={String(n)}>
                     {isRecorrente
@@ -129,7 +129,7 @@ export default function GerarFinanceiroModal({ proposal, items, client, tenantId
               <Label>Intervalo de Vencimento</Label>
               <Select value={intervalo} onValueChange={setIntervalo}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[300]">
                   {INTERVALOS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
