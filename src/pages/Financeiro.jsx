@@ -153,20 +153,12 @@ export default function Financeiro() {
           <SummaryCard label="Saldo Projetado" value={saldo} icon={Wallet} colorClass={saldo >= 0 ? "bg-violet-500/15 text-violet-400" : "bg-amber-500/15 text-amber-400"} />
         </div>
 
-        {/* Persistent Filters */}
-        <FinancialFilters
-          filters={filters}
-          setFilters={setFilters}
-          bankAccounts={bankAccounts}
-          categories={categories}
-        />
-
-        <Tabs defaultValue="extrato">
-          <TabsList className="mb-6 bg-muted/50 border border-border/50 flex-wrap h-auto gap-1">
+        <Tabs defaultValue="relatorios">
+          <TabsList className="mb-4 bg-muted/50 border border-border/50 flex-wrap h-auto gap-1">
+            <TabsTrigger value="relatorios">📊 Relatórios</TabsTrigger>
             <TabsTrigger value="extrato">Extrato</TabsTrigger>
             <TabsTrigger value="receber">A Receber</TabsTrigger>
             <TabsTrigger value="pagar">A Pagar</TabsTrigger>
-            <TabsTrigger value="relatorios">📊 Relatórios</TabsTrigger>
             <TabsTrigger value="conciliacao" className="data-[state=active]:bg-violet-600/30 data-[state=active]:text-violet-300">
               ⚡ Central de Conciliação
               {receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length > 0 && (
@@ -176,6 +168,14 @@ export default function Financeiro() {
               )}
             </TabsTrigger>
           </TabsList>
+
+          {/* FILTROS — abaixo do menu, acima do conteúdo */}
+          <FinancialFilters
+            filters={filters}
+            setFilters={setFilters}
+            bankAccounts={bankAccounts}
+            categories={categories}
+          />
 
           {/* EXTRATO CONSOLIDADO */}
           <TabsContent value="extrato">
