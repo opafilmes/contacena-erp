@@ -55,6 +55,7 @@ export default function Financeiro() {
   const [jobs, setJobs] = useState([]);
   const [filters, setFilters] = useState(MONTH_FILTERS);
 
+  const [activeTab, setActiveTab] = useState("relatorios");
   const [receivableDrawer, setReceivableDrawer] = useState({ open: false, record: null });
   const [payableDrawer, setPayableDrawer] = useState({ open: false, record: null });
 
@@ -153,7 +154,7 @@ export default function Financeiro() {
           <SummaryCard label="Saldo Projetado" value={saldo} icon={Wallet} colorClass={saldo >= 0 ? "bg-violet-500/15 text-violet-400" : "bg-amber-500/15 text-amber-400"} />
         </div>
 
-        <Tabs defaultValue="relatorios">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4 bg-muted/50 border border-border/50 flex-wrap h-auto gap-1">
             <TabsTrigger value="relatorios">📊 Relatórios</TabsTrigger>
             <TabsTrigger value="extrato">Extrato</TabsTrigger>
@@ -169,13 +170,15 @@ export default function Financeiro() {
             </TabsTrigger>
           </TabsList>
 
-          {/* FILTROS — abaixo do menu, acima do conteúdo */}
-          <FinancialFilters
-            filters={filters}
-            setFilters={setFilters}
-            bankAccounts={bankAccounts}
-            categories={categories}
-          />
+          {/* FILTROS — ocultos na aba Relatórios */}
+          {activeTab !== "relatorios" && (
+            <FinancialFilters
+              filters={filters}
+              setFilters={setFilters}
+              bankAccounts={bankAccounts}
+              categories={categories}
+            />
+          )}
 
           {/* EXTRATO CONSOLIDADO */}
           <TabsContent value="extrato">
