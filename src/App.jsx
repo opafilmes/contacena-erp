@@ -1,3 +1,4 @@
+import { base44 } from '@/api/base44Client';
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -8,6 +9,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AppLayout from './components/layout/AppLayout';
 import Home from './pages/Home';
+import LandingPage from './pages/LandingPage';
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
@@ -43,8 +45,8 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
+      // Redirect to /login instead of root
+      base44.auth.redirectToLogin(window.location.href);
       return null;
     }
   }
@@ -52,8 +54,9 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Home />} />
         <Route path="/configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="/meu-perfil" element={<MeuPerfil />} />
         <Route path="/cadastros" element={<Cadastros />} />
