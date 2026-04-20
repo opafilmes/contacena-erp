@@ -17,6 +17,7 @@ import ExtratoConsolidado from "@/components/financeiro/ExtratoConsolidado";
 import FinancialFilters from "@/components/financeiro/FinancialFilters";
 import OFXImport from "@/components/financeiro/OFXImport";
 import CentralDeConciliacao from "@/components/financeiro/CentralDeConciliacao";
+import RelatoriosFinanceiros from "@/components/financeiro/RelatoriosFinanceiros";
 import { formatBRL } from "@/utils/format";
 import { ArrowUpCircle, ArrowDownCircle, Wallet } from "lucide-react";
 
@@ -165,6 +166,7 @@ export default function Financeiro() {
             <TabsTrigger value="extrato">Extrato</TabsTrigger>
             <TabsTrigger value="receber">A Receber</TabsTrigger>
             <TabsTrigger value="pagar">A Pagar</TabsTrigger>
+            <TabsTrigger value="relatorios">📊 Relatórios</TabsTrigger>
             <TabsTrigger value="conciliacao" className="data-[state=active]:bg-violet-600/30 data-[state=active]:text-violet-300">
               ⚡ Central de Conciliação
               {receivables.filter(r => r.status === "Aguardando Conciliação").length + payables.filter(p => p.status === "Aguardando Conciliação").length > 0 && (
@@ -221,6 +223,16 @@ export default function Financeiro() {
               onEdit={row => setPayableDrawer({ open: true, record: row })}
               onDelete={async row => { await base44.entities.AccountPayable.delete(row.id); load("AccountPayable", setPayables); }}
               emptyMessage="Nenhuma conta a pagar."
+            />
+          </TabsContent>
+
+          {/* RELATÓRIOS */}
+          <TabsContent value="relatorios">
+            <RelatoriosFinanceiros
+              receivables={receivables}
+              payables={payables}
+              categories={categories}
+              clients={clients}
             />
           </TabsContent>
 
