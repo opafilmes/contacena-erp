@@ -18,6 +18,10 @@
       "type": "string",
       "description": "ID do Job relacionado"
     },
+    "proposal_id": {
+      "type": "string",
+      "description": "ID da Proposal que originou este lan\u00e7amento (para exclus\u00e3o em cascata)"
+    },
     "valor": {
       "type": "number",
       "description": "Valor em BRL"

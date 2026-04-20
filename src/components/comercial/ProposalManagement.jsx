@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import {
   X, Printer, FileCheck2, DollarSign, CreditCard,
-  CheckCircle2, Loader2, Building2, Pencil, Mail, Ticket
+  CheckCircle2, Loader2, Building2, Pencil, Mail, Ticket,
+  Link2, Send
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -24,6 +25,8 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
   const [showFinanceiroModal, setShowFinanceiroModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [gerandoBoletos, setGerandoBoletos] = useState(false);
+  const [gerandoStripe, setGerandoStripe] = useState(false);
+  const [enviandoCarne, setEnviandoCarne] = useState(false);
   const [proposalState, setProposalState] = useState(proposal);
 
   const client = clients?.find(c => c.id === proposalState?.client_id);
@@ -225,6 +228,55 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
                 >
                   <Mail className="w-4 h-4" /> ✉️ Enviar por E-mail
                 </Button>
+
+                {/* Gerar Cobranças Stripe */}
+                {proposalState.financeiro_gerado && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2.5 text-sm border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+                    disabled={gerandoStripe}
+                    onClick={async () => {
+                      const metodo = window.prompt("Método de pagamento: boleto, pix ou card", "boleto");
+                      if (!metodo) return;
+                      setGerandoStripe(true);
+                      const res = await base44.functions.invoke("generateProposalCharges", {
+                        proposalId: proposalState.id,
+                        paymentMethod: metodo.trim().toLowerCase(),
+                      });
+                      if (res.data?.ok) {
+                        toast.success(`${res.data.total} link(s) gerado(s)!`);
+                      } else {
+                        toast.error(res.data?.error || "Erro ao gerar cobranças.");
+                      }
+                      setGerandoStripe(false);
+                    }}
+                  >
+                    {gerandoStripe ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                    {gerandoStripe ? "Gerando..." : "⚡ Gerar Cobranças Stripe"}
+                  </Button>
+                )}
+
+                {/* Enviar Carnê */}
+                {proposalState.financeiro_gerado && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2.5 text-sm"
+                    disabled={enviandoCarne}
+                    onClick={async () => {
+                      setEnviandoCarne(true);
+                      const res = await base44.functions.invoke("enviarCarne", { proposalId: proposalState.id });
+                      if (res.data?.ok) {
+                        toast.success(`Carnê enviado para ${res.data.enviado_para}!`);
+                      } else {
+                        toast.error(res.data?.error || "Erro ao enviar carnê.");
+                      }
+                      setEnviandoCarne(false);
+                    }}
+                  >
+                    {enviandoCarne ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {enviandoCarne ? "Enviando..." : "📨 Enviar Carnê por E-mail"}
+                  </Button>
+                )}
 
                 {proposalState.status === "Pendente" && (
                   <Button
