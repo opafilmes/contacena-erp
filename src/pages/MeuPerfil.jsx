@@ -33,30 +33,54 @@ export default function MeuPerfil() {
     setSaving(true);
     
     try {
-      let userId = usuario?.id || usuario?._id || usuario?.uid;
+      let salvoNoBanco = false;
 
-      // 1. Tenta achar e salvar no Banco de Dados em todas as tabelas possíveis
-      if (!userId && usuario?.email) {
-        const tabelas = ['User', 'Users', 'Usuario', 'Usuarios'];
-        for (const tabela of tabelas) {
+      // 1. TENTATIVA 1: Usar o motor de Autenticação padrão (Se existir)
+      if (base44.auth && typeof base44.auth.updateUser === 'function') {
+        try {
+          await base44.auth.updateUser({ nome: form.nome, foto_perfil: form.foto_perfil });
+          salvoNoBanco = true;
+        } catch(e) {}
+      }
+
+      // 2. TENTATIVA 2: O FAREJADOR DE TABELAS
+      if (!salvoNoBanco && usuario?.email && base44.entities) {
+        let userId = usuario?.id || usuario?._id || usuario?.uid;
+        let tabelaCorreta = null;
+
+        // Pega os nomes de absolutamente todas as tabelas do seu sistema
+        const todasAsTabelas = Object.keys(base44.entities);
+        
+        for (const tabela of todasAsTabelas) {
           try {
             const busca = await base44.entities[tabela].filter({ email: usuario.email });
             if (busca && busca.length > 0) {
               userId = busca[0].id || busca[0]._id;
-              await base44.entities[tabela].update(userId, { nome: form.nome, foto_perfil: form.foto_perfil });
-              break; // Achou e salvou, pode parar de procurar!
+              tabelaCorreta = tabela;
+              break; // Encontrou a tabela certa!
             }
-          } catch (e) { 
-            // Ignora o erro se a tabela não existir e tenta a próxima
+          } catch(e) {
+            // Ignora tabelas soltas
           }
         }
-      } else if (userId) {
-        // Se já tinha ID, tenta salvar nas tabelas mais comuns
-        try { await base44.entities.User.update(userId, { nome: form.nome }); } catch(e) {}
-        try { await base44.entities.Usuarios.update(userId, { nome: form.nome }); } catch(e) {}
+
+        // Se encontrou a tabela e o ID, salva para sempre!
+        if (userId && tabelaCorreta) {
+          await base44.entities[tabelaCorreta].update(userId, { 
+            nome: form.nome, 
+            foto_perfil: form.foto_perfil 
+          });
+          salvoNoBanco = true;
+        }
       }
 
-      // 2. FORÇA BRUTA NO NAVEGADOR: Atualiza o nome na memória local para forçar o cabeçalho a mudar
+      if (!salvoNoBanco) {
+        toast.error("Erro: Não achamos a tabela de usuários no banco.");
+        setSaving(false);
+        return;
+      }
+
+      // 3. ATUALIZA A TELA IMEDIATAMENTE
       const chavesLocais = ['user', 'usuario', '@user', '@usuario', 'base44-user', 'auth'];
       chavesLocais.forEach(chave => {
         const salvo = localStorage.getItem(chave);
@@ -69,16 +93,16 @@ export default function MeuPerfil() {
         }
       });
 
-      // 3. Libera o aviso de sucesso (sem travar)
-      toast.success("Nome atualizado com sucesso!");
+      toast.success("Perfil salvo permanentemente!");
       
-      // Recarrega a página para atualizar o cabeçalho com o nome novo
+      // Recarrega a página para atualizar o cabeçalho
       setTimeout(() => {
         window.location.reload();
       }, 1000);
       
     } catch (error) {
-      toast.error("Erro interno. Tente novamente.");
+      toast.error("Erro interno ao salvar.");
+      console.error("Erro fatal:", error);
     } finally {
       setSaving(false);
     }
