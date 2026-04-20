@@ -204,11 +204,16 @@ export default function ConfiguracoesEmpresa() {
     finally { setPortalLoading(false); }
   };
 
-
+  const planTier  = tenant?.plan_tier || "Profissional";
+  const planMeta  = PLAN_META[planTier] || PLAN_META["Profissional"];
+  const PlanIcon  = planMeta.icon;
+  const subStatus = tenant?.subscription_status || "Active";
+  const statusMeta = STATUS_LABELS[subStatus] || STATUS_LABELS["Active"];
+  const trialEndsAt = tenant?.trial_ends_at ? format(new Date(tenant.trial_ends_at), "dd/MM/yyyy", { locale: ptBR }) : null;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
-      <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
+      <button onClick={() => navigate("/home")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm">Voltar ao Hub</span>
       </button>
