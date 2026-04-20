@@ -235,6 +235,11 @@ export default function Financeiro() {
               payables={payables}
               tenantId={tenantId}
               onRefresh={loadAll}
+              categories={categories}
+              clients={clients}
+              suppliers={suppliers}
+              jobs={jobs}
+              bankAccounts={bankAccounts}
             />
           </TabsContent>
 

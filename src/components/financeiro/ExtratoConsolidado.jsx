@@ -121,7 +121,7 @@ export default function ExtratoConsolidado({ receivables, payables, filters, onC
                   )}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
-                  {e.data_vencimento ? format(new Date(e.data_vencimento), "dd/MM/yyyy") : "—"}
+                  {e.data_vencimento ? format(new Date(e.data_vencimento + "T12:00:00"), "dd/MM/yyyy") : "—"}
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-sm font-semibold tabular-nums ${e._kind === "receber" ? "text-green-400" : "text-red-400"}`}>

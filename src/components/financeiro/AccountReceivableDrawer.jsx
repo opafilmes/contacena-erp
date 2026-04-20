@@ -21,7 +21,7 @@ const EMPTY = {
 
 export default function AccountReceivableDrawer({
   open, onClose, record, tenantId,
-  categories, clients, jobs, bankAccounts = [], onSaved
+  categories, clients, jobs, bankAccounts = [], onSaved, onSavedWithId
 }) {
   const [form, setForm] = useState(EMPTY);
   const [displayValor, setDisplayValor] = useState("");
@@ -129,10 +129,15 @@ export default function AccountReceivableDrawer({
       await base44.entities.AccountReceivable.bulkCreate(records);
       toast.success(`${qtd} parcelas criadas!`);
     } else {
-      await base44.entities.AccountReceivable.create({
+      const created = await base44.entities.AccountReceivable.create({
         ...basePayload, valor: form.valor, data_vencimento: form.data_vencimento
       });
       toast.success("Lançamento criado!");
+      setSaving(false);
+      onSaved();
+      if (onSavedWithId) onSavedWithId(created.id);
+      onClose();
+      return;
     }
 
     setSaving(false);

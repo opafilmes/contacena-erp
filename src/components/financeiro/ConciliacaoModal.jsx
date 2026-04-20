@@ -184,7 +184,7 @@ export default function ConciliacaoModal({ entry, receivables, payables, tenantI
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground/90 truncate">{s.descricao}</p>
                         <p className="text-xs text-muted-foreground">
-                          Venc: {s.data_vencimento || "—"}
+                          Venc: {s.data_vencimento ? format(new Date(s.data_vencimento + "T12:00:00"), "dd/MM/yyyy") : "—"}
                           {daysDiff <= 5 && <span className="ml-2 text-green-400">● próximo</span>}
                         </p>
                       </div>

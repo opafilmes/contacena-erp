@@ -211,7 +211,7 @@ export default function OFXImport({ tenantId, bankAccounts = [], onImported }) {
                 }
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate text-foreground/85">{e.memo}</p>
-                  <p className="text-xs text-muted-foreground">{e.date}</p>
+                  <p className="text-xs text-muted-foreground">{e.date ? new Date(e.date + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</p>
                 </div>
                 <span className={`text-sm font-semibold tabular-nums ${e.type === "receber" ? "text-green-400" : "text-red-400"}`}>
                   {formatBRL(Math.abs(e.amount))}

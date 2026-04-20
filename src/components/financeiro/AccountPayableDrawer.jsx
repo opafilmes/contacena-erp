@@ -21,7 +21,7 @@ const EMPTY = {
 
 export default function AccountPayableDrawer({
   open, onClose, record, tenantId,
-  categories, suppliers, bankAccounts = [], onSaved
+  categories, suppliers, bankAccounts = [], onSaved, onSavedWithId
 }) {
   const [form, setForm] = useState(EMPTY);
   const [displayValor, setDisplayValor] = useState("");
@@ -134,10 +134,15 @@ export default function AccountPayableDrawer({
       await base44.entities.AccountPayable.bulkCreate(records);
       toast.success(`${qtd} parcelas criadas!`);
     } else {
-      await base44.entities.AccountPayable.create({
+      const created = await base44.entities.AccountPayable.create({
         ...basePayload, valor: form.valor, data_vencimento: form.data_vencimento
       });
       toast.success("Lançamento criado!");
+      setSaving(false);
+      onSaved();
+      if (onSavedWithId) onSavedWithId(created.id);
+      onClose();
+      return;
     }
 
     setSaving(false);

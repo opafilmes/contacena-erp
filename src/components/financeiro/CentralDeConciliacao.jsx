@@ -9,6 +9,8 @@ import {
   TrendingUp, TrendingDown, Trash2, Plus, Link2, Loader2, RefreshCw
 } from "lucide-react";
 import StatusPill from "./StatusPill";
+import AccountPayableDrawer from "./AccountPayableDrawer";
+import AccountReceivableDrawer from "./AccountReceivableDrawer";
 
 // ─── Matching engine ──────────────────────────────────────────────────────────
 function findMatches(staging, receivables, payables) {
@@ -31,10 +33,10 @@ function findMatches(staging, receivables, payables) {
 }
 
 // ─── Painel de matches (lado direito) ─────────────────────────────────────────
-function MatchPanel({ selected, receivables, payables, tenantId, onDone }) {
+function MatchPanel({ selected, receivables, payables, tenantId, categories, clients, suppliers, jobs, bankAccounts, onDone }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirming, setConfirming] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const matches = useMemo(
     () => selected ? findMatches(selected, receivables, payables) : [],
@@ -91,19 +93,20 @@ function MatchPanel({ selected, receivables, payables, tenantId, onDone }) {
     setConfirming(false);
   };
 
-  const handleCriarNovo = async () => {
-    if (!selected) return;
-    setCreating(true);
+  // Called by drawer after saving the new record — conciliates the staging entry
+  const handleNovoSaved = async (newRecordId) => {
+    setDrawerOpen(false);
+    if (!selected || !newRecordId) return;
     try {
       const entity = selected.type === "receber" ? "AccountReceivable" : "AccountPayable";
       const paidStatus = selected.type === "receber" ? "Recebido" : "Pago";
+      // Mark the staging OFX entry as conciliated
       await base44.entities[entity].update(selected.id, { status: paidStatus });
       toast.success("Lançamento criado e conciliado!");
       onDone();
     } catch {
-      toast.error("Erro ao criar lançamento.");
+      toast.error("Erro ao conciliar após criação.");
     }
-    setCreating(false);
   };
 
   const handleIgnorar = async () => {
@@ -140,7 +143,9 @@ function MatchPanel({ selected, receivables, payables, tenantId, onDone }) {
           <span className={`font-heading font-bold text-lg ${selected.type === "receber" ? "text-green-400" : "text-red-400"}`}>
             {formatBRL(entryAmt)}
           </span>
-          <span className="text-xs text-muted-foreground ml-auto">{selected.data_vencimento}</span>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {selected.data_vencimento ? format(new Date(selected.data_vencimento + "T12:00:00"), "dd/MM/yyyy") : "—"}
+          </span>
         </div>
         <p className="text-sm text-foreground/80 truncate">{selected.descricao}</p>
 
@@ -179,7 +184,7 @@ function MatchPanel({ selected, receivables, payables, tenantId, onDone }) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground/85 truncate">{m.descricao}</p>
                 <p className="text-xs text-muted-foreground">
-                  {m.data_vencimento}
+                  {m.data_vencimento ? format(new Date(m.data_vencimento + "T12:00:00"), "dd/MM/yyyy") : "—"}
                   {m._daysDiff <= 5 && <span className="ml-1.5 text-green-400">● próximo</span>}
                   {m._pct <= 0.05 && <span className="ml-1.5 text-violet-400">● valor próximo</span>}
                 </p>
@@ -206,21 +211,48 @@ function MatchPanel({ selected, receivables, payables, tenantId, onDone }) {
           Conciliar Selecionados
         </Button>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" onClick={handleCriarNovo} disabled={creating} className="gap-1 text-xs">
-            {creating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-            Criar Novo Lançamento
+          <Button variant="outline" size="sm" onClick={() => setDrawerOpen(true)} className="gap-1 text-xs">
+            <Plus className="w-3 h-3" /> Criar Novo Lançamento
           </Button>
           <Button variant="outline" size="sm" onClick={handleIgnorar} className="gap-1 text-xs text-destructive border-destructive/30 hover:bg-destructive/10">
             <Trash2 className="w-3 h-3" /> Ignorar / Excluir
           </Button>
         </div>
       </div>
+
+      {/* Drawers pré-preenchidos */}
+      {selected?.type === "pagar" ? (
+        <AccountPayableDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          record={{ descricao: selected.descricao, valor: selected.valor, data_vencimento: selected.data_vencimento }}
+          tenantId={tenantId}
+          categories={categories}
+          suppliers={suppliers}
+          bankAccounts={bankAccounts}
+          onSaved={() => {}}
+          onSavedWithId={handleNovoSaved}
+        />
+      ) : (
+        <AccountReceivableDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          record={{ descricao: selected?.descricao, valor: selected?.valor, data_vencimento: selected?.data_vencimento }}
+          tenantId={tenantId}
+          categories={categories}
+          clients={clients}
+          jobs={jobs}
+          bankAccounts={bankAccounts}
+          onSaved={() => {}}
+          onSavedWithId={handleNovoSaved}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-export default function CentralDeConciliacao({ staging, receivables, payables, tenantId, onRefresh }) {
+export default function CentralDeConciliacao({ staging, receivables, payables, tenantId, onRefresh, categories, clients, suppliers, jobs, bankAccounts }) {
   const [selectedStaging, setSelectedStaging] = useState(null);
 
   const pendingStaging = staging.filter(s => s.status === "Aguardando Conciliação");
@@ -271,7 +303,9 @@ export default function CentralDeConciliacao({ staging, receivables, payables, t
                 }
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate text-foreground/85">{s.descricao}</p>
-                  <p className="text-xs text-muted-foreground">{s.data_vencimento}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {s.data_vencimento ? format(new Date(s.data_vencimento + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                  </p>
                 </div>
                 <span className={`text-sm font-semibold tabular-nums shrink-0 ${s.type === "receber" ? "text-green-400" : "text-red-400"}`}>
                   {formatBRL(s.valor)}
@@ -288,6 +322,11 @@ export default function CentralDeConciliacao({ staging, receivables, payables, t
         receivables={receivables}
         payables={payables}
         tenantId={tenantId}
+        categories={categories}
+        clients={clients}
+        suppliers={suppliers}
+        jobs={jobs}
+        bankAccounts={bankAccounts}
         onDone={handleDone}
       />
     </div>
