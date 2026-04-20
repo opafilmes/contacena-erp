@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import CadastrosGlobal from "./CadastrosGlobal";
 
-export default function TopBar({ tenant, usuario, tenantId }) {
+export default function TopBar({ usuario }) {
   const navigate = useNavigate();
   
   const handleLogoClick = (e) => {
@@ -49,29 +49,16 @@ export default function TopBar({ tenant, usuario, tenantId }) {
     <>
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="bg-transparent px-6 flex items-center justify-between h-full">
-        {/* Logo / Tenant */}
+        {/* Logo */}
         <button onClick={handleLogoClick} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          {tenant?.logo ?
-            <img
-              src={tenant.logo}
-              alt={tenant.nome_fantasia}
-              className="h-8 w-8 rounded-lg object-cover bg-white p-0.5" /> :
-
-
-            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-heading font-bold text-sm">
-                {tenant?.nome_fantasia?.[0] || "C"}
-              </span>
-            </div>
-            }
-          <span className="font-heading font-semibold text-foreground text-lg tracking-tight">
-            {tenant?.nome_fantasia || "ConTaCena"}
-          </span>
+          <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
+            <span className="text-primary font-heading font-bold text-sm">C</span>
+          </div>
+          <span className="font-heading font-semibold text-foreground text-lg tracking-tight">ContaCena</span>
         </button>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <CadastrosGlobal tenantId={tenantId} />
 
         {/* Avatar Dropdown */}
         <DropdownMenu>

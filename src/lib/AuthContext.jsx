@@ -94,55 +94,29 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
 
-      // CAMADA 2: Verificar se o email está autorizado (cadastrado no banco de Usuarios)
-      try {
-        const usuarios = await base44.entities.Usuarios.filter({ email: currentUser.email });
-        
-        if (!usuarios || usuarios.length === 0) {
-          // Email não está cadastrado - acesso negado
-          console.warn('Unauthorized email:', currentUser.email);
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          setAuthChecked(true);
-          setAuthError({
-            type: 'user_not_registered',
-            message: 'Acesso não autorizado. Entre em contato com a administração para obter um convite.'
-          });
-          
-          // Fazer logout automático
-          base44.auth.logout(window.location.href);
-          return;
-        }
-
-        // Email está autorizado
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      } catch (checkError) {
-        console.error('Error checking user authorization:', checkError);
-        // Se não conseguir verificar, nega acesso por segurança
+      // Verificar se o email está autorizado
+      const usuarios = await base44.entities.Usuarios.filter({ email: currentUser.email });
+      
+      if (!usuarios || usuarios.length === 0) {
+        console.warn('Unauthorized email:', currentUser.email);
         setIsAuthenticated(false);
         setAuthError({
           type: 'user_not_registered',
-          message: 'Acesso não autorizado. Entre em contato com a administração para obter um convite.'
+          message: 'Acesso não autorizado.'
         });
-        base44.auth.logout(window.location.href);
+        base44.auth.logout();
         return;
       }
 
+      setUser(currentUser);
+      setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
       console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
+      setIsLoadingAuth(false);
     }
   };
 
