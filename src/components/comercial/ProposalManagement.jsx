@@ -340,20 +340,20 @@ export default function ProposalManagement({ proposal, clients, tenant, tenantId
               {items.length > 0 && (
                 <div className="mb-2" style={{ pageBreakInside: "avoid" }}>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 print:text-[#64748b]">Serviços</p>
-                  <div className="rounded-xl overflow-hidden border border-border/40 print:border-[#e2e8f0]">
+                  <div className="overflow-hidden border border-border/30 print:border-[#e2e8f0]" style={{ borderRadius: '0.75rem' }}>
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-secondary/30 print:bg-[#f8fafc]">
-                          <th className="text-left px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b]">Descrição</th>
-                          <th className="text-center px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-16">Qtd</th>
-                          <th className="text-right px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Valor Unit.</th>
-                          <th className="text-right px-4 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Total</th>
+                        <tr className="bg-secondary/20 print:bg-[#f8fafc] border-b border-border/30 print:border-[#e2e8f0]">
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b]">Descrição</th>
+                          <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-16">Qtd</th>
+                          <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Valor Unit.</th>
+                          <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider print:text-[#64748b] w-36">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {items.map((item, idx) => (
                           <React.Fragment key={item.id}>
-                            <tr className={`border-b border-border/30 last:border-b-0 print:border-[#e2e8f0] ${idx % 2 === 1 ? "bg-secondary/[0.06]" : ""}`}>
+                            <tr className={`border-b border-border/30 last:border-b-0 print:border-[#e2e8f0]`}>
                               <td className="px-4 py-4 text-foreground print:text-black">
                                 <span className="font-bold text-sm">{item.titulo}</span>
                                 {item.descricao_detalhada && item.descricao_detalhada !== "<p><br></p>" && (
