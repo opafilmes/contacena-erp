@@ -110,29 +110,12 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Quantidade Total</Label>
-              <div className="flex items-center border border-input rounded-md overflow-hidden">
-                <button
-                  type="button"
-                  className="px-2 h-9 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
-                  onClick={() => setForm(f => ({ ...f, qtd_total: Math.max(1, (f.qtd_total || 1) - 1) }))}
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                <input
-                  type="number"
-                  min="1"
-                  className="flex-1 h-9 text-center bg-transparent text-sm focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  value={form.qtd_total}
-                  onChange={e => setForm(f => ({ ...f, qtd_total: Math.max(1, Number(e.target.value) || 1) }))}
-                />
-                <button
-                  type="button"
-                  className="px-2 h-9 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
-                  onClick={() => setForm(f => ({ ...f, qtd_total: (f.qtd_total || 1) + 1 }))}
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </button>
-              </div>
+              <Input
+                type="number"
+                min="1"
+                value={form.qtd_total || 1}
+                onChange={e => setForm(f => ({ ...f, qtd_total: Number(e.target.value) }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Valor de Compra (R$)</Label>
