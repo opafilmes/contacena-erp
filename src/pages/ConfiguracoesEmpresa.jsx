@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,31 +32,67 @@ function formatCNPJ(v) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
+const TENANT_ID = "default"; // Single tenant
+
 export default function ConfiguracoesEmpresa() {
-  const { tenant } = useOutletContext();
   const navigate = useNavigate();
+  const [tenant, setTenant] = useState(null);
   const [form, setForm] = useState({
-    nome_fantasia:   tenant?.nome_fantasia   || "",
-    razao_social:    tenant?.razao_social    || "",
-    cnpj:            tenant?.cnpj            || "",
-    logo:            tenant?.logo            || "",
-    logradouro:      tenant?.logradouro      || "",
-    numero:          tenant?.numero          || "",
-    bairro:          tenant?.bairro          || "",
-    cidade:          tenant?.cidade          || "",
-    uf:              tenant?.uf              || "",
-    cep:             tenant?.cep             || "",
-    telefone:        tenant?.telefone        || "",
-    email_corporativo: tenant?.email_corporativo || "",
-    website:         tenant?.website         || "",
-    porte_empresa:   tenant?.porte_empresa   || "",
-    faturamento_anual: tenant?.faturamento_anual ?? "",
+    nome_fantasia:   "",
+    razao_social:    "",
+    cnpj:            "",
+    logo:            "",
+    logradouro:      "",
+    numero:          "",
+    bairro:          "",
+    cidade:          "",
+    uf:              "",
+    cep:             "",
+    telefone:        "",
+    email_corporativo: "",
+    website:         "",
+    porte_empresa:   "",
+    faturamento_anual: "",
   });
   const [saving, setSaving]           = useState(false);
+  const [loading, setLoading]         = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [stripeConnecting, setStripeConnecting] = useState(false);
+
+  // Load tenant on mount
+  useEffect(() => {
+    const loadTenant = async () => {
+      try {
+        const t = await base44.entities.Tenant.get(TENANT_ID);
+        setTenant(t);
+        setForm({
+          nome_fantasia:   t?.nome_fantasia   || "",
+          razao_social:    t?.razao_social    || "",
+          cnpj:            t?.cnpj            || "",
+          logo:            t?.logo            || "",
+          logradouro:      t?.logradouro      || "",
+          numero:          t?.numero          || "",
+          bairro:          t?.bairro          || "",
+          cidade:          t?.cidade          || "",
+          uf:              t?.uf              || "",
+          cep:             t?.cep             || "",
+          telefone:        t?.telefone        || "",
+          email_corporativo: t?.email_corporativo || "",
+          website:         t?.website         || "",
+          porte_empresa:   t?.porte_empresa   || "",
+          faturamento_anual: t?.faturamento_anual ?? "",
+        });
+      } catch (err) {
+        console.warn('Tenant not found, creating default:', err);
+        setTenant(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTenant();
+  }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -103,14 +139,28 @@ export default function ConfiguracoesEmpresa() {
   };
 
   const handleSave = async () => {
-    if (!tenant?.id) return;
     setSaving(true);
-    await base44.entities.Tenant.update(tenant.id, {
-      ...form,
-      faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
-    });
-    toast.success("Configurações salvas com sucesso!");
-    setSaving(false);
+    try {
+      const data = {
+        ...form,
+        faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
+      };
+      
+      if (tenant?.id) {
+        // Update existing tenant
+        await base44.entities.Tenant.update(tenant.id, data);
+      } else {
+        // Create new tenant with id "default"
+        const created = await base44.entities.Tenant.create({ id: TENANT_ID, ...data });
+        setTenant(created);
+      }
+      toast.success("Configurações salvas com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao salvar configurações.");
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Detecta retorno do onboarding Stripe Connect
@@ -154,12 +204,7 @@ export default function ConfiguracoesEmpresa() {
     finally { setPortalLoading(false); }
   };
 
-  const planTier  = tenant?.plan_tier || "Básico";
-  const planMeta  = PLAN_META[planTier] || PLAN_META["Básico"];
-  const PlanIcon  = planMeta.icon;
-  const subStatus = tenant?.subscription_status || "Trial";
-  const statusMeta = STATUS_LABELS[subStatus] || STATUS_LABELS["Trial"];
-  const trialEndsAt = tenant?.trial_ends_at ? format(new Date(tenant.trial_ends_at), "dd/MM/yyyy", { locale: ptBR }) : null;
+
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10">
