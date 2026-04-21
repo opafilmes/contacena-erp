@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { X, Upload, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 
 const CATEGORIAS = ["Câmera","Lente","Iluminação","Áudio","Tripé/Suporte","Monitor","Estabilizador","Drone","Acessório","Outros"];
-const BLANK = { nome_item: "", num_serie: "", qtd_total: 1, valor_compra: "", marca: "", categoria: "", status_manutencao: false, fotos: [] };
+const BLANK = { nome_item: "", num_serie: "", qtd_total: 1, marca: "", categoria: "", status_manutencao: false, fotos: [] };
 
 export default function EquipmentDrawer({ open, record, tenantId, onClose, onSaved }) {
   const [form, setForm] = useState(BLANK);
@@ -24,7 +24,6 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
         nome_item:         record.nome_item        || "",
         num_serie:         record.num_serie        || "",
         qtd_total:         record.qtd_total        ?? 1,
-        valor_compra:      record.valor_compra     ?? "",
         marca:             record.marca            || "",
         categoria:         record.categoria        || "",
         status_manutencao: record.status_manutencao ?? false,
@@ -52,7 +51,6 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
       nome_item:         form.nome_item,
       num_serie:         form.num_serie    || undefined,
       qtd_total:         form.qtd_total    !== "" ? Number(form.qtd_total)    : undefined,
-      valor_compra:      form.valor_compra !== "" ? Number(form.valor_compra) : undefined,
       marca:             form.marca        || undefined,
       categoria:         form.categoria    || undefined,
       status_manutencao: form.status_manutencao,
@@ -118,9 +116,6 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Valor de Compra (R$)</Label>
-              <Input type="number" placeholder="0,00" value={form.valor_compra} onChange={e => setForm(f => ({ ...f, valor_compra: e.target.value }))} />
-            </div>
           </div>
 
           {/* Status Manutenção */}
