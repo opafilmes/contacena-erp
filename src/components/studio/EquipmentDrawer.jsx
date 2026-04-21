@@ -114,7 +114,6 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
                 value={form.qtd_total || 1}
                 onChange={e => setForm(f => ({ ...f, qtd_total: Number(e.target.value) }))}
               />
-            </div>
             <div className="space-y-1.5">
           </div>
 
