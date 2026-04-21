@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
@@ -13,8 +13,6 @@ import BookingDashboard from "@/components/studio/BookingDashboard";
 import BookingListView from "@/components/studio/BookingListView";
 import BookingCalendarView from "@/components/studio/BookingCalendarView";
 import DevolucaoModal from "@/components/studio/DevolucaoModal";
-import BookingReportPrint from "@/components/studio/BookingReportPrint";
-import ReactDOM from "react-dom/client";
 
 export default function StudioInventario() {
   const { tenant } = useOutletContext();
@@ -32,16 +30,20 @@ export default function StudioInventario() {
 
   const loadAll = useCallback(async () => {
     if (!tenantId) return;
-    const [eq, bk, j, c] = await Promise.all([
-      base44.entities.Equipment.filter({ tenant_id: tenantId }),
-      base44.entities.EquipmentBooking.filter({ inquilino_id: tenantId }),
-      base44.entities.Job.filter({ tenant_id: tenantId }),
-      base44.entities.Client.filter({ tenant_id: tenantId }),
-    ]);
-    setEquipments(eq);
-    setBookings(bk);
-    setJobs(j);
-    setClients(c);
+    try {
+      const [eq, bk, j, c] = await Promise.all([
+        base44.entities.Equipment.filter({ tenant_id: tenantId }),
+        base44.entities.EquipmentBooking.filter({ inquilino_id: tenantId }),
+        base44.entities.Job.filter({ tenant_id: tenantId }),
+        base44.entities.Client.filter({ tenant_id: tenantId }),
+      ]);
+      setEquipments(eq || []);
+      setBookings(bk || []);
+      setJobs(j || []);
+      setClients(c || []);
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+    }
   }, [tenantId]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -56,42 +58,9 @@ export default function StudioInventario() {
     loadAll();
   };
 
+  // Função de impressão simplificada para não quebrar o React
   const handleGerarRelatorio = () => {
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html><head>
-        <meta charset="utf-8"/>
-        <title>Relatório de Reservas</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          @media print {
-            @page { size: A4 landscape; margin: 1cm; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
-        </style>
-      </head><body id="root"></body></html>
-    `);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      const container = printWindow.document.getElementById("root");
-      const root = printWindow.ReactDOM?.createRoot
-        ? printWindow.ReactDOM.createRoot(container)
-        : null;
-
-      // fallback: inject rendered HTML
-      const el = document.createElement("div");
-      document.body.appendChild(el);
-      const tempRoot = ReactDOM.createRoot(el);
-      tempRoot.render(
-        <BookingReportPrint bookings={bookings} equipments={equipments} clients={clients} tenant={tenant} />
-      );
-      setTimeout(() => {
-        printWindow.document.body.innerHTML = el.innerHTML;
-        el.remove();
-        setTimeout(() => printWindow.print(), 300);
-      }, 300);
-    };
+    window.print(); 
   };
 
   return (
@@ -112,7 +81,7 @@ export default function StudioInventario() {
             ) : (
               <>
                 <Button variant="outline" size="sm" className="gap-2" onClick={handleGerarRelatorio}>
-                  <FileText className="w-4 h-4" /> Gerar Relatório
+                  <FileText className="w-4 h-4" /> Imprimir Tela
                 </Button>
                 <Button onClick={() => setBkDrawer({ open: true, record: null })} size="sm" className="gap-2">
                   <Plus className="w-4 h-4" /> Nova Reserva
@@ -129,7 +98,6 @@ export default function StudioInventario() {
           </TabsList>
 
           <TabsContent value="equipamentos">
-            {/* Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-4 flex items-center gap-4">
                 <div className="p-2 rounded-lg bg-white/[0.05] text-violet-400">
@@ -158,10 +126,8 @@ export default function StudioInventario() {
           </TabsContent>
 
           <TabsContent value="reservas">
-            {/* BI Dashboard */}
             <BookingDashboard bookings={bookings} equipments={equipments} />
 
-            {/* Sub-tabs: Lista / Calendário */}
             <Tabs value={bookingTab} onValueChange={setBookingTab}>
               <TabsList className="mb-4 bg-secondary/50">
                 <TabsTrigger value="lista">Lista</TabsTrigger>
