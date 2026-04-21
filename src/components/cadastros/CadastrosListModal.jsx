@@ -81,13 +81,31 @@ export default function CadastrosListModal({ type, open, onClose, tenantId }) {
     if (!cfg || !tenantId) return;
     setLoading(true);
     const data = await base44.entities[cfg.entity].filter({ [cfg.filterKey]: tenantId });
-    setRows(data);
+    setRows(data || []);
     setLoading(false);
-  }, [type, tenantId]);
+  }, [type, tenantId, cfg]);
 
   useEffect(() => {
     if (open) { setSearch(""); load(); }
   }, [open, load]);
+
+  // --- VACINA CONTRA O FANTASMA DO MODAL ---
+  const clearLocks = useCallback(() => {
+    // Dá um pequeno atraso para o Radix tentar fechar primeiro
+    setTimeout(() => {
+      document.body.style.pointerEvents = "";
+      document.body.style.overflow = "";
+      document.body.removeAttribute("data-scroll-locked");
+    }, 150); 
+  }, []);
+
+  const handleCloseDialog = (isOpen) => {
+    if (!isOpen) {
+      onClose(); // Avisa o pai que fechou
+      clearLocks(); // Força a destrava da tela
+    }
+  };
+  // ------------------------------------------
 
   const handleDelete = async (row) => {
     if (!window.confirm("Confirmar exclusão?")) return;
@@ -104,7 +122,7 @@ export default function CadastrosListModal({ type, open, onClose, tenantId }) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-3xl bg-card/95 backdrop-blur-xl border-border/50">
           <DialogHeader>
             <DialogTitle className="font-heading">{cfg.title}</DialogTitle>
@@ -180,10 +198,13 @@ export default function CadastrosListModal({ type, open, onClose, tenantId }) {
       <DrawerSwitch
         type={type}
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          clearLocks(); // Garante que a tela destrave quando o Drawer secundário fecha
+        }}
         record={editing}
         tenantId={tenantId}
-        onSaved={() => { setDrawerOpen(false); load(); }}
+        onSaved={() => { setDrawerOpen(false); load(); clearLocks(); }}
       />
     </>
   );
