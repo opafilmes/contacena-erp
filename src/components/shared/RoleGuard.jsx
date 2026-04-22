@@ -10,7 +10,7 @@ export default function RoleGuard({ blockedRoles = [], children }) {
   const role = usuario?.role || "Admin";
 
   if (blockedRoles.includes(role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   return children;

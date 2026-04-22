@@ -83,28 +83,16 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   const updateSubtask = (i, k, v) => setSubtasks(s => s.map((sub, idx) => idx === i ? { ...sub, [k]: v } : sub));
   const removeSubtask = (i) => setSubtasks(s => s.filter((_, idx) => idx !== i));
 
-  const handleSave = async () => {
-const handleDeleteTask = async () => {
-    // 1. Primeira confirmação de segurança
+  const handleDeleteTask = async () => {
     if (!window.confirm("🚨 Tem certeza que deseja excluir esta tarefa?")) return;
-
     setSaving(true);
     try {
-      // 2. Exclui a tarefa principal
       await base44.entities.Task.delete(task.id);
-
-      // 3. Verifica se o usuário também quer deletar o "futuro" / subtarefas
       const querExcluirVinculadas = window.confirm(
         "🗑️ Deseja excluir também todas as ocorrências futuras e subtarefas vinculadas a esta tarefa?"
       );
-
       if (querExcluirVinculadas) {
-        // Busca no banco tudo que é "filho" dessa tarefa
-        const vinculadas = await base44.entities.Task.filter({
-          parent_task_id: task.id
-        });
-
-        // Deleta todas as filhas encontradas
+        const vinculadas = await base44.entities.Task.filter({ parent_task_id: task.id });
         if (vinculadas.length > 0) {
           await Promise.all(vinculadas.map(v => base44.entities.Task.delete(v.id)));
         }
@@ -112,16 +100,34 @@ const handleDeleteTask = async () => {
       } else {
         toast.success("Apenas a tarefa principal foi excluída.");
       }
-
-      // 4. Atualiza a tela e fecha a gaveta
       onSaved();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error("Erro ao excluir a tarefa.");
     } finally {
       setSaving(false);
     }
   };
+
+  const handleSave = async () => {
+    if (!form.titulo.trim()) { toast.error("Título obrigatório."); return; }
+    setSaving(true);
+
+    const baseDate = form.data_vencimento || undefined;
+
+    const masterPayload = {
+      titulo:          form.titulo,
+      descricao:       form.descricao || undefined,
+      data_vencimento: baseDate,
+      status:          form.status,
+      prioridade:      form.prioridade,
+      repeticao:       form.repeticao,
+      responsavel_id:  form.responsavel_id  || undefined,
+      job_id:          form.job_id          || undefined,
+      client_id:       form.client_id       || undefined,
+      inquilino_id:    inquilinoId,
+      criado_por_id:   task ? task.criado_por_id : (currentUserId || undefined),
+    };
 
     let masterId;
     if (isEditMode) {

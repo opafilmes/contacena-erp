@@ -64,7 +64,7 @@ export default function StudioAtividades() {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col">
       <div className="px-6 pt-8 pb-4 max-w-7xl mx-auto w-full">
-        <BackButton to="/producao" label="← Studio" />
+        <BackButton to="/app/producao" label="← Studio" />
       </div>
 
       <div className="flex flex-1 max-w-7xl mx-auto w-full px-6 pb-10 gap-0">

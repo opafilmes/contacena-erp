@@ -9,7 +9,7 @@ const MODULES = [
     Icon: Video,
     title: "Studio",
     subtitle: "Ordem do dia, Inventário, Produção",
-    to: "/producao",
+    to: "/app/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2",
     minH: "min-h-[260px]",
@@ -22,7 +22,7 @@ const MODULES = [
     Icon: LineChart,
     title: "Financeiro",
     subtitle: "Receitas e Despesas",
-    to: "/financeiro",
+    to: "/app/financeiro",
     requiredPlan: "Financeiro",
     gridClass: "col-span-1",
     minH: "min-h-[200px]",
@@ -35,7 +35,7 @@ const MODULES = [
     Icon: Briefcase,
     title: "Comercial",
     subtitle: "Propostas e Contratos",
-    to: "/comercial",
+    to: "/app/comercial",
     requiredPlan: null,
     gridClass: "col-span-1",
     minH: "min-h-[200px]",
@@ -124,9 +124,9 @@ export default function Home() {
   const plano = tenant?.plan_tier || "Básico";
 
   const hasPermission = (mod) => {
-    if (mod.to === "/comercial" && usuario?.perm_comercial === false) return false;
-    if (mod.to === "/financeiro" && usuario?.perm_financeiro === false) return false;
-    if (mod.to === "/producao" && usuario?.perm_studio_atividades === false && usuario?.perm_studio_inventario === false) return false;
+    if (mod.to === "/app/comercial" && usuario?.perm_comercial === false) return false;
+    if (mod.to === "/app/financeiro" && usuario?.perm_financeiro === false) return false;
+    if (mod.to === "/app/producao" && usuario?.perm_studio_atividades === false && usuario?.perm_studio_equipamentos === false) return false;
     return true;
   };
 

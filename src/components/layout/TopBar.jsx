@@ -30,7 +30,7 @@ export default function TopBar({ tenant, usuario }) {
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="flex items-center justify-between h-full px-6">
         {/* Logo / Tenant */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/app" className="flex items-center gap-3">
           {tenant?.logo ? (
             <img
               src={tenant.logo}
@@ -71,25 +71,25 @@ export default function TopBar({ tenant, usuario }) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/configuracoes-empresa" className="cursor-pointer">
+              <Link to="/app/configuracoes-empresa" className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações da Empresa
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/gestao-equipe" className="cursor-pointer">
+              <Link to="/app/gestao-equipe" className="cursor-pointer">
                 <Users className="mr-2 h-4 w-4" />
                 Usuários
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/cadastros" className="cursor-pointer">
+              <Link to="/app/cadastros" className="cursor-pointer">
                 <Database className="mr-2 h-4 w-4" />
                 Cadastros Base
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/meu-perfil" className="cursor-pointer">
+              <Link to="/app/meu-perfil" className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
                 Meu Perfil
               </Link>

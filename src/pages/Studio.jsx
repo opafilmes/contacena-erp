@@ -9,7 +9,7 @@ const HUBS = [
     icon: CheckSquare,
     title: "Gestão de Atividades",
     subtitle: "Tarefas, prazos, delegação e acompanhamento de equipe",
-    to: "/studio/atividades",
+    to: "/app/studio/atividades",
     image: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?q=80&w=1974&auto=format&fit=crop",
     accent: "rgba(34,197,94,0.55)",
     iconColor: "text-green-300",
@@ -20,7 +20,7 @@ const HUBS = [
     icon: Package,
     title: "Equipamentos",
     subtitle: "Controle de ativos, reservas e detecção de conflitos",
-    to: "/studio/inventario",
+    to: "/app/studio/inventario",
     image: "https://images.unsplash.com/photo-1604978880209-8e21f7b69e50?q=80&w=1974&auto=format&fit=crop",
     accent: "rgba(139,92,246,0.55)",
     iconColor: "text-violet-300",
@@ -88,8 +88,8 @@ function HubCard({ hub, index }) {
 }
 
 const PERM_MAP = {
-  "/studio/atividades": "perm_studio_atividades",
-  "/studio/inventario": "perm_studio_inventario",
+  "/app/studio/atividades": "perm_studio_atividades",
+  "/app/studio/inventario": "perm_studio_equipamentos",
 };
 
 export default function Studio() {

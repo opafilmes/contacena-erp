@@ -22,7 +22,7 @@ export default function Producao() {
   // Plan gate
   useEffect(() => {
     if (tenant && plano !== "Profissional") {
-      navigate("/");
+      navigate("/app");
     }
   }, [tenant, plano, navigate]);
 
