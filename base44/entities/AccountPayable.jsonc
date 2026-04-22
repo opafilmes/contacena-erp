@@ -28,15 +28,10 @@
       "enum": [
         "Pendente",
         "Pago",
-        "Atrasado",
-        "Aguardando Concilia\u00e7\u00e3o"
+        "Atrasado"
       ],
       "default": "Pendente",
       "description": "Status do pagamento"
-    },
-    "bank_account_id": {
-      "type": "string",
-      "description": "ID da conta banc\u00e1ria relacionada"
     },
     "inquilino_id": {
       "type": "string",

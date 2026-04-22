@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Trash2, GitBranch, MessageSquare, FileText } from "lucide-react";
-import DeleteTaskModal from "./DeleteTaskModal";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import TaskComments from "./TaskComments";
@@ -50,7 +49,6 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   const [subtasks, setSubtasks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("form");
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const isEditMode   = !!task?.id;
   const isMasterTask = !task?.parent_task_id;
@@ -85,24 +83,27 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   const updateSubtask = (i, k, v) => setSubtasks(s => s.map((sub, idx) => idx === i ? { ...sub, [k]: v } : sub));
   const removeSubtask = (i) => setSubtasks(s => s.filter((_, idx) => idx !== i));
 
-  // ── DELETE (chamado pelo DeleteTaskModal) ──
-  const handleDeleteConfirm = async (targetTask, mode) => {
+  // ── CASCADE DELETE ──
+  const handleDeleteTask = async () => {
+    if (!window.confirm("🚨 Tem certeza que deseja excluir esta tarefa?")) return;
     setSaving(true);
     try {
-      if (mode === "future" && targetTask.recurrence_group_id) {
-        // Fetch all tasks in the same recurrence group
-        const group = await base44.entities.Task.filter({ recurrence_group_id: targetTask.recurrence_group_id });
-        const targetDate = targetTask.data_vencimento || targetTask.created_date || "";
-        const toDelete = group.filter(t => {
-          const tDate = t.data_vencimento || t.created_date || "";
-          return tDate >= targetDate;
-        });
-        await Promise.all(toDelete.map(t => base44.entities.Task.delete(t.id)));
-        toast.success(`${toDelete.length} tarefa(s) excluída(s) com sucesso!`);
+      await base44.entities.Task.delete(task.id);
+
+      const querExcluirVinculadas = window.confirm(
+        "🗑️ Deseja excluir também todas as ocorrências futuras e subtarefas vinculadas a esta tarefa?"
+      );
+
+      if (querExcluirVinculadas) {
+        const vinculadas = await base44.entities.Task.filter({ parent_task_id: task.id });
+        if (vinculadas.length > 0) {
+          await Promise.all(vinculadas.map(v => base44.entities.Task.delete(v.id)));
+        }
+        toast.success("Tarefa, subtarefas e ocorrências excluídas com sucesso!");
       } else {
-        await base44.entities.Task.delete(targetTask.id);
-        toast.success("Tarefa excluída com sucesso!");
+        toast.success("Apenas a tarefa principal foi excluída.");
       }
+
       onSaved();
       onClose();
     } catch {
@@ -111,8 +112,6 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
       setSaving(false);
     }
   };
-
-  const handleDeleteTask = () => setDeleteModalOpen(true);
 
   // ── SAVE ──
   const handleSave = async () => {
@@ -149,8 +148,6 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
 
     // Recurring occurrences (1 year cycle) — new tasks only
     if (!isEditMode && form.repeticao !== "Nenhuma" && baseDate) {
-      // Also stamp the master task with the group id
-      await base44.entities.Task.update(masterId, { recurrence_group_id: masterId });
       let limiteOcorrencias = 0;
       if (form.repeticao === "Diário")    limiteOcorrencias = 365;
       else if (form.repeticao === "Semanal")   limiteOcorrencias = 52;
@@ -164,7 +161,6 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
           ...masterPayload,
           data_vencimento: `${nextDate.toISOString().slice(0, 10)}T12:00:00`,
           parent_task_id: masterId,
-          recurrence_group_id: masterId,
           status: "A Fazer",
         });
       }
@@ -201,13 +197,6 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   };
 
   return (
-    <>
-    <DeleteTaskModal
-      open={deleteModalOpen}
-      task={task}
-      onClose={() => setDeleteModalOpen(false)}
-      onConfirm={handleDeleteConfirm}
-    />
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-lg bg-card/95 backdrop-blur-xl border-border/50 overflow-y-auto">
         <SheetHeader>
@@ -296,6 +285,17 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
                   {(clients || []).map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.nome_fantasia}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Projeto */}
+            <div className="space-y-1.5">
+              <Label>Projeto</Label>
+              <Select value={form.job_id} onValueChange={v => setForm(f => ({ ...f, job_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar projeto..." /></SelectTrigger>
+                <SelectContent>
+                  {jobs.map(j => (<SelectItem key={j.id} value={j.id}>{j.titulo}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
@@ -415,6 +415,5 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
         )}
       </SheetContent>
     </Sheet>
-    </>
   );
 }

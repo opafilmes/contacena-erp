@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Search, Loader2, Upload } from "lucide-react";
+import { useRef } from "react";
 
 const emptyPJ = { tipo: "PJ", razao_social: "", nome_fantasia: "", cnpj_cpf: "", contato: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", cep: "", logo: "" };
 const emptyPF = { tipo: "PF", nome_completo: "", cnpj_cpf: "", contato: "", logo: "" };
@@ -35,34 +36,14 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef(null);
 
-  // --- VACINA DE LIMPEZA ---
-  const forceCleanup = useCallback(() => {
-    setTimeout(() => {
-      document.body.style.pointerEvents = "auto";
-      document.body.style.overflow = "auto";
-      document.body.removeAttribute("data-scroll-locked");
-      // Se houver algum overlay de fundo preso, isso ajuda a liberar
-      const guards = document.querySelectorAll('[data-radix-focus-guard]');
-      guards.forEach(el => el.remove());
-    }, 100);
-  }, []);
-
-  const handleClose = () => {
-    forceCleanup();
-    onClose();
-  };
-  // -------------------------
-
   useEffect(() => {
-    if (open) {
-      if (record) {
-        const t = record.tipo || (record.cnpj_cpf?.replace(/\D/g, "").length <= 11 ? "PF" : "PJ");
-        setTipo(t);
-        setForm({ ...record, tipo: t });
-      } else {
-        setTipo("PJ");
-        setForm(emptyPJ);
-      }
+    if (record) {
+      const t = record.tipo || (record.cnpj_cpf?.replace(/\D/g, "").length <= 11 ? "PF" : "PJ");
+      setTipo(t);
+      setForm({ ...record, tipo: t });
+    } else {
+      setTipo("PJ");
+      setForm(emptyPJ);
     }
   }, [record, open]);
 
@@ -107,42 +88,37 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
     if (!nome?.trim()) { toast.error("Nome é obrigatório."); return; }
     setSaving(true);
 
-    try {
-      const payload = {
-        tipo,
-        cnpj_cpf: form.cnpj_cpf || "",
-        contato: form.contato || "",
-        tenant_id: tenantId,
-        logo: form.logo || "",
-        ...(tipo === "PJ" ? {
-          nome_fantasia: form.nome_fantasia || "",
-          razao_social: form.razao_social || "",
-          logradouro: form.logradouro || "",
-          numero: form.numero || "",
-          bairro: form.bairro || "",
-          cidade: form.cidade || "",
-          uf: form.uf || "",
-          cep: form.cep || "",
-        } : {
-          nome_fantasia: form.nome_completo || "",
-          razao_social: "",
-        }),
-      };
+    const payload = {
+      tipo,
+      cnpj_cpf: form.cnpj_cpf || "",
+      contato: form.contato || "",
+      tenant_id: tenantId,
+      logo: form.logo || "",
+      ...(tipo === "PJ" ? {
+        nome_fantasia: form.nome_fantasia || "",
+        razao_social: form.razao_social || "",
+        logradouro: form.logradouro || "",
+        numero: form.numero || "",
+        bairro: form.bairro || "",
+        cidade: form.cidade || "",
+        uf: form.uf || "",
+        cep: form.cep || "",
+      } : {
+        nome_fantasia: form.nome_completo || "",
+        razao_social: "",
+      }),
+    };
 
-      if (record?.id) {
-        await base44.entities.Client.update(record.id, payload);
-        toast.success("Cliente atualizado!");
-      } else {
-        await base44.entities.Client.create(payload);
-        toast.success("Cliente criado!");
-      }
-      onSaved();
-      handleClose();
-    } catch (err) {
-      toast.error("Erro ao salvar.");
-    } finally {
-      setSaving(false);
+    if (record?.id) {
+      await base44.entities.Client.update(record.id, payload);
+      toast.success("Cliente atualizado!");
+    } else {
+      await base44.entities.Client.create(payload);
+      toast.success("Cliente criado!");
     }
+    setSaving(false);
+    onSaved();
+    onClose();
   };
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -151,25 +127,21 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingLogo(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      set("logo", file_url);
-      toast.success("Logo enviada!");
-    } catch {
-      toast.error("Erro no upload.");
-    } finally {
-      setUploadingLogo(false);
-    }
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    set("logo", file_url);
+    setUploadingLogo(false);
+    toast.success("Logo enviada!");
   };
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && handleClose()}>
+    <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="bg-popover/95 backdrop-blur-xl border-border/50 w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="font-heading">{record ? "Editar Cliente" : "Novo Cliente"}</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-4 mt-6">
+          {/* Toggle PF/PJ */}
           <div className="flex rounded-lg overflow-hidden border border-border/50">
             {["PJ", "PF"].map(t => (
               <button
@@ -184,6 +156,7 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
 
           {tipo === "PJ" ? (
             <>
+              {/* CNPJ com busca automática */}
               <div className="space-y-1.5">
                 <Label>CNPJ</Label>
                 <div className="relative">
@@ -197,21 +170,22 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
                     {loadingCnpj ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   </div>
                 </div>
+                {loadingCnpj && <p className="text-xs text-muted-foreground">Consultando CNPJ...</p>}
               </div>
 
               <div className="space-y-1.5">
                 <Label>Razão Social</Label>
-                <Input value={form.razao_social} onChange={e => set("razao_social", e.target.value)} placeholder="Razão Social" />
+                <Input value={form.razao_social} onChange={e => set("razao_social", e.target.value)} placeholder="Razão Social da empresa" />
               </div>
               <div className="space-y-1.5">
                 <Label>Nome Fantasia *</Label>
-                <Input value={form.nome_fantasia} onChange={e => set("nome_fantasia", e.target.value)} placeholder="Nome fantasia" />
+                <Input value={form.nome_fantasia} onChange={e => set("nome_fantasia", e.target.value)} placeholder="Nome fantasia ou marca" />
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2 space-y-1.5">
                   <Label>Logradouro</Label>
-                  <Input value={form.logradouro} onChange={e => set("logradouro", e.target.value)} placeholder="Rua..." />
+                  <Input value={form.logradouro} onChange={e => set("logradouro", e.target.value)} placeholder="Rua, Av..." />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Número</Label>
@@ -237,7 +211,7 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
                 </div>
                 <div className="space-y-1.5">
                   <Label>UF</Label>
-                  <Input value={form.uf} onChange={e => set("uf", e.target.value)} placeholder="UF" maxLength={2} />
+                  <Input value={form.uf} onChange={e => set("uf", e.target.value)} placeholder="SP" maxLength={2} />
                 </div>
               </div>
             </>
@@ -255,30 +229,44 @@ export default function ClientDrawer({ open, onClose, record, tenantId, onSaved 
           )}
 
           <div className="space-y-1.5">
-            <Label>Contato</Label>
-            <Input value={form.contato} onChange={e => set("contato", e.target.value)} placeholder="E-mail ou telefone" />
+            <Label>Contato (e-mail ou telefone)</Label>
+            <Input value={form.contato} onChange={e => set("contato", e.target.value)} placeholder="email@exemplo.com ou (11) 99999-9999" />
           </div>
 
+          {/* Logo upload */}
           <div className="space-y-1.5">
             <Label>Logo do Cliente</Label>
             <div className="flex items-center gap-3">
               <div
                 onClick={() => logoInputRef.current?.click()}
-                className="w-14 h-14 rounded-full border-2 border-dashed border-border/50 flex items-center justify-center cursor-pointer overflow-hidden"
+                className="w-14 h-14 rounded-full border-2 border-dashed border-border/50 flex items-center justify-center cursor-pointer hover:border-accent/60 transition-colors shrink-0 overflow-hidden"
               >
-                {form.logo ? <img src={form.logo} alt="logo" className="w-full h-full object-cover" /> : <Upload className="w-5 h-5 text-muted-foreground" />}
+                {form.logo ? (
+                  <img src={form.logo} alt="logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                )}
               </div>
-              <div className="flex-1">
-                <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} className="w-full">
-                  {uploadingLogo ? "Enviando..." : "Trocar Logo"}
+              <div className="flex-1 space-y-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                  className="w-full"
+                >
+                  {uploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
+                  {uploadingLogo ? "Enviando..." : form.logo ? "Trocar Logo" : "Fazer Upload"}
                 </Button>
+                <p className="text-xs text-muted-foreground">PNG, JPG ou SVG</p>
               </div>
               <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
             </div>
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" onClick={handleClose} className="flex-1">Cancelar</Button>
+            <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} className="flex-1">{saving ? "Salvando..." : "Salvar"}</Button>
           </div>
         </div>

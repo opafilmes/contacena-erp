@@ -149,123 +149,109 @@
 }
 
 @media print {
-  /* ── DARK MODE OVERRIDE: força cores para impressão ── */
-  body, #root, main {
-    background-color: white !important;
-    color: black !important;
+  /* ── Reset global ── */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Montserrat', sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  #print-container,
-  #print-container * {
-    color: black !important;
-    background-color: white !important;
-    border-color: #d1d5db !important;
-  }
-  #print-container table,
-  #print-container th,
-  #print-container td {
-    border-color: #000 !important;
-  }
-  /* Libera overflow/height para quebra natural de páginas */
-  .overflow-hidden, .overflow-y-auto, .overflow-x-auto {
-    overflow: visible !important;
-  }
-  [class*="h-screen"], [class*="max-h-screen"] {
-    height: auto !important;
-    max-height: none !important;
-  }
-  /* Oculta interface não-essencial */
+
+  /* ── Ocultar chrome da app ── */
+  header,
+  nav,
+  aside,
   .no-print,
-  nav, aside, header,
+  [data-print-hide],
   [data-sidebar],
-  [role="navigation"] {
+  .topbar,
+  button:not(.print-keep),
+  .sheet-overlay,
+  [role="dialog"] {
     display: none !important;
   }
 
-  /* ── Rodapé fixo na impressão ── */
-  .print-footer-fixed {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
+  /* ── Área de impressão ── */
+  .print-area {
+    display: block !important;
     width: 100% !important;
-    text-align: center !important;
-    padding-top: 10px !important;
-    border-top: 1px solid #e5e7eb !important;
-    background: white !important;
-  }
-  #print-container { padding-bottom: 50px !important; }
-
-  /* ── Instrução 1: zera margens do navegador (oculta URL, data, título) ── */
-  @page {
-    size: A4 portrait;
-    margin: 0;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
   }
 
-  /* ── Instrução 3: força fundo branco absoluto ── */
-  html, body, #root {
-    background-color: white !important;
-    background-image: none !important;
-    color: black !important;
-    height: 100% !important;
+  /* ── Cabeçalho com logo do tenant ── */
+  .print-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 2px solid #e5e7eb !important;
   }
-  .bg-background, .bg-card, .dark {
-    background-color: white !important;
+  .print-header img {
+    height: 48px !important;
+    width: auto !important;
+    object-fit: contain !important;
   }
-
-  /* ── Técnica definitiva: esconde tudo, mostra só o container ── */
-  body * {
-    visibility: hidden;
+  .print-header .print-header-text h1 {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    margin: 0 !important;
   }
-  #print-container,
-  #print-container * {
-    visibility: visible;
-  }
-
-  /* ── Instrução 2+3: container com padding compensatório e fundo branco ── */
-  #print-container {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    padding: 2cm !important;
-    min-height: 100vh !important;
-    box-sizing: border-box !important;
-    background: white !important;
-    color: black !important;
-    z-index: 9999 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  .print-header .print-header-text p {
+    font-size: 11px !important;
+    color: #6b7280 !important;
+    margin: 2px 0 0 !important;
   }
 
-  /* Oculta botões e UI dentro do container */
-  #print-container button,
-  .no-print {
-    display: none !important;
+  /* ── Títulos ── */
+  .print-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+    color: #111827 !important;
+  }
+  .print-subtitle {
+    font-size: 11px !important;
+    color: #6b7280 !important;
+    margin-bottom: 16px !important;
   }
 
   /* ── Tabelas ── */
   table {
     width: 100% !important;
     border-collapse: collapse !important;
+    page-break-inside: auto !important;
   }
   thead { display: table-header-group !important; }
-  tr { page-break-inside: avoid !important; }
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
   th, td {
+    border: 1px solid #d1d5db !important;
     color: #111827 !important;
     background: #ffffff !important;
-    padding: 12px 16px !important;
+    padding: 7px 10px !important;
     font-size: 11px !important;
     text-align: left !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-top: none !important;
   }
   th {
-    background: #f8fafc !important;
+    background: #f3f4f6 !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
     font-size: 10px !important;
     letter-spacing: 0.05em !important;
-    color: #64748b !important;
+  }
+
+  /* ── Página ── */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 15mm;
   }
 }

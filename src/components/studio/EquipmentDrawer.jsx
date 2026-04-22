@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { X, Upload, Loader2 } from "lucide-react";
 
 const CATEGORIAS = ["Câmera","Lente","Iluminação","Áudio","Tripé/Suporte","Monitor","Estabilizador","Drone","Acessório","Outros"];
-const BLANK = { nome_item: "", num_serie: "", qtd_total: 1, marca: "", categoria: "", status_manutencao: false, fotos: [] };
+const BLANK = { nome_item: "", num_serie: "", qtd_total: "", valor_compra: "", marca: "", categoria: "", status_manutencao: false, fotos: [] };
 
 export default function EquipmentDrawer({ open, record, tenantId, onClose, onSaved }) {
   const [form, setForm] = useState(BLANK);
@@ -23,7 +23,8 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
       setForm(record ? {
         nome_item:         record.nome_item        || "",
         num_serie:         record.num_serie        || "",
-        qtd_total:         record.qtd_total        ?? 1,
+        qtd_total:         record.qtd_total        ?? "",
+        valor_compra:      record.valor_compra     ?? "",
         marca:             record.marca            || "",
         categoria:         record.categoria        || "",
         status_manutencao: record.status_manutencao ?? false,
@@ -36,15 +37,10 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingFoto(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setForm(f => ({ ...f, fotos: [file_url] })); // limita a 1 foto
-      toast.success("Foto adicionada!");
-    } catch (err) {
-      toast.error("Erro no upload.");
-    } finally {
-      setUploadingFoto(false);
-    }
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setForm(f => ({ ...f, fotos: [file_url] })); // limit to 1 photo
+    setUploadingFoto(false);
+    toast.success("Foto adicionada!");
   };
 
   const removeFoto = () => setForm(f => ({ ...f, fotos: [] }));
@@ -52,32 +48,27 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
   const handleSave = async () => {
     if (!form.nome_item.trim()) { toast.error("Nome obrigatório."); return; }
     setSaving(true);
-    try {
-      const payload = {
-        nome_item:         form.nome_item,
-        num_serie:         form.num_serie    || undefined,
-        qtd_total:         form.qtd_total    !== "" ? Number(form.qtd_total)    : undefined,
-        marca:             form.marca        || undefined,
-        categoria:         form.categoria    || undefined,
-        status_manutencao: form.status_manutencao,
-        fotos:             form.fotos.length > 0 ? form.fotos : undefined,
-        tenant_id:         tenantId,
-      };
-      
-      if (record?.id) {
-        await base44.entities.Equipment.update(record.id, payload);
-        toast.success("Equipamento atualizado!");
-      } else {
-        await base44.entities.Equipment.create(payload);
-        toast.success("Equipamento cadastrado!");
-      }
-      onSaved();
-      onClose();
-    } catch (err) {
-      toast.error("Erro ao salvar.");
-    } finally {
-      setSaving(false);
+    const payload = {
+      nome_item:         form.nome_item,
+      num_serie:         form.num_serie    || undefined,
+      qtd_total:         form.qtd_total    !== "" ? Number(form.qtd_total)    : undefined,
+      valor_compra:      form.valor_compra !== "" ? Number(form.valor_compra) : undefined,
+      marca:             form.marca        || undefined,
+      categoria:         form.categoria    || undefined,
+      status_manutencao: form.status_manutencao,
+      fotos:             form.fotos.length > 0 ? form.fotos : undefined,
+      tenant_id:         tenantId,
+    };
+    if (record?.id) {
+      await base44.entities.Equipment.update(record.id, payload);
+      toast.success("Equipamento atualizado!");
+    } else {
+      await base44.entities.Equipment.create(payload);
+      toast.success("Equipamento cadastrado!");
     }
+    setSaving(false);
+    onSaved();
+    onClose();
   };
 
   const currentFoto = form.fotos?.[0];
@@ -90,25 +81,15 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
         </SheetHeader>
 
         <div className="space-y-5 mt-6 pb-6">
-          {/* Nome */}
           <div className="space-y-1.5">
             <Label>Nome *</Label>
-            <Input 
-              placeholder="Ex: Sony FX3" 
-              value={form.nome_item} 
-              onChange={e => setForm(f => ({ ...f, nome_item: e.target.value }))} 
-            />
+            <Input placeholder="Ex: Sony FX3" value={form.nome_item} onChange={e => setForm(f => ({ ...f, nome_item: e.target.value }))} />
           </div>
 
-          {/* Marca e Categoria */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Marca</Label>
-              <Input 
-                placeholder="Sony, Sigma..." 
-                value={form.marca} 
-                onChange={e => setForm(f => ({ ...f, marca: e.target.value }))} 
-              />
+              <Input placeholder="Sony, Sigma..." value={form.marca} onChange={e => setForm(f => ({ ...f, marca: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
               <Label>Categoria</Label>
@@ -121,26 +102,19 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
             </div>
           </div>
 
-          {/* Número de Série */}
           <div className="space-y-1.5">
             <Label>Número de Série</Label>
-            <Input 
-              placeholder="SN-XXXXXXX" 
-              value={form.num_serie} 
-              onChange={e => setForm(f => ({ ...f, num_serie: e.target.value }))} 
-            />
+            <Input placeholder="SN-XXXXXXX" value={form.num_serie} onChange={e => setForm(f => ({ ...f, num_serie: e.target.value }))} />
           </div>
 
-          {/* Quantidade */}
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Quantidade Total</Label>
-              <Input
-                type="number"
-                min="1"
-                value={form.qtd_total || 1}
-                onChange={e => setForm(f => ({ ...f, qtd_total: Number(e.target.value) }))}
-              />
+              <Input type="number" placeholder="1" value={form.qtd_total} onChange={e => setForm(f => ({ ...f, qtd_total: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Valor de Compra (R$)</Label>
+              <Input type="number" placeholder="0,00" value={form.valor_compra} onChange={e => setForm(f => ({ ...f, valor_compra: e.target.value }))} />
             </div>
           </div>
 
@@ -153,7 +127,7 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
             <Switch checked={form.status_manutencao} onCheckedChange={v => setForm(f => ({ ...f, status_manutencao: v }))} />
           </div>
 
-          {/* Foto Upload */}
+          {/* Foto Upload (1 foto) */}
           <div className="space-y-2">
             <Label>Foto do Equipamento</Label>
             {currentFoto ? (
@@ -183,14 +157,13 @@ export default function EquipmentDrawer({ open, record, tenantId, onClose, onSav
             )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFotoUpload} />
             {currentFoto && (
-              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploadingFoto} className="w-full mt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploadingFoto} className="w-full">
                 {uploadingFoto ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
                 Trocar Foto
               </Button>
             )}
           </div>
 
-          {/* Ações */}
           <div className="flex gap-3 pt-2">
             <Button variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
             <Button className="flex-1" onClick={handleSave} disabled={saving}>

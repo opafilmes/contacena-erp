@@ -58,7 +58,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <TopBar tenant={tenant} usuario={usuario} tenantId={tenant?.id} />
+      <TopBar tenant={tenant} usuario={usuario} />
       <main className="pt-16">
         <Outlet context={{ tenant, usuario }} />
       </main>

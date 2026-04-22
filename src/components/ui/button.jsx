@@ -43,3 +43,6 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
       {...props} />)
   );
 })
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
