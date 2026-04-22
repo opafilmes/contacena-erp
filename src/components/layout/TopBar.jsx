@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, Settings, User, Database, Users } from "lucide-react";
+import { LogOut, Settings, User, Database, Users, Shield } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import {
   DropdownMenu,
@@ -11,7 +11,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 
+const SUPER_ADMIN_EMAIL = "contato@opafilmes.com";
+
 export default function TopBar({ tenant, usuario }) {
+  const isSuperAdmin = usuario?.email === SUPER_ADMIN_EMAIL;
+
   const handleLogout = () => {
     base44.auth.logout();
   };
@@ -94,6 +98,17 @@ export default function TopBar({ tenant, usuario }) {
                 Meu Perfil
               </Link>
             </DropdownMenuItem>
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/super-admin" className="cursor-pointer text-accent focus:text-accent">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Super Admin
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />

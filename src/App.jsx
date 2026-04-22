@@ -20,6 +20,7 @@ import Studio from './pages/Studio';
 import StudioAtividades from './pages/StudioAtividades';
 import StudioInventario from './pages/StudioInventario';
 import GestaoEquipe from './pages/GestaoEquipe';
+import SuperAdminPage from './pages/admin/SuperAdminPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -64,6 +65,7 @@ const AuthenticatedApp = () => {
         <Route path="gestao-equipe" element={<GestaoEquipe />} />
       </Route>
 
+      <Route path="/super-admin" element={<SuperAdminPage />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
