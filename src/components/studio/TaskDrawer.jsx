@@ -48,7 +48,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   const [form, setForm] = useState(BLANK_FORM);
   const [subtasks, setSubtasks] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("form");
+  const [activeTab, setActiveTab] = useState("form"); // "form" | "comments"
 
   const isEditMode   = !!task?.id;
   const isMasterTask = !task?.parent_task_id;
@@ -83,19 +83,28 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
   const updateSubtask = (i, k, v) => setSubtasks(s => s.map((sub, idx) => idx === i ? { ...sub, [k]: v } : sub));
   const removeSubtask = (i) => setSubtasks(s => s.filter((_, idx) => idx !== i));
 
-  // ── CASCADE DELETE ──
-  const handleDeleteTask = async () => {
+  const handleSave = async () => {
+const handleDeleteTask = async () => {
+    // 1. Primeira confirmação de segurança
     if (!window.confirm("🚨 Tem certeza que deseja excluir esta tarefa?")) return;
+
     setSaving(true);
     try {
+      // 2. Exclui a tarefa principal
       await base44.entities.Task.delete(task.id);
 
+      // 3. Verifica se o usuário também quer deletar o "futuro" / subtarefas
       const querExcluirVinculadas = window.confirm(
         "🗑️ Deseja excluir também todas as ocorrências futuras e subtarefas vinculadas a esta tarefa?"
       );
 
       if (querExcluirVinculadas) {
-        const vinculadas = await base44.entities.Task.filter({ parent_task_id: task.id });
+        // Busca no banco tudo que é "filho" dessa tarefa
+        const vinculadas = await base44.entities.Task.filter({
+          parent_task_id: task.id
+        });
+
+        // Deleta todas as filhas encontradas
         if (vinculadas.length > 0) {
           await Promise.all(vinculadas.map(v => base44.entities.Task.delete(v.id)));
         }
@@ -104,37 +113,15 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
         toast.success("Apenas a tarefa principal foi excluída.");
       }
 
+      // 4. Atualiza a tela e fecha a gaveta
       onSaved();
       onClose();
-    } catch {
+    } catch (error) {
       toast.error("Erro ao excluir a tarefa.");
     } finally {
       setSaving(false);
     }
   };
-
-  // ── SAVE ──
-  const handleSave = async () => {
-    if (!form.titulo.trim()) { toast.error("Título obrigatório."); return; }
-    setSaving(true);
-
-    const baseDate = form.data_vencimento
-      ? `${form.data_vencimento}T12:00:00`
-      : undefined;
-
-    const masterPayload = {
-      titulo:          form.titulo,
-      descricao:       form.descricao || undefined,
-      data_vencimento: baseDate,
-      status:          form.status,
-      prioridade:      form.prioridade,
-      repeticao:       form.repeticao,
-      responsavel_id:  form.responsavel_id  || undefined,
-      job_id:          form.job_id          || undefined,
-      client_id:       form.client_id       || undefined,
-      inquilino_id:    inquilinoId,
-      criado_por_id:   task ? task.criado_por_id : (currentUserId || undefined),
-    };
 
     let masterId;
     if (isEditMode) {
@@ -146,13 +133,13 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
       masterId = created.id;
     }
 
-    // Recurring occurrences (1 year cycle) — new tasks only
-    if (!isEditMode && form.repeticao !== "Nenhuma" && baseDate) {
+    // Create recurring occurrences (1 year cycle) for new tasks only
+   if (!isEditMode && form.repeticao !== "Nenhuma" && baseDate) {
       let limiteOcorrencias = 0;
-      if (form.repeticao === "Diário")    limiteOcorrencias = 365;
-      else if (form.repeticao === "Semanal")   limiteOcorrencias = 52;
+      if (form.repeticao === "Diário") limiteOcorrencias = 365;
+      else if (form.repeticao === "Semanal") limiteOcorrencias = 52;
       else if (form.repeticao === "Quinzenal") limiteOcorrencias = 26;
-      else if (form.repeticao === "Mensal")    limiteOcorrencias = 12;
+      else if (form.repeticao === "Mensal") limiteOcorrencias = 12;
 
       const occurrences = [];
       for (let i = 1; i <= limiteOcorrencias; i++) {
@@ -203,12 +190,12 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
           <SheetTitle className="font-heading">{isEditMode ? "Editar Tarefa" : "Nova Tarefa"}</SheetTitle>
         </SheetHeader>
 
-        {/* Tab bar */}
+        {/* Tab bar — only show comments if editing */}
         {isEditMode && (
           <div className="flex gap-1 mt-4 mb-2 p-1 bg-secondary/40 rounded-lg border border-border/30">
             {[
-              { key: "form",     label: "Detalhes",    icon: FileText },
-              { key: "comments", label: "Comentários", icon: MessageSquare },
+              { key: "form",     label: "Detalhes",     icon: FileText },
+              { key: "comments", label: "Comentários",  icon: MessageSquare },
             ].map(({ key, label, icon: Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
@@ -255,13 +242,14 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
               </div>
             </div>
 
+            {/* Repeat hint */}
             {hasRepeat && (
               <p className="text-xs text-accent bg-accent/10 border border-accent/20 rounded-lg px-3 py-2">
                 🔁 Serão criadas automaticamente as ocorrências para 1 ano ({form.repeticao}).
               </p>
             )}
 
-            {/* Descrição */}
+            {/* Descrição Rich Text */}
             <div className="space-y-1.5">
               <Label>Descrição</Label>
               <div className="quill-dark rounded-md overflow-hidden border border-border/50">
@@ -361,6 +349,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
                         </button>
                       </div>
                       <Input className="h-8 text-sm" placeholder="Título da subtarefa..." value={sub.titulo} onChange={e => updateSubtask(i, "titulo", e.target.value)} />
+                      {/* Rich text description for subtask */}
                       <div className="quill-dark rounded-md overflow-hidden border border-border/40">
                         <ReactQuill
                           value={sub.descricao || ""}
@@ -386,13 +375,7 @@ export default function TaskDrawer({ open, onClose, task, inquilinoId, tenantId,
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex gap-3 pt-2">
-              {isEditMode && (
-                <Button variant="destructive" size="sm" className="px-3" onClick={handleDeleteTask} disabled={saving}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
               <Button variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
               <Button className="flex-1" onClick={handleSave} disabled={saving}>
                 {saving ? "Salvando..." : isEditMode ? "Atualizar" : "Criar Tarefa"}
