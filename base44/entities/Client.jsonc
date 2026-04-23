@@ -21,8 +21,17 @@
     "cnpj_cpf": {
       "type": "string"
     },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone de contato"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email de contato"
+    },
     "contato": {
-      "type": "string"
+      "type": "string",
+      "description": "Contato legado (campo unificado)"
     },
     "logradouro": {
       "type": "string"

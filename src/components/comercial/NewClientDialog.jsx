@@ -4,15 +4,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 const EMPTY = {
   nome_fantasia: "", razao_social: "", cnpj_cpf: "",
-  contato: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", cep: ""
+  telefone: "", email: "",
+  logradouro: "", numero: "", bairro: "", cidade: "", uf: "", cep: ""
 };
 
 function cleanCNPJ(v) { return v.replace(/\D/g, ""); }
+
+function formatPhone(raw) {
+  const d = raw.replace(/\D/g, "");
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return raw;
+}
 
 export default function NewClientDialog({ open, onClose, tenantId, onCreated }) {
   const [form, setForm] = useState(EMPTY);
@@ -29,11 +37,15 @@ export default function NewClientDialog({ open, onClose, tenantId, onCreated }) 
     const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
     if (!res.ok) { toast.error("CNPJ não encontrado."); setSearching(false); return; }
     const data = await res.json();
+
+    const rawPhone = data.ddd_telefone_1 ? `${data.ddd_telefone_1}${data.telefone_1 || ""}` : "";
+
     setForm({
       nome_fantasia: data.nome_fantasia || data.razao_social || "",
       razao_social: data.razao_social || "",
       cnpj_cpf: cnpj,
-      contato: data.ddd_telefone_1 ? `(${data.ddd_telefone_1}) ${data.telefone_1}` : "",
+      telefone: rawPhone ? formatPhone(rawPhone) : "",
+      email: data.email || "",
       logradouro: data.logradouro || "",
       numero: data.numero || "",
       bairro: data.bairro || "",
@@ -48,7 +60,11 @@ export default function NewClientDialog({ open, onClose, tenantId, onCreated }) 
   const handleSave = async () => {
     if (!form.nome_fantasia.trim()) { toast.error("Nome fantasia obrigatório."); return; }
     setSaving(true);
-    const created = await base44.entities.Client.create({ ...form, tenant_id: tenantId });
+    const created = await base44.entities.Client.create({
+      ...form,
+      contato: form.telefone || form.email || "",
+      tenant_id: tenantId
+    });
     toast.success("Cliente cadastrado!");
     setSaving(false);
     onCreated(created);
@@ -78,7 +94,7 @@ export default function NewClientDialog({ open, onClose, tenantId, onCreated }) 
                 value={cnpjInput}
                 onChange={e => setCnpjInput(e.target.value)}
                 placeholder="00.000.000/0000-00"
-                className="bg-zinc-900 border-zinc-700"
+                className="bg-zinc-900 border-zinc-700 text-zinc-200"
                 onKeyDown={e => e.key === "Enter" && handleBuscarCNPJ()}
               />
               <Button
@@ -86,7 +102,9 @@ export default function NewClientDialog({ open, onClose, tenantId, onCreated }) 
                 disabled={searching}
                 className="bg-violet-600 hover:bg-violet-700 shrink-0 gap-1.5"
               >
-                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                {searching
+                  ? <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+                  : <Search className="w-4 h-4 text-zinc-300" />}
                 {searching ? "Buscando..." : "Buscar"}
               </Button>
             </div>
@@ -97,19 +115,42 @@ export default function NewClientDialog({ open, onClose, tenantId, onCreated }) 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1.5">
               <Label className="text-zinc-300 text-sm">Nome Fantasia *</Label>
-              <Input value={form.nome_fantasia} onChange={e => setField("nome_fantasia", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+              <Input value={form.nome_fantasia} onChange={e => setField("nome_fantasia", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-zinc-300 text-sm">Razão Social</Label>
-              <Input value={form.razao_social} onChange={e => setField("razao_social", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+              <Input value={form.razao_social} onChange={e => setField("razao_social", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
             </div>
-            <div className="space-y-1.5">
+            <div className="col-span-2 space-y-1.5">
               <Label className="text-zinc-300 text-sm">CNPJ/CPF</Label>
-              <Input value={form.cnpj_cpf} onChange={e => setField("cnpj_cpf", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+              <Input value={form.cnpj_cpf} onChange={e => setField("cnpj_cpf", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
             </div>
+
+            {/* Telefone */}
             <div className="space-y-1.5">
-              <Label className="text-zinc-300 text-sm">Contato (Tel)</Label>
-              <Input value={form.contato} onChange={e => setField("contato", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+              <Label className="text-zinc-300 text-sm flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-zinc-400" /> Telefone
+              </Label>
+              <Input
+                value={form.telefone}
+                onChange={e => setField("telefone", e.target.value)}
+                placeholder="(00) 00000-0000"
+                className="bg-zinc-900 border-zinc-700 text-zinc-200"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label className="text-zinc-300 text-sm flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-zinc-400" /> E-mail
+              </Label>
+              <Input
+                value={form.email}
+                onChange={e => setField("email", e.target.value)}
+                placeholder="contato@empresa.com"
+                type="email"
+                className="bg-zinc-900 border-zinc-700 text-zinc-200"
+              />
             </div>
           </div>
 
@@ -119,23 +160,23 @@ export default function NewClientDialog({ open, onClose, tenantId, onCreated }) 
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-zinc-300 text-sm">Logradouro</Label>
-                <Input value={form.logradouro} onChange={e => setField("logradouro", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+                <Input value={form.logradouro} onChange={e => setField("logradouro", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-300 text-sm">Número</Label>
-                <Input value={form.numero} onChange={e => setField("numero", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+                <Input value={form.numero} onChange={e => setField("numero", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-300 text-sm">Bairro</Label>
-                <Input value={form.bairro} onChange={e => setField("bairro", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+                <Input value={form.bairro} onChange={e => setField("bairro", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-300 text-sm">Cidade</Label>
-                <Input value={form.cidade} onChange={e => setField("cidade", e.target.value)} className="bg-zinc-900 border-zinc-700" />
+                <Input value={form.cidade} onChange={e => setField("cidade", e.target.value)} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-300 text-sm">UF</Label>
-                <Input value={form.uf} onChange={e => setField("uf", e.target.value)} maxLength={2} className="bg-zinc-900 border-zinc-700" />
+                <Input value={form.uf} onChange={e => setField("uf", e.target.value)} maxLength={2} className="bg-zinc-900 border-zinc-700 text-zinc-200" />
               </div>
             </div>
           </div>
