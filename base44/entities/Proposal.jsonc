@@ -42,7 +42,36 @@
     },
     "total_value": {
       "type": "number",
-      "description": "Valor total da proposta em BRL"
+      "description": "Valor total da proposta em BRL (j\u00e1 com desconto)"
+    },
+    "subtotal_value": {
+      "type": "number",
+      "description": "Subtotal antes do desconto"
+    },
+    "discount_value": {
+      "type": "number",
+      "description": "Valor do desconto"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "percent",
+        "fixed"
+      ],
+      "default": "fixed",
+      "description": "Tipo de desconto: percentual ou valor fixo"
+    },
+    "payment_method": {
+      "type": "string",
+      "description": "Forma de pagamento"
+    },
+    "installments": {
+      "type": "number",
+      "description": "N\u00famero de parcelas (se parcelado)"
+    },
+    "contract_due_day": {
+      "type": "number",
+      "description": "Dia de vencimento do contrato mensal (1-31)"
     },
     "client_id": {
       "type": "string",

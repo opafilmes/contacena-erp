@@ -1,20 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, UserPlus, X } from "lucide-react";
+import { Plus, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/utils/format";
+import NewClientDialog from "./NewClientDialog";
+import ReactQuill from "react-quill";
+
+const DESCRIPTION_SUGGESTIONS = [
+  "Pré-produção", "Roteiro", "Diária de Gravação", "Direção de Fotografia",
+  "Drone", "Edição de Vídeo", "Color Grading", "Sound Design", "Motion Graphics", "Locução"
+];
+
+const PAYMENT_AVULSA = ["Boleto", "Pix", "Transferência", "Dinheiro", "Parcelado"];
+const PAYMENT_MENSAL = ["Boleto", "Pix", "Transferência", "Dinheiro"];
+const INSTALLMENTS = [2,3,4,5,6,7,8,9,10,11,12];
 
 const EMPTY_PROPOSAL = {
   client_id: "", type: "Avulsa", status: "Elaboração",
   issue_date: new Date().toISOString().slice(0, 10),
   validity_date: "", observations: "",
+  discount_value: 0, discount_type: "fixed",
+  payment_method: "", installments: 2, contract_due_day: 1,
 };
-
 const EMPTY_ITEM = { description: "", details: "", quantity: 1, unit_price: 0, total_price: 0 };
 
 async function getNextProposalNumber(tenantId) {
@@ -25,13 +37,19 @@ async function getNextProposalNumber(tenantId) {
   return `PROP-${num + 1}`;
 }
 
+function calcDiscount(subtotal, discountValue, discountType) {
+  if (!discountValue) return 0;
+  if (discountType === "percent") return parseFloat(((subtotal * discountValue) / 100).toFixed(2));
+  return parseFloat((discountValue || 0).toFixed(2));
+}
+
 export default function ProposalForm({ open, onClose, proposal, tenantId, clients: initialClients, tenant, onSaved }) {
   const [form, setForm] = useState(EMPTY_PROPOSAL);
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
   const [clients, setClients] = useState(initialClients || []);
   const [saving, setSaving] = useState(false);
-  const [newClientMode, setNewClientMode] = useState(false);
-  const [newClientName, setNewClientName] = useState("");
+  const [newClientOpen, setNewClientOpen] = useState(false);
+  const [activeRichIdx, setActiveRichIdx] = useState(null);
 
   useEffect(() => { setClients(initialClients || []); }, [initialClients]);
 
@@ -45,6 +63,11 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
         issue_date: proposal.issue_date || new Date().toISOString().slice(0, 10),
         validity_date: proposal.validity_date || "",
         observations: proposal.observations || "",
+        discount_value: proposal.discount_value || 0,
+        discount_type: proposal.discount_type || "fixed",
+        payment_method: proposal.payment_method || "",
+        installments: proposal.installments || 2,
+        contract_due_day: proposal.contract_due_day || 1,
       });
       base44.entities.ProposalItem.filter({ proposal_id: proposal.id }).then(its => {
         setItems(its.length ? its : [{ ...EMPTY_ITEM }]);
@@ -53,8 +76,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
       setForm(EMPTY_PROPOSAL);
       setItems([{ ...EMPTY_ITEM }]);
     }
-    setNewClientMode(false);
-    setNewClientName("");
+    setActiveRichIdx(null);
   }, [open, proposal]);
 
   const setField = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -63,37 +85,42 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
     setItems(prev => {
       const next = [...prev];
       const item = { ...next[idx], [key]: rawVal };
-      const qty = parseFloat(item.quantity) || 0;
-      const price = parseFloat(item.unit_price) || 0;
-      item.total_price = parseFloat((qty * price).toFixed(2));
+      if (key !== "details") {
+        const qty = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.unit_price) || 0;
+        item.total_price = parseFloat((qty * price).toFixed(2));
+      }
       next[idx] = item;
       return next;
     });
   };
 
   const addItem = () => setItems(prev => [...prev, { ...EMPTY_ITEM }]);
-  const removeItem = (idx) => setItems(prev => prev.filter((_, i) => i !== idx));
+  const removeItem = (idx) => {
+    setItems(prev => prev.filter((_, i) => i !== idx));
+    if (activeRichIdx === idx) setActiveRichIdx(null);
+  };
 
-  const totalValue = items.reduce((s, i) => s + (parseFloat(i.total_price) || 0), 0);
+  const subtotal = items.reduce((s, i) => s + (parseFloat(i.total_price) || 0), 0);
+  const discountAmt = calcDiscount(subtotal, form.discount_value, form.discount_type);
+  const totalValue = Math.max(0, parseFloat((subtotal - discountAmt).toFixed(2)));
 
-  const handleAddClient = async () => {
-    if (!newClientName.trim()) { toast.error("Nome obrigatório"); return; }
-    const created = await base44.entities.Client.create({ nome_fantasia: newClientName.trim(), tenant_id: tenantId });
+  const handleClientCreated = (created) => {
     const updated = [...clients, created];
     setClients(updated);
     setField("client_id", created.id);
-    setNewClientMode(false);
-    setNewClientName("");
-    toast.success("Cliente adicionado!");
+    setNewClientOpen(false);
+    toast.success("Cliente selecionado!");
   };
 
   const handleSave = async () => {
     if (!form.client_id) { toast.error("Selecione um cliente."); return; }
     setSaving(true);
-
     let proposalId = proposal?.id;
-    const payload = { ...form, total_value: totalValue, tenant_id: tenantId };
-
+    const payload = {
+      ...form, total_value: totalValue, subtotal_value: subtotal,
+      discount_value: form.discount_value, tenant_id: tenantId
+    };
     if (proposal) {
       await base44.entities.Proposal.update(proposal.id, payload);
     } else {
@@ -101,37 +128,36 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
       const created = await base44.entities.Proposal.create(payload);
       proposalId = created.id;
     }
-
-    // Save items
     if (proposal) {
       const old = await base44.entities.ProposalItem.filter({ proposal_id: proposalId });
       await Promise.all(old.map(o => base44.entities.ProposalItem.delete(o.id)));
     }
     await Promise.all(
-      items.filter(i => i.description.trim()).map(i =>
+      items.filter(i => i.description?.trim()).map(i =>
         base44.entities.ProposalItem.create({ ...i, proposal_id: proposalId, tenant_id: tenantId })
       )
     );
-
     toast.success(proposal ? "Proposta atualizada!" : "Proposta criada!");
     setSaving(false);
     onSaved(clients);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-heading text-lg">
-            {proposal ? `Editar ${proposal.number || "Proposta"}` : "Nova Proposta"}
-          </DialogTitle>
-        </DialogHeader>
+  const paymentOptions = form.type === "Mensal" ? PAYMENT_MENSAL : PAYMENT_AVULSA;
 
-        <div className="space-y-6 py-2">
-          {/* Cliente */}
-          <section>
-            <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-3 block">Cliente</Label>
-            {!newClientMode ? (
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-4xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-lg">
+              {proposal ? `Editar ${proposal.number || "Proposta"}` : "Nova Proposta"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-2">
+            {/* ── Cliente ── */}
+            <section>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-3 block">Cliente</Label>
               <div className="flex gap-2">
                 <Select value={form.client_id} onValueChange={v => setField("client_id", v)}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-700 flex-1">
@@ -141,142 +167,226 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                     {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.nome_fantasia}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" onClick={() => setNewClientMode(true)} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 gap-1.5 shrink-0">
+                <Button variant="outline" size="sm" onClick={() => setNewClientOpen(true)} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 gap-1.5 shrink-0">
                   <UserPlus className="w-3.5 h-3.5" /> Novo Cliente
                 </Button>
               </div>
-            ) : (
-              <div className="flex gap-2">
-                <Input
-                  value={newClientName}
-                  onChange={e => setNewClientName(e.target.value)}
-                  placeholder="Nome do cliente..."
-                  className="bg-zinc-900 border-zinc-700 flex-1"
-                  onKeyDown={e => e.key === "Enter" && handleAddClient()}
-                  autoFocus
-                />
-                <Button size="sm" onClick={handleAddClient} className="bg-violet-600 hover:bg-violet-700">Adicionar</Button>
-                <Button size="sm" variant="ghost" onClick={() => setNewClientMode(false)}><X className="w-4 h-4" /></Button>
-              </div>
-            )}
-          </section>
+            </section>
 
-          {/* Dados da Proposta */}
-          <section>
-            <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-3 block">Dados da Proposta</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-sm">Tipo</Label>
-                <Select value={form.type} onValueChange={v => setField("type", v)}>
-                  <SelectTrigger className="bg-zinc-900 border-zinc-700">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-700">
-                    <SelectItem value="Avulsa">Avulsa</SelectItem>
-                    <SelectItem value="Mensal">Mensal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-sm">Status</Label>
-                <Select value={form.status} onValueChange={v => setField("status", v)}>
-                  <SelectTrigger className="bg-zinc-900 border-zinc-700">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-700">
-                    {["Elaboração", "Enviada", "Aprovada", "Recusada"].map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-sm">Data de Emissão</Label>
-                <Input type="date" value={form.issue_date} onChange={e => setField("issue_date", e.target.value)} className="bg-zinc-900 border-zinc-700" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-zinc-300 text-sm">Validade</Label>
-                <Input type="date" value={form.validity_date} onChange={e => setField("validity_date", e.target.value)} className="bg-zinc-900 border-zinc-700" />
-              </div>
-            </div>
-          </section>
+            {/* ── Dados da Proposta ── */}
+            <section>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-3 block">Dados da Proposta</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300 text-sm">Tipo</Label>
+                  <Select value={form.type} onValueChange={v => { setField("type", v); setField("payment_method", ""); }}>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      <SelectItem value="Avulsa">Avulsa</SelectItem>
+                      <SelectItem value="Mensal">Mensal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300 text-sm">Status</Label>
+                  <Select value={form.status} onValueChange={v => setField("status", v)}>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {["Elaboração", "Enviada", "Aprovada", "Recusada"].map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300 text-sm">Data de Emissão</Label>
+                  <Input type="date" value={form.issue_date} onChange={e => setField("issue_date", e.target.value)}
+                    className="bg-zinc-900 border-zinc-700 text-zinc-300 [color-scheme:dark]" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300 text-sm">Validade</Label>
+                  <Input type="date" value={form.validity_date} onChange={e => setField("validity_date", e.target.value)}
+                    className="bg-zinc-900 border-zinc-700 text-zinc-300 [color-scheme:dark]" />
+                </div>
 
-          {/* Itens */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Itens da Proposta</Label>
-              <Button variant="ghost" size="sm" onClick={addItem} className="text-violet-400 hover:text-violet-300 gap-1.5 h-7">
-                <Plus className="w-3.5 h-3.5" /> Adicionar Item
-              </Button>
-            </div>
-            <div className="rounded-lg border border-zinc-800 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-zinc-900/60 border-b border-zinc-800">
-                    <th className="text-left px-3 py-2 text-zinc-500 font-medium text-xs">Descrição</th>
-                    <th className="text-left px-3 py-2 text-zinc-500 font-medium text-xs w-28">Detalhes</th>
-                    <th className="text-right px-3 py-2 text-zinc-500 font-medium text-xs w-16">Qtd</th>
-                    <th className="text-right px-3 py-2 text-zinc-500 font-medium text-xs w-28">Valor Unit.</th>
-                    <th className="text-right px-3 py-2 text-zinc-500 font-medium text-xs w-28">Total</th>
-                    <th className="w-8" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, idx) => (
-                    <tr key={idx} className="border-b border-zinc-800/50 last:border-0">
-                      <td className="px-1 py-1">
-                        <Input value={item.description} onChange={e => updateItem(idx, "description", e.target.value)} placeholder="Descrição" className="bg-transparent border-0 focus-visible:ring-0 px-2 text-sm h-8" />
-                      </td>
-                      <td className="px-1 py-1">
-                        <Input value={item.details} onChange={e => updateItem(idx, "details", e.target.value)} placeholder="Detalhe" className="bg-transparent border-0 focus-visible:ring-0 px-2 text-sm h-8" />
-                      </td>
-                      <td className="px-1 py-1">
-                        <Input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)} className="bg-transparent border-0 focus-visible:ring-0 px-2 text-sm h-8 text-right" />
-                      </td>
-                      <td className="px-1 py-1">
-                        <Input type="number" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)} className="bg-transparent border-0 focus-visible:ring-0 px-2 text-sm h-8 text-right" />
-                      </td>
-                      <td className="px-3 py-1 text-right text-zinc-300 font-medium">{formatBRL(item.total_price)}</td>
-                      <td className="px-1 py-1">
-                        {items.length > 1 && (
-                          <button onClick={() => removeItem(idx)} className="p-1 rounded hover:bg-red-500/15 text-zinc-600 hover:text-red-400 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex justify-end mt-3 pr-4">
-              <div className="text-right">
-                <p className="text-xs text-zinc-500">Valor Total</p>
-                <p className="text-xl font-bold text-violet-400 font-heading">{formatBRL(totalValue)}</p>
+                {/* Forma de Pagamento */}
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-300 text-sm">Forma de Pagamento</Label>
+                  <Select value={form.payment_method} onValueChange={v => setField("payment_method", v)}>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300">
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {paymentOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Parcelas (Avulsa + Parcelado) */}
+                {form.type === "Avulsa" && form.payment_method === "Parcelado" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-300 text-sm">Parcelas</Label>
+                    <Select value={String(form.installments)} onValueChange={v => setField("installments", parseInt(v))}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-700">
+                        {INSTALLMENTS.map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Dia de vencimento (Mensal) */}
+                {form.type === "Mensal" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-300 text-sm">Dia de Vencimento do Contrato</Label>
+                    <Input type="number" min={1} max={31} value={form.contract_due_day}
+                      onChange={e => setField("contract_due_day", parseInt(e.target.value) || 1)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300" />
+                  </div>
+                )}
               </div>
-            </div>
-          </section>
+            </section>
 
-          {/* Observações */}
-          <section>
-            <Label className="text-zinc-300 text-sm mb-1.5 block">Observações</Label>
-            <textarea
-              value={form.observations}
-              onChange={e => setField("observations", e.target.value)}
-              rows={3}
-              placeholder="Condições de pagamento, prazo de entrega..."
-              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
-            />
-          </section>
-        </div>
+            {/* ── Itens ── */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Itens da Proposta</Label>
+                <Button variant="ghost" size="sm" onClick={addItem} className="text-violet-400 hover:text-violet-300 gap-1.5 h-7">
+                  <Plus className="w-3.5 h-3.5" /> Adicionar Item
+                </Button>
+              </div>
 
-        <DialogFooter className="pt-2 border-t border-zinc-800">
-          <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white">
-            {saving ? "Salvando..." : "Salvar Proposta"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              <div className="space-y-3">
+                {items.map((item, idx) => (
+                  <div key={idx} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
+                    {/* Row 1: description, qty, unit_price, total, remove */}
+                    <div className="flex gap-2 items-center">
+                      {/* Description with datalist */}
+                      <div className="flex-1">
+                        <input
+                          list={`desc-suggestions-${idx}`}
+                          value={item.description}
+                          onChange={e => updateItem(idx, "description", e.target.value)}
+                          placeholder="Serviço / Descrição..."
+                          className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                        />
+                        <datalist id={`desc-suggestions-${idx}`}>
+                          {DESCRIPTION_SUGGESTIONS.map(s => <option key={s} value={s} />)}
+                        </datalist>
+                      </div>
+                      <Input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)}
+                        className="bg-zinc-900 border-zinc-700 text-zinc-300 w-16 text-center" placeholder="Qtd" />
+                      <Input type="number" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)}
+                        className="bg-zinc-900 border-zinc-700 text-zinc-300 w-28 text-right" placeholder="Valor Unit." />
+                      <div className="w-28 text-right text-zinc-300 font-medium text-sm shrink-0">{formatBRL(item.total_price)}</div>
+                      {items.length > 1 && (
+                        <button onClick={() => removeItem(idx)} className="p-1.5 rounded hover:bg-red-500/15 text-zinc-600 hover:text-red-400 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Row 2: Rich Text for details */}
+                    <div>
+                      {activeRichIdx === idx ? (
+                        <div className="quill-dark rounded-md border border-zinc-700 overflow-hidden">
+                          <ReactQuill
+                            theme="snow"
+                            value={item.details || ""}
+                            onChange={val => updateItem(idx, "details", val)}
+                            modules={{ toolbar: [["bold", "italic"], [{ list: "bullet" }, { list: "ordered" }], ["clean"]] }}
+                            placeholder="Detalhamento do item..."
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setActiveRichIdx(idx)}
+                          className="w-full text-left px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900/60 text-sm min-h-[32px]"
+                        >
+                          {item.details ? (
+                            <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: item.details }} />
+                          ) : (
+                            <span className="text-zinc-600 italic">Clique para adicionar detalhes (texto rico)...</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Subtotal + Desconto + Total */}
+              <div className="mt-4 flex justify-end">
+                <div className="space-y-2 min-w-[280px]">
+                  <div className="flex justify-between text-sm text-zinc-400">
+                    <span>Subtotal</span>
+                    <span>{formatBRL(subtotal)}</span>
+                  </div>
+
+                  {/* Desconto */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-zinc-400 shrink-0">Desconto</span>
+                    <Select value={form.discount_type} onValueChange={v => setField("discount_type", v)}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-700 h-7 text-xs w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-700">
+                        <SelectItem value="fixed">R$</SelectItem>
+                        <SelectItem value="percent">%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number" min={0}
+                      value={form.discount_value || ""}
+                      onChange={e => setField("discount_value", parseFloat(e.target.value) || 0)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300 h-7 text-sm w-24 text-right"
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-red-400 shrink-0">− {formatBRL(discountAmt)}</span>
+                  </div>
+
+                  <div className="flex justify-between pt-2 border-t border-zinc-700">
+                    <span className="text-sm font-semibold text-zinc-200">Total</span>
+                    <span className="text-xl font-bold text-violet-400 font-heading">{formatBRL(totalValue)}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Observações ── */}
+            <section>
+              <Label className="text-zinc-300 text-sm mb-1.5 block">Observações</Label>
+              <textarea
+                value={form.observations}
+                onChange={e => setField("observations", e.target.value)}
+                rows={3}
+                placeholder="Condições de pagamento, prazo de entrega..."
+                className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+              />
+            </section>
+          </div>
+
+          <DialogFooter className="pt-2 border-t border-zinc-800">
+            <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200">Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white">
+              {saving ? "Salvando..." : "Salvar Proposta"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <NewClientDialog
+        open={newClientOpen}
+        onClose={() => setNewClientOpen(false)}
+        tenantId={tenantId}
+        onCreated={handleClientCreated}
+      />
+    </>
   );
 }
