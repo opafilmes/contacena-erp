@@ -2,35 +2,59 @@
   "name": "Proposal",
   "type": "object",
   "properties": {
-    "titulo": {
+    "number": {
       "type": "string",
-      "description": "T\u00edtulo da proposta"
+      "description": "N\u00famero da proposta (ex: PROP-1001)"
     },
-    "client_id": {
+    "issue_date": {
       "type": "string",
-      "description": "ID do cliente (Client) relacionado"
+      "format": "date",
+      "description": "Data de emiss\u00e3o"
     },
-    "valor_total": {
-      "type": "number",
-      "description": "Valor total da proposta em BRL"
+    "validity_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de validade"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Avulsa",
+        "Mensal"
+      ],
+      "default": "Avulsa",
+      "description": "Tipo da proposta"
     },
     "status": {
       "type": "string",
       "enum": [
-        "Pendente",
+        "Elabora\u00e7\u00e3o",
+        "Enviada",
         "Aprovada",
         "Recusada"
       ],
-      "default": "Pendente",
-      "description": "Status atual da proposta"
+      "default": "Elabora\u00e7\u00e3o",
+      "description": "Status da negocia\u00e7\u00e3o"
+    },
+    "observations": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais da proposta"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Valor total da proposta em BRL"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do Cliente"
     },
     "tenant_id": {
       "type": "string",
-      "description": "ID do Tenant ao qual esta proposta pertence"
+      "description": "ID do Tenant"
     }
   },
   "required": [
-    "titulo",
-    "tenant_id"
+    "tenant_id",
+    "client_id"
   ]
 }
