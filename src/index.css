@@ -153,14 +153,15 @@
 /* =========================================
    CONFIGURAÇÃO DE IMPRESSÃO DEFINITIVA
    ========================================= */
+/* =========================================
+   CONFIGURAÇÃO DE IMPRESSÃO DEFINITIVA
+   ========================================= */
 @media print {
-  /* 1. Remove cabeçalho e rodapé padrão do navegador (Data, URL, etc) */
   @page {
     size: A4 portrait;
-    margin: 0 !important; /* Zerar a margem mata os textos do navegador */
+    margin: 0 !important; /* Mantém zerado para esconder URL e Data do navegador */
   }
 
-  /* 2. Força o fundo branco absoluto em todo o navegador */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -174,31 +175,28 @@
     min-height: 100vh !important;
   }
 
-  /* 3. Esconde toda a interface do ERP e a tela escura */
   header, nav, aside, [data-sidebar], .topbar, .no-print {
     display: none !important;
   }
 
-  /* 4. Configura a folha para cobrir o espaço inteiro (mata o bloco preto) */
   .print-only-doc {
     display: block !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    min-height: 100vh !important; /* Estica o fundo branco até o pé da página */
+    min-height: 100vh !important;
     background-color: #ffffff !important;
-    padding: 15mm !important; /* Cria a margem física do papel por dentro */
+    /* 🔥 MUDANÇA AQUI: Removemos o padding topo/baixo, deixando só as laterais com 15mm */
+    padding: 0 15mm !important; 
     box-sizing: border-box !important;
     z-index: 999999 !important;
   }
 
-  /* Força fontes para preto */
   .print-only-doc * {
     color: #111827 !important;
   }
 
-  /* 5. Mantém as cores vivas na Tabela (Roxo e Cinza) */
   .print-only-doc .prop-total-row td,
   .print-only-doc .prop-total-row td * {
     background-color: #7c3aed !important;
@@ -211,4 +209,4 @@
   .print-only-doc .prop-row-alt {
     background-color: #f9fafb !important;
   }
-} 
+}
