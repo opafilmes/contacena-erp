@@ -1,17 +1,24 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Printer, Pencil, Trash2, FileText, LayoutDashboard, FileCheck } from "lucide-react";
+import { 
+  Plus, Eye, Printer, Pencil, Trash2, FileText, LayoutDashboard, FileCheck, 
+  MoreVertical, ArrowUpDown 
+} from "lucide-react";
+import { 
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
 import { formatBRL } from "@/utils/format";
 import ProposalForm from "@/components/comercial/ProposalForm";
 import ProposalPrintView from "@/components/comercial/ProposalPrintView";
 
+// 🔥 Alteração da cor Aprovada para um verde premium
 const STATUS_STYLES = {
   "Elaboração": "bg-zinc-700/40 text-zinc-300 border-zinc-600/40",
   "Enviada":    "bg-sky-500/15 text-sky-400 border-sky-500/30",
-  "Aprovada":   "bg-violet-500/15 text-violet-400 border-violet-500/30",
+  "Aprovada":   "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   "Recusada":   "bg-red-500/15 text-red-400 border-red-500/30",
 };
 
@@ -31,6 +38,9 @@ export default function Comercial() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProposal, setEditingProposal] = useState(null);
   const [printProposal, setPrintProposal] = useState(null);
+  
+  // Estados para a ordenação da tabela
+  const [sortConfig, setSortConfig] = useState({ key: "created_date", direction: "desc" });
 
   const loadData = useCallback(async () => {
     if (!tenantId) return;
@@ -44,12 +54,11 @@ export default function Comercial() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const getClientName = (id) => clients.find(c => c.id === id)?.nome_fantasia || "—";
+  const getClientName = useCallback((id) => clients.find(c => c.id === id)?.nome_fantasia || "—", [clients]);
   const getClient = (id) => clients.find(c => c.id === id);
 
   const handleDelete = async (p) => {
     if (!window.confirm(`Excluir proposta ${p.number || ""}?`)) return;
-    // Delete items first
     const items = await base44.entities.ProposalItem.filter({ proposal_id: p.id });
     await Promise.all(items.map(i => base44.entities.ProposalItem.delete(i.id)));
     await base44.entities.Proposal.delete(p.id);
@@ -66,9 +75,39 @@ export default function Comercial() {
     setFormOpen(true);
   };
 
+  // 🔥 Função de Ordenação
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // 🔥 Aplica a ordenação na lista de propostas
+  const sortedProposals = useMemo(() => {
+    let sortableProposals = [...proposals];
+    if (sortConfig !== null) {
+      sortableProposals.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        // Tratamento especial para o nome do cliente (que não está na proposta em si)
+        if (sortConfig.key === "client_id") {
+          aValue = getClientName(a.client_id).toLowerCase();
+          bValue = getClientName(b.client_id).toLowerCase();
+        }
+        
+        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableProposals;
+  }, [proposals, sortConfig, getClientName]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex">
-      {/* Sidebar */}
       <aside className="w-56 border-r border-zinc-800 bg-zinc-950/60 flex flex-col pt-8 px-3 shrink-0">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-3 mb-3">Comercial</p>
         <nav className="space-y-1">
@@ -89,7 +128,6 @@ export default function Comercial() {
         </nav>
       </aside>
 
-      {/* Main */}
       <div className="flex-1 px-8 py-8 overflow-auto">
         {activeNav === "dashboard" && <ComercialDashboard proposals={proposals} clients={clients} />}
 
@@ -109,17 +147,17 @@ export default function Comercial() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800">
-                    <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">Nº</th>
-                    <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">Data</th>
-                    <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">Cliente</th>
-                    <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">Tipo</th>
-                    <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">Valor</th>
-                    <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3" />
+                    <SortableHeader label="Nº" sortKey="number" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableHeader label="Data" sortKey="issue_date" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableHeader label="Cliente" sortKey="client_id" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableHeader label="Tipo" sortKey="type" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableHeader label="Valor" sortKey="total_value" sortConfig={sortConfig} onSort={handleSort} />
+                    <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+                    <th className="px-4 py-3 w-10 text-right" />
                   </tr>
                 </thead>
                 <tbody>
-                  {proposals.map(p => (
+                  {sortedProposals.map(p => (
                     <tr
                       key={p.id}
                       onClick={() => handleEdit(p)}
@@ -137,13 +175,32 @@ export default function Comercial() {
                           {p.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                          <ActionBtn icon={Eye} title="Visualizar" onClick={() => setPrintProposal(p)} />
-                          <ActionBtn icon={Printer} title="Imprimir" onClick={() => { setPrintProposal(p); setTimeout(() => window.print(), 400); }} />
-                          <ActionBtn icon={Pencil} title="Editar" onClick={() => handleEdit(p)} />
-                          <ActionBtn icon={Trash2} title="Excluir" destructive onClick={() => handleDelete(p)} />
-                        </div>
+                      <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                        
+                        {/* 🔥 Novo Dropdown Menu de Ações */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
+                            <DropdownMenuItem onClick={() => setPrintProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
+                              <Eye className="w-4 h-4 mr-2" /> Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setPrintProposal(p); setTimeout(() => window.print(), 400); }} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
+                              <Printer className="w-4 h-4 mr-2" /> Imprimir
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
+                              <Pencil className="w-4 h-4 mr-2" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(p)} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                              <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
                       </td>
                     </tr>
                   ))}
@@ -167,7 +224,6 @@ export default function Comercial() {
         )}
       </div>
 
-      {/* Form Modal */}
       <ProposalForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
@@ -182,7 +238,6 @@ export default function Comercial() {
         }}
       />
 
-      {/* Print View */}
       {printProposal && (
         <ProposalPrintView
           proposal={printProposal}
@@ -195,19 +250,19 @@ export default function Comercial() {
   );
 }
 
-function ActionBtn({ icon: Icon, title, onClick, destructive }) {
+// 🔥 Componente novo para cabeçalho clicável com setinha
+function SortableHeader({ label, sortKey, sortConfig, onSort }) {
+  const isActive = sortConfig.key === sortKey;
   return (
-    <button
-      title={title}
-      onClick={onClick}
-      className={`p-1.5 rounded-md transition-colors ${
-        destructive
-          ? "hover:bg-red-500/15 text-zinc-500 hover:text-red-400"
-          : "hover:bg-zinc-700/60 text-zinc-500 hover:text-zinc-200"
-      }`}
+    <th 
+      onClick={() => onSort(sortKey)}
+      className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase tracking-wider cursor-pointer hover:bg-zinc-800/40 hover:text-zinc-300 transition-colors group select-none"
     >
-      <Icon className="w-3.5 h-3.5" />
-    </button>
+      <div className="flex items-center gap-1.5">
+        {label}
+        <ArrowUpDown className={`w-3.5 h-3.5 ${isActive ? "opacity-100 text-violet-400" : "opacity-0 group-hover:opacity-50"} transition-opacity`} />
+      </div>
+    </th>
   );
 }
 
@@ -219,8 +274,9 @@ function ComercialDashboard({ proposals, clients }) {
 
   const stats = [
     { label: "Total de Propostas", value: proposals.length, color: "text-zinc-200" },
-    { label: "Valor Total em Aberto", value: formatBRL(total), color: "text-violet-400" },
-    { label: "Aprovadas", value: aprovadas.length, color: "text-green-400" },
+    { label: "Valor Total", value: formatBRL(total), color: "text-violet-400" },
+    // 🔥 Cor verde atualizada no Dashboard
+    { label: "Aprovadas", value: aprovadas.length, color: "text-emerald-400" },
     { label: "Taxa de Conversão", value: `${txConversao}%`, color: "text-sky-400" },
   ];
 
