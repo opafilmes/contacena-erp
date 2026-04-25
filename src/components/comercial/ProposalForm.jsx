@@ -16,12 +16,12 @@ const DESCRIPTION_SUGGESTIONS = [
   "Drone", "Edição de Vídeo", "Color Grading", "Sound Design", "Motion Graphics", "Locução"
 ];
 
-const PAYMENT_AVULSA = ["Boleto", "Pix", "Transferência", "Dinheiro", "Parcelado"];
+const PAYMENT_PROJETO = ["Boleto", "Pix", "Transferência", "Dinheiro", "Parcelado"];
 const PAYMENT_MENSAL = ["Boleto", "Pix", "Transferência", "Dinheiro"];
 const INSTALLMENTS = [2,3,4,5,6,7,8,9,10,11,12];
 
 const EMPTY_PROPOSAL = {
-  client_id: "", type: "Avulsa", status: "Elaboração",
+  client_id: "", type: "Projeto", status: "Elaboração",
   issue_date: new Date().toISOString().slice(0, 10),
   validity_date: "", observations: "",
   discount_value: 0, discount_type: "fixed",
@@ -58,7 +58,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
     if (proposal) {
       setForm({
         client_id: proposal.client_id || "",
-        type: proposal.type || "Avulsa",
+        type: proposal.type || "Projeto",
         status: proposal.status || "Elaboração",
         issue_date: proposal.issue_date || new Date().toISOString().slice(0, 10),
         validity_date: proposal.validity_date || "",
@@ -145,13 +145,13 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
       onSaved(clients);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar. Verifique se o banco de dados tem o campo contract_duration.");
+      toast.error("Erro ao salvar a proposta.");
     } finally {
       setSaving(false);
     }
   };
 
-  const paymentOptions = form.type === "Mensal" ? PAYMENT_MENSAL : PAYMENT_AVULSA;
+  const paymentOptions = form.type === "Mensal" ? PAYMENT_MENSAL : PAYMENT_PROJETO;
 
   return (
     <>
@@ -204,8 +204,8 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 <Select value={form.type} onValueChange={v => { 
                   setField("type", v); 
                   setField("payment_method", ""); 
-                  if (v === "Avulsa") {
-                    setField("contract_duration", 12); // Reseta se voltar para avulsa
+                  if (v === "Projeto") {
+                    setField("contract_duration", 12); // Reseta se voltar para projeto
                     setField("contract_due_day", 1);
                   }
                 }}>
@@ -213,7 +213,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-700">
-                    <SelectItem value="Avulsa">Avulsa</SelectItem>
+                    <SelectItem value="Projeto">Projeto</SelectItem>
                     <SelectItem value="Mensal">Mensal</SelectItem>
                   </SelectContent>
                 </Select>
@@ -246,8 +246,8 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </Select>
               </div>
 
-              {/* Parcelas (Aparece apenas em Avulsa + Parcelado) */}
-              {form.type === "Avulsa" && form.payment_method === "Parcelado" && (
+              {/* Parcelas (Aparece apenas em Projeto + Parcelado) */}
+              {form.type === "Projeto" && form.payment_method === "Parcelado" && (
                 <div className="space-y-1">
                   <Label className="text-zinc-400 text-xs uppercase tracking-wider">Parcelas</Label>
                   <Select value={String(form.installments)} onValueChange={v => setField("installments", parseInt(v))}>
