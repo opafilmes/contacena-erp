@@ -86,6 +86,9 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
     <div style={{ fontFamily: "'Montserrat', sans-serif", color: "#111827", background: "#ffffff", width: "100%" }}>
       
       <style>{`
+        /* ── Inicializa o contador de páginas ── */
+        body { counter-reset: print-page; }
+        
         .print-rich-text p { margin: 0 0 6px 0 !important; }
         .print-rich-text p:last-child { margin: 0 !important; }
         .print-rich-text ul, .print-rich-text ol { margin: 0 0 6px 0 !important; padding-left: 18px !important; }
@@ -98,6 +101,12 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         .master-print-table > tbody > tr > td, 
         .master-print-table > thead > tr > td, 
         .master-print-table > tfoot > tr > td { border: none !important; padding: 0 !important; }
+        
+        /* ── Gera o texto "Página X" automaticamente ── */
+        .page-number::before {
+          counter-increment: print-page;
+          content: "Página " counter(print-page);
+        }
       `}</style>
 
       <table className="master-print-table">
@@ -159,7 +168,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                     <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{validityDate}</p>
                   </div>
                 )}
-                {/* 🔥 CAMPO TIPO ADICIONADO DE VOLTA AQUI */}
                 {proposal?.type && (
                   <div>
                     <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Tipo</p>
@@ -186,7 +194,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                 {proposal?.type === "Mensal" && proposal?.contract_due_day && (
                   <div>
                     <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Vencimento</p>
-                    {/* 🔥 TEXTO ALTERADO PARA "Todo dia X" */}
                     <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>Todo dia {proposal.contract_due_day}</p>
                   </div>
                 )}
@@ -276,12 +283,14 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
           </tr>
         </tbody>
 
-        {/* ── RODAPÉ REPETITIVO (TFOOT) ── */}
+        {/* ── RODAPÉ REPETITIVO (TFOOT) COM NUMERAÇÃO ── */}
         <tfoot>
           <tr>
             <td>
-              <div style={{ marginTop: "36px", textAlign: "center", paddingTop: "15px" }}>
+              {/* Flexbox para separar o texto à esquerda e a numeração à direita */}
+              <div style={{ marginTop: "36px", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "15px" }}>
                 <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
+                <p className="page-number" style={{ fontSize: "9px", fontWeight: "600", color: "#6b7280", margin: 0 }}></p>
               </div>
               <div style={{ height: "15mm" }} />
             </td>
