@@ -265,15 +265,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                   <p style={{ fontSize: "12px", color: "#374151", margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{proposal.observations}</p>
                 </div>
               )}
-
-              <div style={{ pageBreakInside: "avoid", display: "flex", justifyContent: "center", gap: "80px", marginTop: "60px", paddingTop: "28px", borderTop: "1px solid #e5e7eb" }}>
-                {[tenant?.nome_fantasia || "Contratante", client?.nome_fantasia || "Contratado"].map(name => (
-                  <div key={name} style={{ textAlign: "center" }}>
-                    <div style={{ width: "200px", borderBottom: "1px solid #374151", marginBottom: "6px" }} />
-                    <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>{name}</p>
-                  </div>
-                ))}
-              </div>
             </td>
           </tr>
         </tbody>
