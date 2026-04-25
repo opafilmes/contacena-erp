@@ -354,7 +354,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                             <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-300 max-h-72">
                               {/* Opção para forçar texto livre sempre no topo */}
                               <SelectItem value="___custom___" className="text-violet-400 font-medium border-b border-zinc-800 rounded-none mb-1">
-                                ✍️ Preencher manualmente...
+                                Preencher manualmente...
                               </SelectItem>
                               {SERVICE_OPTIONS.map(s => (
                                 <SelectItem key={s} value={s}>{s}</SelectItem>
