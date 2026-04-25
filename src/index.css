@@ -168,19 +168,46 @@
   [data-print-hide],
   [data-sidebar],
   .topbar,
-  button:not(.print-keep),
-  .sheet-overlay,
-  [role="dialog"] {
+  .sheet-overlay {
+    display: none !important;
+  }
+
+  /* Ocultar TUDO do body por padrão — só mostramos .print-only-doc */
+  body > * {
     display: none !important;
   }
 
   /* ── Área de impressão ── */
-  .print-area {
+  .print-only-doc {
     display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     background: #ffffff !important;
     color: #000000 !important;
+    z-index: 99999 !important;
     padding: 0 !important;
+  }
+
+  .print-only-doc * {
+    color: #111827 !important;
+    background: transparent !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Exceções: fundo colorido do header da tabela */
+  .print-only-doc .prop-total-row td {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+  }
+  .print-only-doc .prop-th {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+  .print-only-doc .prop-row-alt {
+    background: #f9fafb !important;
   }
 
   /* ── Cabeçalho com logo do tenant ── */
@@ -247,6 +274,12 @@
     text-transform: uppercase !important;
     font-size: 10px !important;
     letter-spacing: 0.05em !important;
+  }
+
+  /* Exceção: linha de total colorida */
+  .prop-total-row td {
+    background: #7c3aed !important;
+    color: #ffffff !important;
   }
 
   /* ── Página ── */
