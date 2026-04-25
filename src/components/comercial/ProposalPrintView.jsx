@@ -85,7 +85,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
   return (
     <div style={{ fontFamily: "'Montserrat', sans-serif", color: "#111827", background: "#ffffff", width: "100%" }}>
       
-      {/* Estilos para Quebras de Página, Rich Text e Tabela Mestra */}
       <style>{`
         .print-rich-text p { margin: 0 0 6px 0 !important; }
         .print-rich-text p:last-child { margin: 0 !important; }
@@ -93,7 +92,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         .print-rich-text li { margin-bottom: 2px !important; }
         .print-table-row { page-break-inside: avoid !important; }
         
-        /* Regras para repetir o cabeçalho e rodapé em todas as páginas */
         .master-print-table { width: 100%; border-collapse: collapse; border: none; }
         .master-print-table > thead { display: table-header-group !important; }
         .master-print-table > tfoot { display: table-footer-group !important; }
@@ -102,15 +100,14 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         .master-print-table > tfoot > tr > td { border: none !important; padding: 0 !important; }
       `}</style>
 
-      {/* ── TABELA MESTRA INVISÍVEL PARA REPETIÇÃO ── */}
       <table className="master-print-table">
         
         {/* ── CABEÇALHO REPETITIVO (THEAD) ── */}
         <thead>
           <tr>
             <td>
-              {/* Espaçador superior invisível para a página 2 em diante não colar na borda */}
-              <div style={{ height: "15px" }} />
+              {/* 🔥 ESPAÇADOR TOPO: Garante 15mm de margem superior em TODAS as páginas */}
+              <div style={{ height: "15mm" }} />
               
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "30px" }}>
                 {tenant?.logo ? (
@@ -150,7 +147,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         <tbody>
           <tr>
             <td>
-              {/* Barra de Metadados */}
               <div style={{ display: "flex", gap: "40px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
                 {issueDate && (
                   <div>
@@ -189,7 +185,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                 )}
               </div>
 
-              {/* Cliente */}
               <div style={{ pageBreakInside: "avoid", marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
                 <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 8px" }}>Cliente</p>
                 <p style={{ fontWeight: "700", fontSize: "15px", margin: "0 0 3px", color: "#111827" }}>{client?.nome_fantasia || "—"}</p>
@@ -210,7 +205,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                 )}
               </div>
 
-              {/* Itens da Proposta */}
               <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 10px" }}>Itens da Proposta</p>
               <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0", tableLayout: "fixed" }}>
                 <thead>
@@ -265,7 +259,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                 </tfoot>
               </table>
 
-              {/* Observações */}
               {proposal?.observations && (
                 <div style={{ pageBreakInside: "avoid", marginTop: "24px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
                   <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 7px" }}>Observações</p>
@@ -273,7 +266,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                 </div>
               )}
 
-              {/* Assinaturas */}
               <div style={{ pageBreakInside: "avoid", display: "flex", justifyContent: "center", gap: "80px", marginTop: "60px", paddingTop: "28px", borderTop: "1px solid #e5e7eb" }}>
                 {[tenant?.nome_fantasia || "Contratante", client?.nome_fantasia || "Contratado"].map(name => (
                   <div key={name} style={{ textAlign: "center" }}>
@@ -293,6 +285,8 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
               <div style={{ marginTop: "36px", textAlign: "center", paddingTop: "15px" }}>
                 <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
               </div>
+              {/* 🔥 ESPAÇADOR FUNDO: Garante 15mm de margem inferior em TODAS as páginas */}
+              <div style={{ height: "15mm" }} />
             </td>
           </tr>
         </tfoot>
