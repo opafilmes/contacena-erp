@@ -163,9 +163,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
               {proposal ? `Editar ${proposal.number || "Proposta"}` : "Nova Proposta"}
             </h2>
 
-            {/* Top fields in rows of 3 cols */}
             <div className="grid grid-cols-3 gap-3 mt-4">
-              {/* Cliente — spans 2 cols */}
               <div className="col-span-2 space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Cliente</Label>
                 <div className="flex gap-2">
@@ -183,7 +181,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </div>
               </div>
 
-              {/* Status */}
               <div className="space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Status</Label>
                 <Select value={form.status} onValueChange={v => setField("status", v)}>
@@ -198,14 +195,13 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </Select>
               </div>
 
-              {/* Tipo */}
               <div className="space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tipo</Label>
                 <Select value={form.type} onValueChange={v => { 
                   setField("type", v); 
                   setField("payment_method", ""); 
                   if (v === "Projeto") {
-                    setField("contract_duration", 12); // Reseta se voltar para projeto
+                    setField("contract_duration", 12);
                     setField("contract_due_day", 1);
                   }
                 }}>
@@ -219,21 +215,18 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </Select>
               </div>
 
-              {/* Emissão */}
               <div className="space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Emissão</Label>
                 <Input type="date" value={form.issue_date} onChange={e => setField("issue_date", e.target.value)}
                   className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm [color-scheme:dark]" />
               </div>
 
-              {/* Validade */}
               <div className="space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Validade</Label>
                 <Input type="date" value={form.validity_date} onChange={e => setField("validity_date", e.target.value)}
                   className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm [color-scheme:dark]" />
               </div>
 
-              {/* Pagamento */}
               <div className="space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Pagamento</Label>
                 <Select value={form.payment_method} onValueChange={v => setField("payment_method", v)}>
@@ -246,7 +239,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </Select>
               </div>
 
-              {/* Parcelas (Aparece apenas em Projeto + Parcelado) */}
               {form.type === "Projeto" && form.payment_method === "Parcelado" && (
                 <div className="space-y-1">
                   <Label className="text-zinc-400 text-xs uppercase tracking-wider">Parcelas</Label>
@@ -261,7 +253,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </div>
               )}
 
-              {/* Duração e Vencimento (Aparecem apenas em Mensal) */}
               {form.type === "Mensal" && (
                 <>
                   <div className="space-y-1">
@@ -326,7 +317,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                     )}
                   </div>
 
-                  {/* Rich Text for details */}
                   <div>
                     {activeRichIdx === idx ? (
                       <div className="quill-dark rounded-md border border-zinc-700 overflow-hidden">
@@ -355,7 +345,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
               ))}
             </div>
 
-            {/* Observações */}
             <div className="mt-5">
               <Label className="text-zinc-300 text-sm mb-1.5 block">Observações</Label>
               <textarea
@@ -369,48 +358,58 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
           </div>
 
           {/* ── Sticky Footer: Totalizador + Actions ── */}
-          <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-4">
-            <div className="flex items-end justify-between gap-6">
-              {/* Desconto */}
-              <div className="flex items-center gap-3">
-                <Label className="text-zinc-400 text-sm shrink-0">Desconto</Label>
-                <Select value={form.discount_type} onValueChange={v => setField("discount_type", v)}>
-                  <SelectTrigger className="bg-zinc-900 border-zinc-700 h-8 text-xs w-16">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-700">
-                    <SelectItem value="fixed">R$</SelectItem>
-                    <SelectItem value="percent">%</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number" min={0}
-                  value={form.discount_value || ""}
-                  onChange={e => setField("discount_value", parseFloat(e.target.value) || 0)}
-                  className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-24 text-right"
-                  placeholder="0"
-                />
-                {discountAmt > 0 && (
-                  <span className="text-sky-400 text-sm shrink-0">− {formatBRL(discountAmt)}</span>
-                )}
+          <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-5 flex justify-end">
+            <div className="flex flex-col gap-5 w-full max-w-md">
+              
+              {/* Cálculo em coluna */}
+              <div className="flex flex-col gap-2.5">
+                {/* Subtotal */}
+                <div className="flex items-center justify-between text-zinc-400 text-sm">
+                  <span>Subtotal</span>
+                  <span>{formatBRL(subtotal)}</span>
+                </div>
+
+                {/* Desconto */}
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-400 text-sm">Desconto</span>
+                  <div className="flex items-center gap-2">
+                    <Select value={form.discount_type} onValueChange={v => setField("discount_type", v)}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-700 h-8 text-xs w-16 text-zinc-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-300">
+                        <SelectItem value="fixed">R$</SelectItem>
+                        <SelectItem value="percent">%</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number" min={0}
+                      value={form.discount_value || ""}
+                      onChange={e => setField("discount_value", parseFloat(e.target.value) || 0)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-24 text-right"
+                      placeholder="0"
+                    />
+                    <div className="w-24 text-right text-sky-400 text-sm font-medium">
+                      {discountAmt > 0 ? `− ${formatBRL(discountAmt)}` : "R$ 0,00"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="flex items-end justify-between border-t border-zinc-800 pt-3">
+                  <span className="text-zinc-300 text-sm font-medium pb-1">Valor Total</span>
+                  <span className="text-2xl font-bold text-violet-400 font-heading tracking-tight">{formatBRL(totalValue)}</span>
+                </div>
               </div>
 
-              {/* Totais + Ações */}
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  {discountAmt > 0 && (
-                    <p className="text-xs text-zinc-500">Subtotal: {formatBRL(subtotal)}</p>
-                  )}
-                  <p className="text-xs text-zinc-500">Total</p>
-                  <p className="text-xl font-bold text-violet-400 font-heading">{formatBRL(totalValue)}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 h-9">Cancelar</Button>
-                  <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white h-9">
-                    {saving ? "Salvando..." : "Salvar Proposta"}
-                  </Button>
-                </div>
+              {/* Botões */}
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 h-10 px-6">Cancelar</Button>
+                <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white h-10 px-6">
+                  {saving ? "Salvando..." : "Salvar Proposta"}
+                </Button>
               </div>
+
             </div>
           </div>
         </DialogContent>
