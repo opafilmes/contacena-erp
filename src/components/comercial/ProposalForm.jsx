@@ -200,4 +200,230 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 <Select value={form.type} onValueChange={v => { 
                   setField("type", v); 
                   setField("payment_method", ""); 
-                  if (
+                  if (v === "Projeto") {
+                    setField("contract_duration", 12);
+                    setField("contract_due_day", 1);
+                  }
+                }}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-700">
+                    <SelectItem value="Projeto">Projeto</SelectItem>
+                    <SelectItem value="Mensal">Mensal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Emissão</Label>
+                <Input type="date" value={form.issue_date} onChange={e => setField("issue_date", e.target.value)}
+                  className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm [color-scheme:dark]" />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Validade</Label>
+                <Input type="date" value={form.validity_date} onChange={e => setField("validity_date", e.target.value)}
+                  className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm [color-scheme:dark]" />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Pagamento</Label>
+                <Select value={form.payment_method} onValueChange={v => setField("payment_method", v)}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm">
+                    <SelectValue placeholder="Selecionar..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-700">
+                    {paymentOptions.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {form.type === "Projeto" && form.payment_method === "Parcelado" && (
+                <div className="space-y-1">
+                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">Parcelas</Label>
+                  <Select value={String(form.installments)} onValueChange={v => setField("installments", parseInt(v))}>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {INSTALLMENTS.map(n => <SelectItem key={n} value={String(n)}>{n}x</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {form.type === "Mensal" && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Duração (Meses)</Label>
+                    <Select value={String(form.contract_duration || 12)} onValueChange={v => setField("contract_duration", parseInt(v))}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-700">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                          <SelectItem key={n} value={String(n)}>{n} {n === 1 ? 'mês' : 'meses'}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Vencimento (Dia)</Label>
+                    <Input type="number" min={1} max={31} value={form.contract_due_day}
+                      onChange={e => setField("contract_due_day", parseInt(e.target.value) || 1)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm" />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── Scrollable Items Area ── */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Itens da Proposta</Label>
+              <Button variant="ghost" size="sm" onClick={addItem} className="text-violet-400 hover:text-violet-300 gap-1.5 h-7">
+                <Plus className="w-3.5 h-3.5" /> Adicionar Item
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {items.map((item, idx) => (
+                <div key={idx} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <input
+                        list={`desc-suggestions-${idx}`}
+                        value={item.description}
+                        onChange={e => updateItem(idx, "description", e.target.value)}
+                        placeholder="Serviço / Descrição..."
+                        className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      />
+                      <datalist id={`desc-suggestions-${idx}`}>
+                        {DESCRIPTION_SUGGESTIONS.map(s => <option key={s} value={s} />)}
+                      </datalist>
+                    </div>
+                    <Input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300 w-16 text-center h-8 text-sm" placeholder="Qtd" />
+                    <Input type="number" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300 w-28 text-right h-8 text-sm" placeholder="Valor Unit." />
+                    <div className="w-24 text-right text-zinc-300 font-medium text-sm shrink-0">{formatBRL(item.total_price)}</div>
+                    {items.length > 1 && (
+                      <button onClick={() => removeItem(idx)} className="p-1.5 rounded hover:bg-red-500/15 text-zinc-600 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
+                    {activeRichIdx === idx ? (
+                      <div className="quill-dark rounded-md border border-zinc-700 overflow-hidden">
+                        <ReactQuill
+                          theme="snow"
+                          value={item.details || ""}
+                          onChange={val => updateItem(idx, "details", val)}
+                          modules={{ toolbar: [["bold", "italic"], [{ list: "bullet" }, { list: "ordered" }], ["clean"]] }}
+                          placeholder="Detalhamento do item..."
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setActiveRichIdx(idx)}
+                        className="w-full text-left px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900/60 text-sm min-h-[32px]"
+                      >
+                        {item.details ? (
+                          <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: item.details }} />
+                        ) : (
+                          <span className="text-zinc-600 italic">Clique para adicionar detalhes (texto rico)...</span>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Sticky Footer: Valores, Observações + Ações ── */}
+          <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-5">
+            <div className="flex flex-col gap-4">
+              
+              {/* Totais alinhados à direita */}
+              <div className="flex justify-end">
+                <div className="flex flex-col gap-2 w-full max-w-md">
+                  {/* Subtotal */}
+                  <div className="flex items-center justify-between text-zinc-400 text-sm">
+                    <span>Subtotal</span>
+                    <span>{formatBRL(subtotal)}</span>
+                  </div>
+
+                  {/* Desconto */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-400 text-sm">Desconto</span>
+                    <div className="flex items-center gap-2">
+                      <Select value={form.discount_type} onValueChange={v => setField("discount_type", v)}>
+                        <SelectTrigger className="bg-zinc-900 border-zinc-700 h-8 text-xs w-16 text-zinc-300">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-300">
+                          <SelectItem value="fixed">R$</SelectItem>
+                          <SelectItem value="percent">%</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number" min={0}
+                        value={form.discount_value || ""}
+                        onChange={e => setField("discount_value", parseFloat(e.target.value) || 0)}
+                        className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-24 text-right"
+                        placeholder="0"
+                      />
+                      <div className="w-24 text-right text-sky-400 text-sm font-medium">
+                        {discountAmt > 0 ? `− ${formatBRL(discountAmt)}` : "R$ 0,00"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total */}
+                  <div className="flex items-end justify-between border-t border-zinc-800 pt-2 mt-1">
+                    <span className="text-zinc-300 text-sm font-medium pb-1">Valor Total</span>
+                    <span className="text-2xl font-bold text-violet-400 font-heading tracking-tight">{formatBRL(totalValue)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Observações abaixo dos valores */}
+              <div className="w-full mt-2">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-1.5 block">Observações</Label>
+                <textarea
+                  value={form.observations}
+                  onChange={e => setField("observations", e.target.value)}
+                  rows={2}
+                  placeholder="Condições de pagamento, prazo de entrega..."
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                />
+              </div>
+
+              {/* Botões */}
+              <div className="flex justify-end gap-3 mt-1">
+                <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 h-10 px-6">Cancelar</Button>
+                <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white h-10 px-6">
+                  {saving ? "Salvando..." : "Salvar Proposta"}
+                </Button>
+              </div>
+
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <NewClientDialog
+        open={newClientOpen}
+        onClose={() => setNewClientOpen(false)}
+        tenantId={tenantId}
+        onCreated={handleClientCreated}
+      />
+    </>
+  );
+}
