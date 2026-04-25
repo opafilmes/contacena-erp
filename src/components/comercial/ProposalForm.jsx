@@ -31,10 +31,12 @@ const EMPTY_ITEM = { description: "", details: "", quantity: 1, unit_price: 0, t
 
 async function getNextProposalNumber(tenantId) {
   const existing = await base44.entities.Proposal.filter({ tenant_id: tenantId }, "-created_date", 1);
-  if (!existing.length) return "PROP-1001";
-  const last = existing[0].number || "PROP-1000";
-  const num = parseInt(last.replace("PROP-", ""), 10) || 1000;
-  return `PROP-${num + 1}`;
+  if (!existing.length) return "#1001";
+  const last = existing[0].number || "#1000";
+  
+  /* Pega apenas os números da última proposta, ignorando se era PROP- ou # */
+  const num = parseInt(last.replace(/[^0-9]/g, ""), 10) || 1000;
+  return `#${num + 1}`;
 }
 
 function calcDiscount(subtotal, discountValue, discountType) {
