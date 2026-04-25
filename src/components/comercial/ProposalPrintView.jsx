@@ -114,7 +114,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
 
       {/* 🔥 RODAPÉ FIXO: Fica ancorado na última linha de todas as páginas */}
       <div style={{ position: "fixed", bottom: "15mm", left: 0, width: "100%", textAlign: "center", zIndex: 50 }}>
-        <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
+        <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCena ERP®</p>
       </div>
 
       <table className="master-print-table">
