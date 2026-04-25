@@ -224,12 +224,11 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
 
               <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 10px" }}>Itens da Proposta</p>
               
-              {/* 🔥 REMOVIDO o tableLayout: "fixed" para a tabela ser elástica e inteligente */}
               <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0" }}>
                 <thead>
-                  {/* 🔥 Aumentamos o tamanho de Total e Valor Unit., e reduzimos um pouco o detalhamento para dar margem padrão */}
                   <tr>
-                    {[["#", "center", "4%"], ["Serviço", "left", "22%"], ["Detalhamento", "left", "34%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "16%"], ["Total", "right", "18%"]].map(([h, align, w]) => (
+                    {/* 🔥 Mudança de Detalhamento para Complemento aqui */}
+                    {[["#", "center", "4%"], ["Serviço", "left", "24%"], ["Complemento", "left", "36%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "15%"], ["Total", "right", "15%"]].map(([h, align, w]) => (
                       <th key={h} className="prop-th" style={{ padding: "9px 12px", textAlign: align, fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "#374151", border: "1px solid #d1d5db", background: "#f3f4f6", width: w }}>
                         {h}
                       </th>
@@ -248,7 +247,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                       </td>
                       <td style={cellStyle({ textAlign: "center" })}>{item.quantity}</td>
                       
-                      {/* nowrap obriga a não quebrar, e o layout auto da tabela estica a coluna se precisar */}
                       <td style={cellStyle({ textAlign: "right", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(item.unit_price)}</td>
                       <td style={cellStyle({ textAlign: "right", fontWeight: "600", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(item.total_price)}</td>
                     </tr>
