@@ -150,151 +150,59 @@
   flex-direction: column-reverse;
 }
 
+/* =========================================
+   CONFIGURAÇÃO DE IMPRESSÃO DEFINITIVA
+   ========================================= */
 @media print {
-  /* ── Reset global ── */
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
-  body, html {
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-family: 'Montserrat', sans-serif !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* ── Ocultar chrome da app ── */
-  header,
-  nav,
-  aside,
-  .no-print,
-  [data-print-hide],
-  [data-sidebar],
-  .topbar {
-    display: none !important;
-  }
-
-  /* 🔥 CORREÇÃO 1: Oculta apenas o App Principal, preservando o Portal (Modal) */
-  #root {
-    display: none !important;
-  }
-
-  /* 🔥 CORREÇÃO 2: Remove a máscara preta (overlay) do fundo do Modal */
-  div[data-state="open"],
-  div[data-radix-portal] > div,
-  .sheet-overlay {
-    background: transparent !important;
-    backdrop-filter: none !important;
-  }
-
-  /* ── Área de impressão ── */
-  .print-only-doc {
-    display: block !important;
-    /* 🔥 CORREÇÃO 3: Absolute em vez de Fixed para permitir múltiplas páginas */
-    position: absolute !important; 
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    z-index: 99999 !important;
-    padding: 0 !important;
-  }
-
-  .print-only-doc * {
-    color: #111827 !important;
-    background: transparent !important;
+  /* 1. Força as cores exatas (ignora modo de economia de tinta do navegador) */
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Exceções: fundo colorido do header da tabela */
-  .print-only-doc .prop-total-row td {
-    background: #7c3aed !important;
+  body, html {
+    background-color: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 2. Esconde menus, barras e a tela escura do Modal (.no-print) */
+  header, nav, aside, [data-sidebar], .topbar, .no-print {
+    display: none !important;
+  }
+
+  /* 3. Coloca a folha da proposta por cima de tudo (z-index gigante) */
+  .print-only-doc {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background-color: #ffffff !important;
+    z-index: 999999 !important;
+  }
+
+  /* 4. Força todos os textos a ficarem pretos na impressão */
+  .print-only-doc * {
+    color: #111827 !important;
+  }
+
+  /* 5. Mantém as cores da marca (Roxo e Cinza) nas tabelas */
+  .print-only-doc .prop-total-row td,
+  .print-only-doc .prop-total-row td * {
+    background-color: #7c3aed !important;
     color: #ffffff !important;
   }
   .print-only-doc .prop-th {
-    background: #f3f4f6 !important;
+    background-color: #f3f4f6 !important;
     color: #374151 !important;
   }
   .print-only-doc .prop-row-alt {
-    background: #f9fafb !important;
+    background-color: #f9fafb !important;
   }
 
-  /* ── Cabeçalho com logo do tenant ── */
-  .print-header {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    margin-bottom: 20px !important;
-    padding-bottom: 12px !important;
-    border-bottom: 2px solid #e5e7eb !important;
-  }
-  .print-header img {
-    height: 48px !important;
-    width: auto !important;
-    object-fit: contain !important;
-  }
-  .print-header .print-header-text h1 {
-    font-size: 18px !important;
-    font-weight: 700 !important;
-    color: #111827 !important;
-    margin: 0 !important;
-  }
-  .print-header .print-header-text p {
-    font-size: 11px !important;
-    color: #6b7280 !important;
-    margin: 2px 0 0 !important;
-  }
-
-  /* ── Títulos ── */
-  .print-title {
-    font-size: 20px !important;
-    font-weight: 700 !important;
-    margin-bottom: 4px !important;
-    color: #111827 !important;
-  }
-  .print-subtitle {
-    font-size: 11px !important;
-    color: #6b7280 !important;
-    margin-bottom: 16px !important;
-  }
-
-  /* ── Tabelas ── */
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    page-break-inside: auto !important;
-  }
-  thead { display: table-header-group !important; }
-  tr {
-    page-break-inside: avoid !important;
-    page-break-after: auto !important;
-  }
-  th, td {
-    border: 1px solid #d1d5db !important;
-    color: #111827 !important;
-    background: #ffffff !important;
-    padding: 7px 10px !important;
-    font-size: 11px !important;
-    text-align: left !important;
-  }
-  th {
-    background: #f3f4f6 !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    font-size: 10px !important;
-    letter-spacing: 0.05em !important;
-  }
-
-  /* Exceção: linha de total colorida */
-  .prop-total-row td {
-    background: #7c3aed !important;
-    color: #ffffff !important;
-  }
-
-  /* ── Página ── */
   @page {
     size: A4 portrait;
-    margin: 18mm 15mm;
+    margin: 15mm;
   }
 }
