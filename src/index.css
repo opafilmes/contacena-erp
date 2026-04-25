@@ -82,11 +82,13 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-back  ground text-foreground font-body;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body), sans-serif;
   }
 
   /* Remove number input spinners */
