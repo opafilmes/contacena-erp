@@ -70,7 +70,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
         contract_due_day: proposal.contract_due_day || 1,
         contract_duration: proposal.contract_duration || 12,
       });
-      // Sort by created_date ascending (oldest first)
       base44.entities.ProposalItem.filter({ proposal_id: proposal.id }, "created_date").then(its => {
         setItems(its.length ? its : [{ ...EMPTY_ITEM }]);
       });
@@ -156,14 +155,16 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 w-full max-w-5xl h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* AUMENTADO PARA max-w-6xl */}
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 w-full max-w-6xl h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
+          
           {/* ── Fixed Header ── */}
           <div className="px-6 pt-5 pb-4 border-b border-zinc-800 shrink-0">
             <h2 className="font-heading text-lg font-semibold">
               {proposal ? `Editar ${proposal.number || "Proposta"}` : "Nova Proposta"}
             </h2>
 
-            <div className="grid grid-cols-3 gap-3 mt-4">
+            <div className="grid grid-cols-4 gap-4 mt-4">
               <div className="col-span-2 space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Cliente</Label>
                 <div className="flex gap-2">
@@ -346,13 +347,25 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
             </div>
           </div>
 
-          {/* ── Sticky Footer: Valores, Observações + Ações ── */}
-          <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-5">
-            <div className="flex flex-col gap-4">
+          {/* ── Sticky Footer Side-by-Side (LADO A LADO) ── */}
+          <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-4">
+            <div className="flex gap-8">
               
-              {/* Totais alinhados à direita */}
-              <div className="flex justify-end">
-                <div className="flex flex-col gap-2 w-full max-w-md">
+              {/* Lado Esquerdo: Observações */}
+              <div className="flex-1 flex flex-col">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-2 block">Observações</Label>
+                <textarea
+                  value={form.observations}
+                  onChange={e => setField("observations", e.target.value)}
+                  placeholder="Condições de pagamento, prazo de entrega..."
+                  className="w-full flex-1 min-h-[100px] rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                />
+              </div>
+
+              {/* Lado Direito: Totais e Botões */}
+              <div className="w-[360px] flex flex-col justify-between">
+                
+                <div className="flex flex-col gap-2 w-full">
                   {/* Subtotal */}
                   <div className="flex items-center justify-between text-zinc-400 text-sm">
                     <span>Subtotal</span>
@@ -379,38 +392,28 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                         className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-24 text-right"
                         placeholder="0"
                       />
-                      <div className="w-24 text-right text-sky-400 text-sm font-medium">
-                        {discountAmt > 0 ? `− ${formatBRL(discountAmt)}` : "R$ 0,00"}
-                      </div>
                     </div>
                   </div>
 
                   {/* Total */}
                   <div className="flex items-end justify-between border-t border-zinc-800 pt-2 mt-1">
                     <span className="text-zinc-300 text-sm font-medium pb-1">Valor Total</span>
-                    <span className="text-2xl font-bold text-violet-400 font-heading tracking-tight">{formatBRL(totalValue)}</span>
+                    <div className="text-right">
+                      {discountAmt > 0 && (
+                        <div className="text-sky-400 text-xs font-medium mb-1">− {formatBRL(discountAmt)}</div>
+                      )}
+                      <div className="text-2xl font-bold text-violet-400 font-heading tracking-tight leading-none">{formatBRL(totalValue)}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Observações abaixo dos valores */}
-              <div className="w-full mt-2">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-1.5 block">Observações</Label>
-                <textarea
-                  value={form.observations}
-                  onChange={e => setField("observations", e.target.value)}
-                  rows={2}
-                  placeholder="Condições de pagamento, prazo de entrega..."
-                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
-                />
-              </div>
-
-              {/* Botões */}
-              <div className="flex justify-end gap-3 mt-1">
-                <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 h-10 px-6">Cancelar</Button>
-                <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white h-10 px-6">
-                  {saving ? "Salvando..." : "Salvar Proposta"}
-                </Button>
+                {/* Botões */}
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 h-10 px-6">Cancelar</Button>
+                  <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white h-10 px-6">
+                    {saving ? "Salvando..." : "Salvar Proposta"}
+                  </Button>
+                </div>
               </div>
 
             </div>
