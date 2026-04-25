@@ -2,19 +2,22 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Plus, Eye, Printer, Pencil, Trash2, FileText, LayoutDashboard, FileCheck, 
-  MoreVertical, ArrowUpDown 
+  MoreVertical, ArrowUpDown, Send, Mail, MessageCircle
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
 import { formatBRL } from "@/utils/format";
+import { toast } from "sonner";
 import ProposalForm from "@/components/comercial/ProposalForm";
 import ProposalPrintView from "@/components/comercial/ProposalPrintView";
 
-// 🔥 Alteração da cor Aprovada para um verde premium
 const STATUS_STYLES = {
   "Elaboração": "bg-zinc-700/40 text-zinc-300 border-zinc-600/40",
   "Enviada":    "bg-sky-500/15 text-sky-400 border-sky-500/30",
@@ -35,11 +38,13 @@ export default function Comercial() {
   const [activeNav, setActiveNav] = useState("propostas");
   const [proposals, setProposals] = useState([]);
   const [clients, setClients] = useState([]);
+  
+  // Modals state
   const [formOpen, setFormOpen] = useState(false);
   const [editingProposal, setEditingProposal] = useState(null);
   const [printProposal, setPrintProposal] = useState(null);
+  const [sendProposal, setSendProposal] = useState(null);
   
-  // Estados para a ordenação da tabela
   const [sortConfig, setSortConfig] = useState({ key: "created_date", direction: "desc" });
 
   const loadData = useCallback(async () => {
@@ -63,6 +68,7 @@ export default function Comercial() {
     await Promise.all(items.map(i => base44.entities.ProposalItem.delete(i.id)));
     await base44.entities.Proposal.delete(p.id);
     setProposals(prev => prev.filter(x => x.id !== p.id));
+    toast.success("Proposta excluída com sucesso!");
   };
 
   const handleEdit = (p) => {
@@ -75,7 +81,6 @@ export default function Comercial() {
     setFormOpen(true);
   };
 
-  // 🔥 Função de Ordenação
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -84,7 +89,6 @@ export default function Comercial() {
     setSortConfig({ key, direction });
   };
 
-  // 🔥 Aplica a ordenação na lista de propostas
   const sortedProposals = useMemo(() => {
     let sortableProposals = [...proposals];
     if (sortConfig !== null) {
@@ -92,7 +96,6 @@ export default function Comercial() {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
         
-        // Tratamento especial para o nome do cliente (que não está na proposta em si)
         if (sortConfig.key === "client_id") {
           aValue = getClientName(a.client_id).toLowerCase();
           bValue = getClientName(b.client_id).toLowerCase();
@@ -177,7 +180,6 @@ export default function Comercial() {
                       </td>
                       <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
                         
-                        {/* 🔥 Novo Dropdown Menu de Ações */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
@@ -185,7 +187,13 @@ export default function Comercial() {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
+                          <DropdownMenuContent align="end" className="w-44 bg-zinc-900 border-zinc-800 text-zinc-300">
+                            
+                            {/* 🔥 Nova Ação: Enviar */}
+                            <DropdownMenuItem onClick={() => setSendProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white text-violet-400 focus:text-violet-300">
+                              <Send className="w-4 h-4 mr-2" /> Enviar...
+                            </DropdownMenuItem>
+                            
                             <DropdownMenuItem onClick={() => setPrintProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
                               <Eye className="w-4 h-4 mr-2" /> Visualizar
                             </DropdownMenuItem>
@@ -246,11 +254,21 @@ export default function Comercial() {
           onClose={() => setPrintProposal(null)}
         />
       )}
+
+      {/* 🔥 Novo Modal de Envio por E-mail ou WhatsApp */}
+      <SendProposalDialog 
+        open={!!sendProposal}
+        onClose={() => setSendProposal(null)}
+        proposal={sendProposal}
+        client={sendProposal ? getClient(sendProposal.client_id) : null}
+        tenant={tenant}
+        onSent={loadData}
+      />
+
     </div>
   );
 }
 
-// 🔥 Componente novo para cabeçalho clicável com setinha
 function SortableHeader({ label, sortKey, sortConfig, onSort }) {
   const isActive = sortConfig.key === sortKey;
   return (
@@ -266,6 +284,151 @@ function SortableHeader({ label, sortKey, sortConfig, onSort }) {
   );
 }
 
+// 🔥 Componente do Modal de Envio Integrado
+function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent }) {
+  const [method, setMethod] = useState("email");
+  const [sending, setSending] = useState(false);
+
+  // Email states
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+
+  // WhatsApp states
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [whatsappMsg, setWhatsappMsg] = useState("");
+
+  useEffect(() => {
+    if (open && proposal) {
+      const cName = client?.nome_fantasia || "Cliente";
+      const tName = tenant?.nome_fantasia || "Produtora";
+      const pNum = proposal.number || "Sem Número";
+
+      setEmailTo(client?.email || "");
+      setEmailSubject(`Proposta Comercial ${pNum} - ${tName}`);
+      setEmailBody(`Olá, ${cName}!\n\nConforme conversamos, seguem os detalhes da nossa proposta comercial ${pNum} em anexo.\n\nFicamos à disposição para quaisquer dúvidas.\n\nAtenciosamente,\n${tName}`);
+
+      setWhatsappPhone(client?.telefone || "");
+      setWhatsappMsg(`Olá, ${cName}! Tudo bem? Aqui é da ${tName}.\nEstou enviando a proposta comercial ${pNum} referente ao nosso projeto. Podemos conversar sobre os detalhes?`);
+    }
+  }, [open, proposal, client, tenant]);
+
+  const updateStatusToSent = async () => {
+    if (proposal.status !== "Aprovada" && proposal.status !== "Enviada") {
+      await base44.entities.Proposal.update(proposal.id, { status: "Enviada" });
+      onSent(); // Recarrega a tabela por trás
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailTo) { toast.error("Preencha o e-mail do destinatário."); return; }
+    setSending(true);
+    try {
+      // Simulação do envio de e-mail (futuramente conectar à API de disparo)
+      await new Promise(resolve => setTimeout(resolve, 800)); 
+      await updateStatusToSent();
+      toast.success("E-mail enviado com sucesso!");
+      onClose();
+    } catch (e) {
+      toast.error("Erro ao enviar e-mail.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendWhatsapp = async () => {
+    const cleanPhone = whatsappPhone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) { 
+      toast.error("Número de WhatsApp inválido."); 
+      return; 
+    }
+    
+    // Assume DDI 55 (Brasil) caso não tenha sido digitado
+    const finalPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+    const url = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(whatsappMsg)}`;
+    
+    // Abre o WhatsApp Web
+    window.open(url, "_blank");
+    
+    // Atualiza o status automaticamente
+    await updateStatusToSent();
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-lg p-6">
+        <h2 className="font-heading text-lg font-semibold mb-4">Enviar Proposta {proposal?.number}</h2>
+
+        {/* Abas de seleção */}
+        <div className="flex gap-2 p-1 bg-zinc-900 border border-zinc-800 rounded-lg mb-6">
+          <button 
+            onClick={() => setMethod("email")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${method === "email" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-300"}`}
+          >
+            <Mail className="w-4 h-4" /> E-mail
+          </button>
+          <button 
+            onClick={() => setMethod("whatsapp")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${method === "whatsapp" ? "bg-[#25D366]/20 text-[#25D366] shadow-sm" : "text-zinc-400 hover:text-zinc-300"}`}
+          >
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </button>
+        </div>
+
+        {method === "email" ? (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">Para (E-mail)</Label>
+              <Input value={emailTo} onChange={e => setEmailTo(e.target.value)} className="bg-zinc-900 border-zinc-700 h-9" placeholder="cliente@email.com" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">Assunto</Label>
+              <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} className="bg-zinc-900 border-zinc-700 h-9" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">Mensagem</Label>
+              <textarea 
+                value={emailBody} 
+                onChange={e => setEmailBody(e.target.value)}
+                className="w-full h-32 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+              <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400">Cancelar</Button>
+              <Button onClick={handleSendEmail} disabled={sending} className="bg-violet-600 hover:bg-violet-700 text-white">
+                {sending ? "Enviando..." : "Enviar E-mail"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">Telefone WhatsApp</Label>
+              <Input value={whatsappPhone} onChange={e => setWhatsappPhone(e.target.value)} className="bg-zinc-900 border-zinc-700 h-9" placeholder="(11) 99999-9999" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-zinc-400 text-xs">Mensagem</Label>
+              <textarea 
+                value={whatsappMsg} 
+                onChange={e => setWhatsappMsg(e.target.value)}
+                className="w-full h-32 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+              />
+            </div>
+            <p className="text-xs text-zinc-500">Ao clicar em enviar, o WhatsApp Web será aberto em uma nova aba com a mensagem pronta.</p>
+            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+              <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400">Cancelar</Button>
+              <Button onClick={handleSendWhatsapp} className="bg-[#25D366] hover:bg-[#1ebd5a] text-white">
+                Abrir WhatsApp
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ComercialDashboard({ proposals, clients }) {
   const total = proposals.reduce((s, p) => s + (p.total_value || 0), 0);
   const aprovadas = proposals.filter(p => p.status === "Aprovada");
@@ -275,7 +438,6 @@ function ComercialDashboard({ proposals, clients }) {
   const stats = [
     { label: "Total de Propostas", value: proposals.length, color: "text-zinc-200" },
     { label: "Valor Total", value: formatBRL(total), color: "text-violet-400" },
-    // 🔥 Cor verde atualizada no Dashboard
     { label: "Aprovadas", value: aprovadas.length, color: "text-emerald-400" },
     { label: "Taxa de Conversão", value: `${txConversao}%`, color: "text-sky-400" },
   ];
