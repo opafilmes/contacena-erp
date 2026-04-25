@@ -145,7 +145,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                   PROPOSTA COMERCIAL
                 </h1>
                 <div style={{ textAlign: "right" }}>
-                  <p style={{ fontSize: "16px", fontWeight: "800", color: "#111827", margin: 0 }}>{proposal?.number || "PROP-—"}</p>
+      <p style={{ fontSize: "16px", fontWeight: "800", color: "#111827", margin: 0 }}>{proposal?.number || "#—"}</p>
                 </div>
               </div>
 
