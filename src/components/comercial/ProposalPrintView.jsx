@@ -117,7 +117,28 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
 
       <div style={{ width: "100%", height: "2px", backgroundColor: "#e5e7eb", marginBottom: "20px" }} />
 
-      {/* ── 3. Barra de Metadados (Validade, Tipo, Pagamento) ── */}
+      {/* ── 4. Cliente ── */}
+      <div style={{ marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
+        <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 8px" }}>Cliente</p>
+        <p style={{ fontWeight: "700", fontSize: "15px", margin: "0 0 3px", color: "#111827" }}>{client?.nome_fantasia || "—"}</p>
+        {client?.razao_social && <p style={{ fontSize: "12px", color: "#374151", margin: "0 0 2px" }}>{client.razao_social}</p>}
+        {client?.cnpj_cpf && <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>CNPJ/CPF: {client.cnpj_cpf}</p>}
+        {(client?.telefone || client?.email) && (
+          <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>
+            {[client.email, client.telefone ? `Tel: ${client.telefone}` : null].filter(Boolean).join(" | ")}
+          </p>
+        )}
+        {!client?.telefone && !client?.email && client?.contato && (
+          <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>Contato: {client.contato}</p>
+        )}
+        {client?.logradouro && (
+          <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>
+            {[client.logradouro, client.numero, client.bairro, client.cidade, client.uf].filter(Boolean).join(", ")}
+          </p>
+        )}
+      </div>
+
+       {/* ── 3. Barra de Metadados (Validade, Tipo, Pagamento) ── */}
       <div style={{ display: "flex", gap: "40px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
         {proposal?.validity_date && (
           <div>
@@ -145,27 +166,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
             <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Vencimento</p>
             <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>Dia {proposal.contract_due_day}</p>
           </div>
-        )}
-      </div>
-
-      {/* ── 4. Cliente ── */}
-      <div style={{ marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
-        <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 8px" }}>Cliente</p>
-        <p style={{ fontWeight: "700", fontSize: "15px", margin: "0 0 3px", color: "#111827" }}>{client?.nome_fantasia || "—"}</p>
-        {client?.razao_social && <p style={{ fontSize: "12px", color: "#374151", margin: "0 0 2px" }}>{client.razao_social}</p>}
-        {client?.cnpj_cpf && <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>CNPJ/CPF: {client.cnpj_cpf}</p>}
-        {(client?.telefone || client?.email) && (
-          <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>
-            {[client.email, client.telefone ? `Tel: ${client.telefone}` : null].filter(Boolean).join(" | ")}
-          </p>
-        )}
-        {!client?.telefone && !client?.email && client?.contato && (
-          <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>Contato: {client.contato}</p>
-        )}
-        {client?.logradouro && (
-          <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>
-            {[client.logradouro, client.numero, client.bairro, client.cidade, client.uf].filter(Boolean).join(", ")}
-          </p>
         )}
       </div>
 
