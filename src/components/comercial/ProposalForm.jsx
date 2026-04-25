@@ -11,9 +11,34 @@ import { formatBRL } from "@/utils/format";
 import NewClientDialog from "./NewClientDialog";
 import ReactQuill from "react-quill";
 
-const DESCRIPTION_SUGGESTIONS = [
-  "Pré-produção", "Roteiro", "Diária de Gravação", "Direção de Fotografia",
-  "Drone", "Edição de Vídeo", "Color Grading", "Sound Design", "Motion Graphics", "Locução"
+// 🔥 Lista completa e estratégica de serviços audiovisuais
+const SERVICE_OPTIONS = [
+  "Vídeo Vertical (Reels / TikTok / Shorts)",
+  "Filme Institucional",
+  "Vídeo Comercial (Publicidade)",
+  "Cobertura de Evento (Aftermovie)",
+  "Vídeo de Produto / Review",
+  "Vídeo Manifesto",
+  "Vídeo de Treinamento / Corporativo",
+  "Videocast / Podcast (Gravação completa)",
+  "Transmissão ao Vivo (Live Streaming)",
+  "Fashion Film",
+  "Videoclipe Musical",
+  "Diária de Direção",
+  "Diária de Direção de Fotografia (DOP)",
+  "Diária de Operador de Câmera",
+  "Diária de Drone",
+  "Diária de Captação de Áudio",
+  "Diária de Assistente / Gaffer",
+  "Edição de Vídeo",
+  "Cortes para Redes Sociais (Pílulas)",
+  "Color Grading (Correção de Cor)",
+  "Motion Graphics (Animação)",
+  "Sound Design e Mixagem",
+  "Locução (Voiceover)",
+  "Roteiro / Pré-produção",
+  "Trilha Sonora (Licenciamento)",
+  "Outro Serviço"
 ];
 
 const PAYMENT_PROJETO = ["Boleto", "Pix", "Transferência", "Dinheiro", "Parcelado"];
@@ -29,12 +54,12 @@ const EMPTY_PROPOSAL = {
 };
 const EMPTY_ITEM = { description: "", details: "", quantity: 1, unit_price: 0, total_price: 0 };
 
+// 🔥 Geração automática com a hashtag (#1001, #1002...)
 async function getNextProposalNumber(tenantId) {
   const existing = await base44.entities.Proposal.filter({ tenant_id: tenantId }, "-created_date", 1);
   if (!existing.length) return "#1001";
   const last = existing[0].number || "#1000";
-  
-  /* Pega apenas os números da última proposta, ignorando se era PROP- ou # */
+  // Extrai apenas os números da última proposta salva
   const num = parseInt(last.replace(/[^0-9]/g, ""), 10) || 1000;
   return `#${num + 1}`;
 }
@@ -118,6 +143,14 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
 
   const handleSave = async () => {
     if (!form.client_id) { toast.error("Selecione um cliente."); return; }
+    
+    // Validação para impedir itens sem serviço selecionado
+    const hasEmptyItem = items.some(i => !i.description);
+    if (hasEmptyItem) {
+      toast.error("Por favor, selecione um serviço para todos os itens da proposta.");
+      return;
+    }
+
     setSaving(true);
     let proposalId = proposal?.id;
     const payload = {
@@ -138,7 +171,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
         await Promise.all(old.map(o => base44.entities.ProposalItem.delete(o.id)));
       }
       await Promise.all(
-        items.filter(i => i.description?.trim()).map(i =>
+        items.map(i =>
           base44.entities.ProposalItem.create({ ...i, proposal_id: proposalId, tenant_id: tenantId })
         )
       );
@@ -157,10 +190,8 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        {/* AUMENTADO PARA max-w-6xl */}
         <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 w-full max-w-6xl h-[95vh] flex flex-col p-0 gap-0 overflow-hidden">
           
-          {/* ── Fixed Header ── */}
           <div className="px-6 pt-5 pb-4 border-b border-zinc-800 shrink-0">
             <h2 className="font-heading text-lg font-semibold">
               {proposal ? `Editar ${proposal.number || "Proposta"}` : "Nova Proposta"}
@@ -283,7 +314,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
             </div>
           </div>
 
-          {/* ── Scrollable Items Area ── */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="flex items-center justify-between mb-3">
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Itens da Proposta</Label>
@@ -296,18 +326,21 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
               {items.map((item, idx) => (
                 <div key={idx} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
                   <div className="flex gap-2 items-center">
+                    
+                    {/* 🔥 CAMPO DE SERVIÇO SUBSTITUÍDO POR SELECT DROPDOWN */}
                     <div className="flex-1">
-                      <input
-                        list={`desc-suggestions-${idx}`}
-                        value={item.description}
-                        onChange={e => updateItem(idx, "description", e.target.value)}
-                        placeholder="Serviço / Descrição..."
-                        className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                      />
-                      <datalist id={`desc-suggestions-${idx}`}>
-                        {DESCRIPTION_SUGGESTIONS.map(s => <option key={s} value={s} />)}
-                      </datalist>
+                      <Select value={item.description} onValueChange={v => updateItem(idx, "description", v)}>
+                        <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-full">
+                          <SelectValue placeholder="Selecione o serviço..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-300 max-h-72">
+                          {SERVICE_OPTIONS.map(s => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
+
                     <Input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)}
                       className="bg-zinc-900 border-zinc-700 text-zinc-300 w-16 text-center h-8 text-sm" placeholder="Qtd" />
                     <Input type="number" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)}
@@ -328,7 +361,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                           value={item.details || ""}
                           onChange={val => updateItem(idx, "details", val)}
                           modules={{ toolbar: [["bold", "italic"], [{ list: "bullet" }, { list: "ordered" }], ["clean"]] }}
-                          placeholder="Detalhamento do item..."
+                          placeholder="Complemento do item..."
                         />
                       </div>
                     ) : (
@@ -339,7 +372,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                         {item.details ? (
                           <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: item.details }} />
                         ) : (
-                          <span className="text-zinc-600 italic">Clique para adicionar detalhes (texto rico)...</span>
+                          <span className="text-zinc-600 italic">Clique para adicionar complemento (texto rico)...</span>
                         )}
                       </button>
                     )}
@@ -349,11 +382,9 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
             </div>
           </div>
 
-          {/* ── Sticky Footer Side-by-Side (LADO A LADO) ── */}
           <div className="shrink-0 border-t border-zinc-800 bg-zinc-950 px-6 py-4">
             <div className="flex gap-8">
               
-              {/* Lado Esquerdo: Observações */}
               <div className="flex-1 flex flex-col">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider mb-2 block">Observações</Label>
                 <textarea
@@ -364,17 +395,14 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 />
               </div>
 
-              {/* Lado Direito: Totais e Botões */}
               <div className="w-[360px] flex flex-col justify-between">
                 
                 <div className="flex flex-col gap-2 w-full">
-                  {/* Subtotal */}
                   <div className="flex items-center justify-between text-zinc-400 text-sm">
                     <span>Subtotal</span>
                     <span>{formatBRL(subtotal)}</span>
                   </div>
 
-                  {/* Desconto */}
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-400 text-sm">Desconto</span>
                     <div className="flex items-center gap-2">
@@ -397,7 +425,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                     </div>
                   </div>
 
-                  {/* Total */}
                   <div className="flex items-end justify-between border-t border-zinc-800 pt-2 mt-1">
                     <span className="text-zinc-300 text-sm font-medium pb-1">Valor Total</span>
                     <div className="text-right">
@@ -409,7 +436,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                   </div>
                 </div>
 
-                {/* Botões */}
                 <div className="flex justify-end gap-3 mt-4">
                   <Button variant="outline" onClick={onClose} className="border-zinc-700 text-zinc-400 hover:text-zinc-200 h-10 px-6">Cancelar</Button>
                   <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white h-10 px-6">
