@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Plus, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/utils/format";
@@ -25,7 +25,7 @@ const EMPTY_PROPOSAL = {
   issue_date: new Date().toISOString().slice(0, 10),
   validity_date: "", observations: "",
   discount_value: 0, discount_type: "fixed",
-  payment_method: "", installments: 2, contract_due_day: 1,
+  payment_method: "", installments: 2, contract_due_day: 1, contract_duration: 12,
 };
 const EMPTY_ITEM = { description: "", details: "", quantity: 1, unit_price: 0, total_price: 0 };
 
@@ -68,6 +68,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
         payment_method: proposal.payment_method || "",
         installments: proposal.installments || 2,
         contract_due_day: proposal.contract_due_day || 1,
+        contract_duration: proposal.contract_duration || 12,
       });
       // Sort by created_date ascending (oldest first)
       base44.entities.ProposalItem.filter({ proposal_id: proposal.id }, "created_date").then(its => {
@@ -122,25 +123,32 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
       ...form, total_value: totalValue, subtotal_value: subtotal,
       discount_value: form.discount_value, tenant_id: tenantId
     };
-    if (proposal) {
-      await base44.entities.Proposal.update(proposal.id, payload);
-    } else {
-      payload.number = await getNextProposalNumber(tenantId);
-      const created = await base44.entities.Proposal.create(payload);
-      proposalId = created.id;
+    
+    try {
+      if (proposal) {
+        await base44.entities.Proposal.update(proposal.id, payload);
+      } else {
+        payload.number = await getNextProposalNumber(tenantId);
+        const created = await base44.entities.Proposal.create(payload);
+        proposalId = created.id;
+      }
+      if (proposal) {
+        const old = await base44.entities.ProposalItem.filter({ proposal_id: proposalId });
+        await Promise.all(old.map(o => base44.entities.ProposalItem.delete(o.id)));
+      }
+      await Promise.all(
+        items.filter(i => i.description?.trim()).map(i =>
+          base44.entities.ProposalItem.create({ ...i, proposal_id: proposalId, tenant_id: tenantId })
+        )
+      );
+      toast.success(proposal ? "Proposta atualizada!" : "Proposta criada!");
+      onSaved(clients);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar. Verifique se o banco de dados tem o campo contract_duration.");
+    } finally {
+      setSaving(false);
     }
-    if (proposal) {
-      const old = await base44.entities.ProposalItem.filter({ proposal_id: proposalId });
-      await Promise.all(old.map(o => base44.entities.ProposalItem.delete(o.id)));
-    }
-    await Promise.all(
-      items.filter(i => i.description?.trim()).map(i =>
-        base44.entities.ProposalItem.create({ ...i, proposal_id: proposalId, tenant_id: tenantId })
-      )
-    );
-    toast.success(proposal ? "Proposta atualizada!" : "Proposta criada!");
-    setSaving(false);
-    onSaved(clients);
   };
 
   const paymentOptions = form.type === "Mensal" ? PAYMENT_MENSAL : PAYMENT_AVULSA;
@@ -155,7 +163,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
               {proposal ? `Editar ${proposal.number || "Proposta"}` : "Nova Proposta"}
             </h2>
 
-            {/* Top fields in 2 rows of 3 cols */}
+            {/* Top fields in rows of 3 cols */}
             <div className="grid grid-cols-3 gap-3 mt-4">
               {/* Cliente — spans 2 cols */}
               <div className="col-span-2 space-y-1">
@@ -193,7 +201,14 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
               {/* Tipo */}
               <div className="space-y-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tipo</Label>
-                <Select value={form.type} onValueChange={v => { setField("type", v); setField("payment_method", ""); }}>
+                <Select value={form.type} onValueChange={v => { 
+                  setField("type", v); 
+                  setField("payment_method", ""); 
+                  if (v === "Avulsa") {
+                    setField("contract_duration", 12); // Reseta se voltar para avulsa
+                    setField("contract_due_day", 1);
+                  }
+                }}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm">
                     <SelectValue />
                   </SelectTrigger>
@@ -231,7 +246,7 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </Select>
               </div>
 
-              {/* Parcelas (Avulsa + Parcelado) */}
+              {/* Parcelas (Aparece apenas em Avulsa + Parcelado) */}
               {form.type === "Avulsa" && form.payment_method === "Parcelado" && (
                 <div className="space-y-1">
                   <Label className="text-zinc-400 text-xs uppercase tracking-wider">Parcelas</Label>
@@ -246,14 +261,30 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
                 </div>
               )}
 
-              {/* Dia de vencimento (Mensal) */}
+              {/* Duração e Vencimento (Aparecem apenas em Mensal) */}
               {form.type === "Mensal" && (
-                <div className="space-y-1">
-                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">Dia de Vencimento</Label>
-                  <Input type="number" min={1} max={31} value={form.contract_due_day}
-                    onChange={e => setField("contract_due_day", parseInt(e.target.value) || 1)}
-                    className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm" />
-                </div>
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Duração (Meses)</Label>
+                    <Select value={String(form.contract_duration || 12)} onValueChange={v => setField("contract_duration", parseInt(v))}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-700">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                          <SelectItem key={n} value={String(n)}>{n} {n === 1 ? 'mês' : 'meses'}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Vencimento (Dia)</Label>
+                    <Input type="number" min={1} max={31} value={form.contract_due_day}
+                      onChange={e => setField("contract_due_day", parseInt(e.target.value) || 1)}
+                      className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm" />
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -270,7 +301,6 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
             <div className="space-y-3">
               {items.map((item, idx) => (
                 <div key={idx} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
-                  {/* Row: description, qty, unit_price, total, remove */}
                   <div className="flex gap-2 items-center">
                     <div className="flex-1">
                       <input
