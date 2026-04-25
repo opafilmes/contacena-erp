@@ -5,13 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Plus, Trash2, UserPlus } from "lucide-react";
+import { Plus, Trash2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/utils/format";
 import NewClientDialog from "./NewClientDialog";
 import ReactQuill from "react-quill";
 
-// 🔥 Lista completa e estratégica de serviços audiovisuais
 const SERVICE_OPTIONS = [
   "Vídeo Vertical (Reels / TikTok / Shorts)",
   "Filme Institucional",
@@ -37,8 +36,7 @@ const SERVICE_OPTIONS = [
   "Sound Design e Mixagem",
   "Locução (Voiceover)",
   "Roteiro / Pré-produção",
-  "Trilha Sonora (Licenciamento)",
-  "Outro Serviço"
+  "Trilha Sonora (Licenciamento)"
 ];
 
 const PAYMENT_PROJETO = ["Boleto", "Pix", "Transferência", "Dinheiro", "Parcelado"];
@@ -54,12 +52,10 @@ const EMPTY_PROPOSAL = {
 };
 const EMPTY_ITEM = { description: "", details: "", quantity: 1, unit_price: 0, total_price: 0 };
 
-// 🔥 Geração automática com a hashtag (#1001, #1002...)
 async function getNextProposalNumber(tenantId) {
   const existing = await base44.entities.Proposal.filter({ tenant_id: tenantId }, "-created_date", 1);
   if (!existing.length) return "#1001";
   const last = existing[0].number || "#1000";
-  // Extrai apenas os números da última proposta salva
   const num = parseInt(last.replace(/[^0-9]/g, ""), 10) || 1000;
   return `#${num + 1}`;
 }
@@ -144,10 +140,10 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
   const handleSave = async () => {
     if (!form.client_id) { toast.error("Selecione um cliente."); return; }
     
-    // Validação para impedir itens sem serviço selecionado
-    const hasEmptyItem = items.some(i => !i.description);
+    // Bloqueia salvamento se algum item estiver vazio ou travado no modo "custom" sem texto
+    const hasEmptyItem = items.some(i => !i.description || i.description === "___custom___");
     if (hasEmptyItem) {
-      toast.error("Por favor, selecione um serviço para todos os itens da proposta.");
+      toast.error("Por favor, selecione ou preencha o serviço para todos os itens da proposta.");
       return;
     }
 
@@ -323,62 +319,90 @@ export default function ProposalForm({ open, onClose, proposal, tenantId, client
             </div>
 
             <div className="space-y-3">
-              {items.map((item, idx) => (
-                <div key={idx} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
-                  <div className="flex gap-2 items-center">
-                    
-                    {/* 🔥 CAMPO DE SERVIÇO SUBSTITUÍDO POR SELECT DROPDOWN */}
-                    <div className="flex-1">
-                      <Select value={item.description} onValueChange={v => updateItem(idx, "description", v)}>
-                        <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-full">
-                          <SelectValue placeholder="Selecione o serviço..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-300 max-h-72">
-                          {SERVICE_OPTIONS.map(s => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              {items.map((item, idx) => {
+                // Lógica mágica que decide se mostra o dropdown ou o campo de texto livre
+                const desc = item.description || "";
+                const showInput = desc === "___custom___" || (desc !== "" && !SERVICE_OPTIONS.includes(desc));
+
+                return (
+                  <div key={idx} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
+                    <div className="flex gap-2 items-center">
+                      
+                      <div className="flex-1">
+                        {showInput ? (
+                          <div className="relative flex items-center">
+                            <Input 
+                              value={desc === "___custom___" ? "" : desc} 
+                              onChange={e => updateItem(idx, "description", e.target.value)}
+                              className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-full pr-8" 
+                              placeholder="Digite o nome do serviço..." 
+                              autoFocus
+                            />
+                            <button 
+                              onClick={() => updateItem(idx, "description", "")}
+                              className="absolute right-2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                              title="Voltar para a lista"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Select value={desc} onValueChange={v => updateItem(idx, "description", v)}>
+                            <SelectTrigger className="bg-zinc-900 border-zinc-700 text-zinc-300 h-8 text-sm w-full">
+                              <SelectValue placeholder="Selecione o serviço..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-900 border-zinc-700 text-zinc-300 max-h-72">
+                              {/* Opção para forçar texto livre sempre no topo */}
+                              <SelectItem value="___custom___" className="text-violet-400 font-medium border-b border-zinc-800 rounded-none mb-1">
+                                ✍️ Preencher manualmente...
+                              </SelectItem>
+                              {SERVICE_OPTIONS.map(s => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+
+                      <Input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)}
+                        className="bg-zinc-900 border-zinc-700 text-zinc-300 w-16 text-center h-8 text-sm" placeholder="Qtd" />
+                      <Input type="number" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)}
+                        className="bg-zinc-900 border-zinc-700 text-zinc-300 w-28 text-right h-8 text-sm" placeholder="Valor Unit." />
+                      <div className="w-24 text-right text-zinc-300 font-medium text-sm shrink-0">{formatBRL(item.total_price)}</div>
+                      {items.length > 1 && (
+                        <button onClick={() => removeItem(idx)} className="p-1.5 rounded hover:bg-red-500/15 text-zinc-600 hover:text-red-400 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
 
-                    <Input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)}
-                      className="bg-zinc-900 border-zinc-700 text-zinc-300 w-16 text-center h-8 text-sm" placeholder="Qtd" />
-                    <Input type="number" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", e.target.value)}
-                      className="bg-zinc-900 border-zinc-700 text-zinc-300 w-28 text-right h-8 text-sm" placeholder="Valor Unit." />
-                    <div className="w-24 text-right text-zinc-300 font-medium text-sm shrink-0">{formatBRL(item.total_price)}</div>
-                    {items.length > 1 && (
-                      <button onClick={() => removeItem(idx)} className="p-1.5 rounded hover:bg-red-500/15 text-zinc-600 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    <div>
+                      {activeRichIdx === idx ? (
+                        <div className="quill-dark rounded-md border border-zinc-700 overflow-hidden">
+                          <ReactQuill
+                            theme="snow"
+                            value={item.details || ""}
+                            onChange={val => updateItem(idx, "details", val)}
+                            modules={{ toolbar: [["bold", "italic"], [{ list: "bullet" }, { list: "ordered" }], ["clean"]] }}
+                            placeholder="Complemento do item..."
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setActiveRichIdx(idx)}
+                          className="w-full text-left px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900/60 text-sm min-h-[32px]"
+                        >
+                          {item.details ? (
+                            <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: item.details }} />
+                          ) : (
+                            <span className="text-zinc-600 italic">Clique para adicionar complemento (texto rico)...</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  <div>
-                    {activeRichIdx === idx ? (
-                      <div className="quill-dark rounded-md border border-zinc-700 overflow-hidden">
-                        <ReactQuill
-                          theme="snow"
-                          value={item.details || ""}
-                          onChange={val => updateItem(idx, "details", val)}
-                          modules={{ toolbar: [["bold", "italic"], [{ list: "bullet" }, { list: "ordered" }], ["clean"]] }}
-                          placeholder="Complemento do item..."
-                        />
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setActiveRichIdx(idx)}
-                        className="w-full text-left px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900/60 text-sm min-h-[32px]"
-                      >
-                        {item.details ? (
-                          <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: item.details }} />
-                        ) : (
-                          <span className="text-zinc-600 italic">Clique para adicionar complemento (texto rico)...</span>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
