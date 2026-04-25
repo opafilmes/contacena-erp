@@ -223,11 +223,13 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
               </div>
 
               <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 10px" }}>Itens da Proposta</p>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0", tableLayout: "fixed" }}>
+              
+              {/* 🔥 REMOVIDO o tableLayout: "fixed" para a tabela ser elástica e inteligente */}
+              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0" }}>
                 <thead>
-                  {/* 🔥 LARGURAS CORRIGIDAS: Total e Valor Unit. ganharam mais espaço (15%) */}
+                  {/* 🔥 Aumentamos o tamanho de Total e Valor Unit., e reduzimos um pouco o detalhamento para dar margem padrão */}
                   <tr>
-                    {[["#", "center", "4%"], ["Serviço", "left", "24%"], ["Detalhamento", "left", "36%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "15%"], ["Total", "right", "15%"]].map(([h, align, w]) => (
+                    {[["#", "center", "4%"], ["Serviço", "left", "22%"], ["Detalhamento", "left", "34%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "16%"], ["Total", "right", "18%"]].map(([h, align, w]) => (
                       <th key={h} className="prop-th" style={{ padding: "9px 12px", textAlign: align, fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "#374151", border: "1px solid #d1d5db", background: "#f3f4f6", width: w }}>
                         {h}
                       </th>
@@ -246,7 +248,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                       </td>
                       <td style={cellStyle({ textAlign: "center" })}>{item.quantity}</td>
                       
-                      {/* 🔥 whiteSpace nowrap aplicado nos valores unitários e totais da linha */}
+                      {/* nowrap obriga a não quebrar, e o layout auto da tabela estica a coluna se precisar */}
                       <td style={cellStyle({ textAlign: "right", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(item.unit_price)}</td>
                       <td style={cellStyle({ textAlign: "right", fontWeight: "600", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(item.total_price)}</td>
                     </tr>
@@ -262,22 +264,19 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                     <>
                       <tr className="print-table-row">
                         <td colSpan={5} style={cellStyle({ textAlign: "right", fontWeight: "500" })}>Subtotal</td>
-                        {/* 🔥 whiteSpace nowrap aplicado no Subtotal */}
                         <td style={cellStyle({ textAlign: "right", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(subtotal)}</td>
                       </tr>
                       <tr className="print-table-row">
                         <td colSpan={5} style={cellStyle({ textAlign: "right", color: "#0284c7" })}>
                           Desconto {proposal?.discount_type === "percent" ? `(${proposal.discount_value}%)` : ""}
                         </td>
-                        {/* 🔥 whiteSpace nowrap aplicado no Desconto */}
                         <td style={cellStyle({ textAlign: "right", color: "#0284c7", whiteSpace: "nowrap", wordBreak: "normal" })}>− {formatBRL(discountAmt)}</td>
                       </tr>
                     </>
                   )}
                   <tr className="prop-total-row print-table-row">
                     <td colSpan={5} style={{ padding: "11px 12px", textAlign: "right", fontWeight: "700", fontSize: "12px", color: "#ffffff", border: "1px solid #6d28d9", background: "#7c3aed" }}>VALOR TOTAL</td>
-                    {/* 🔥 padding ajustado de 14px para 10px e whiteSpace nowrap aplicado para garantir a proteção do Valor Total */}
-                    <td style={{ padding: "11px 10px", textAlign: "right", fontWeight: "800", fontSize: "15px", color: "#ffffff", border: "1px solid #6d28d9", background: "#7c3aed", whiteSpace: "nowrap", wordBreak: "normal" }}>{formatBRL(totalValue)}</td>
+                    <td style={{ padding: "11px 12px", textAlign: "right", fontWeight: "800", fontSize: "15px", color: "#ffffff", border: "1px solid #6d28d9", background: "#7c3aed", whiteSpace: "nowrap", wordBreak: "normal" }}>{formatBRL(totalValue)}</td>
                   </tr>
                 </tfoot>
               </table>
