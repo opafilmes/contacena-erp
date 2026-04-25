@@ -83,50 +83,82 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
   return (
     <div style={{ fontFamily: "'Montserrat', sans-serif", color: "#111827", background: "#ffffff", width: "100%" }}>
 
-      {/* ── Header ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: "20px", borderBottom: "2px solid #d1d5db", marginBottom: "28px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          {tenant?.logo ? (
-            <img src={tenant.logo} alt={tenant.nome_fantasia} style={{ height: "56px", width: "auto", objectFit: "contain" }} />
-          ) : (
-            <div style={{ width: "56px", height: "56px", borderRadius: "8px", background: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ color: "#fff", fontWeight: "700", fontSize: "20px" }}>{tenant?.nome_fantasia?.[0] || "C"}</span>
-            </div>
-          )}
-          <div>
-            <p style={{ fontWeight: "700", fontSize: "17px", margin: 0, color: "#111827" }}>{tenant?.nome_fantasia || "Produtora"}</p>
-            {tenant?.cnpj && <p style={{ fontSize: "11px", color: "#4b5563", margin: "3px 0 0" }}>CNPJ: {tenant.cnpj}</p>}
-            {tenantAddress && <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>{tenantAddress}</p>}
-            {tenant?.telefone && <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>Tel: {tenant.telefone}</p>}
-            {tenant?.email_corporativo && <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>{tenant.email_corporativo}</p>}
-            {tenant?.website && <p style={{ fontSize: "11px", color: "#7c3aed", margin: "2px 0 0" }}>{tenant.website}</p>}
+      {/* ── 1. Cabeçalho: Dados da Produtora ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "36px" }}>
+        {tenant?.logo ? (
+          <img src={tenant.logo} alt={tenant.nome_fantasia} style={{ height: "48px", width: "auto", objectFit: "contain" }} />
+        ) : (
+          <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ color: "#fff", fontWeight: "700", fontSize: "20px" }}>{tenant?.nome_fantasia?.[0] || "C"}</span>
           </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <p style={{ fontSize: "22px", fontWeight: "800", color: "#7c3aed", margin: 0 }}>{proposal?.number || "PROP-—"}</p>
-          <p style={{ fontSize: "11px", color: "#4b5563", margin: "5px 0 0" }}>Emissão: {issueDate}</p>
-          <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>Válida até: {validityDate}</p>
-          <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>Tipo: {proposal?.type || "—"}</p>
-          {proposal?.payment_method && (
+        )}
+        <div>
+          <p style={{ fontWeight: "800", fontSize: "15px", margin: 0, color: "#111827", textTransform: "uppercase" }}>{tenant?.nome_fantasia || "Produtora"}</p>
+          {tenant?.cnpj && <p style={{ fontSize: "11px", color: "#4b5563", margin: "3px 0 0" }}>CNPJ: {tenant.cnpj}</p>}
+          {tenantAddress && <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>{tenantAddress}</p>}
+          {(tenant?.email_corporativo || tenant?.telefone) && (
             <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>
-              Pagamento: {proposal.payment_method}
-              {proposal.installments && proposal.payment_method === "Parcelado" ? ` (${proposal.installments}x)` : ""}
+              {[tenant.email_corporativo, tenant.telefone ? `Tel: ${tenant.telefone}` : null].filter(Boolean).join(" | ")}
             </p>
-          )}
-          {proposal?.type === "Mensal" && proposal?.contract_due_day && (
-            <p style={{ fontSize: "11px", color: "#4b5563", margin: "2px 0 0" }}>Vencimento: dia {proposal.contract_due_day}</p>
           )}
         </div>
       </div>
 
-      {/* ── Client ── */}
-      <div style={{ marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+      {/* ── 2. Título e Número da Proposta ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "12px" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: "800", color: "#111827", margin: 0, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          PROPOSTA COMERCIAL
+        </h1>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ fontSize: "16px", fontWeight: "800", color: "#111827", margin: 0 }}>{proposal?.number || "PROP-—"}</p>
+          <p style={{ fontSize: "11px", color: "#4b5563", margin: "4px 0 0" }}>Emitida em {issueDate}</p>
+        </div>
+      </div>
+
+      <div style={{ width: "100%", height: "2px", backgroundColor: "#e5e7eb", marginBottom: "20px" }} />
+
+      {/* ── 3. Barra de Metadados (Validade, Tipo, Pagamento) ── */}
+      <div style={{ display: "flex", gap: "40px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+        {proposal?.validity_date && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Válida até</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{validityDate}</p>
+          </div>
+        )}
+        {proposal?.type && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Tipo</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{proposal.type}</p>
+          </div>
+        )}
+        {proposal?.payment_method && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Forma de Pagamento</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>
+              {proposal.payment_method}
+              {proposal.installments && proposal.payment_method === "Parcelado" ? ` (${proposal.installments}x)` : ""}
+            </p>
+          </div>
+        )}
+        {proposal?.type === "Mensal" && proposal?.contract_due_day && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Vencimento</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>Dia {proposal.contract_due_day}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── 4. Cliente ── */}
+      <div style={{ marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
         <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 8px" }}>Cliente</p>
         <p style={{ fontWeight: "700", fontSize: "15px", margin: "0 0 3px", color: "#111827" }}>{client?.nome_fantasia || "—"}</p>
         {client?.razao_social && <p style={{ fontSize: "12px", color: "#374151", margin: "0 0 2px" }}>{client.razao_social}</p>}
         {client?.cnpj_cpf && <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>CNPJ/CPF: {client.cnpj_cpf}</p>}
-        {client?.telefone && <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>Tel: {client.telefone}</p>}
-        {client?.email && <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>E-mail: {client.email}</p>}
+        {(client?.telefone || client?.email) && (
+          <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>
+            {[client.email, client.telefone ? `Tel: ${client.telefone}` : null].filter(Boolean).join(" | ")}
+          </p>
+        )}
         {!client?.telefone && !client?.email && client?.contato && (
           <p style={{ fontSize: "11px", color: "#6b7280", margin: "0 0 2px" }}>Contato: {client.contato}</p>
         )}
@@ -137,7 +169,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         )}
       </div>
 
-      {/* ── Items Table ── */}
+      {/* ── 5. Itens da Proposta ── */}
       <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 10px" }}>Itens da Proposta</p>
       <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0" }}>
         <thead>
@@ -192,7 +224,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         </tfoot>
       </table>
 
-      {/* ── Observations ── */}
+      {/* ── 6. Observações ── */}
       {proposal?.observations && (
         <div style={{ marginTop: "24px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
           <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 7px" }}>Observações</p>
@@ -200,7 +232,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         </div>
       )}
 
-      {/* ── Signatures ── */}
+      {/* ── 7. Assinaturas ── */}
       <div style={{ display: "flex", justifyContent: "center", gap: "80px", marginTop: "60px", paddingTop: "28px", borderTop: "1px solid #e5e7eb" }}>
         {[tenant?.nome_fantasia || "Contratante", client?.nome_fantasia || "Contratado"].map(name => (
           <div key={name} style={{ textAlign: "center" }}>
@@ -210,7 +242,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         ))}
       </div>
 
-      {/* ── Footer ── */}
+      {/* ── 8. Rodapé ── */}
       <div style={{ marginTop: "36px", textAlign: "center" }}>
         <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
       </div>
