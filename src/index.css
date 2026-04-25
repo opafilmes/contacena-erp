@@ -86,7 +86,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-back  ground text-foreground font-body;
   }
 
   /* Remove number input spinners */
