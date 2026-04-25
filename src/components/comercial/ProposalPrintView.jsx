@@ -72,16 +72,27 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
     .filter(Boolean).join(", ");
 
   const cellStyle = (extra = {}) => ({
-    padding: "9px 12px",
+    padding: "10px 12px",
     fontSize: "11px",
     border: "1px solid #d1d5db",
     color: "#111827",
-    verticalAlign: "top",
+    verticalAlign: "top", // Garante que tudo fique alinhado no topo da linha
+    wordBreak: "break-word", // Força palavras gigantes a quebrarem em vez de esticar a tabela
+    overflowWrap: "break-word",
     ...extra,
   });
 
   return (
     <div style={{ fontFamily: "'Montserrat', sans-serif", color: "#111827", background: "#ffffff", width: "100%" }}>
+      
+      {/* Estilos específicos para forçar a formatação do Rich Text e Quebras de Página */}
+      <style>{`
+        .print-rich-text p { margin: 0 0 6px 0 !important; }
+        .print-rich-text p:last-child { margin: 0 !important; }
+        .print-rich-text ul, .print-rich-text ol { margin: 0 0 6px 0 !important; padding-left: 18px !important; }
+        .print-rich-text li { margin-bottom: 2px !important; }
+        .print-table-row { page-break-inside: avoid !important; }
+      `}</style>
 
       {/* ── 1. Cabeçalho: Dados da Produtora ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "36px" }}>
@@ -116,7 +127,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
 
       <div style={{ width: "100%", height: "2px", backgroundColor: "#e5e7eb", marginBottom: "20px" }} />
 
-      {/* ── 3. Barra de Metadados (Emissão, Validade, Pagamento, Duração, Vencimento) ── */}
+      {/* ── 3. Barra de Metadados ── */}
       <div style={{ display: "flex", gap: "40px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
         {issueDate && (
           <div>
@@ -155,8 +166,8 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         )}
       </div>
 
-      {/* ── 4. Cliente ── */}
-      <div style={{ marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
+      {/* ── 4. Cliente (Evita quebrar no meio) ── */}
+      <div style={{ pageBreakInside: "avoid", marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
         <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 8px" }}>Cliente</p>
         <p style={{ fontWeight: "700", fontSize: "15px", margin: "0 0 3px", color: "#111827" }}>{client?.nome_fantasia || "—"}</p>
         {client?.razao_social && <p style={{ fontSize: "12px", color: "#374151", margin: "0 0 2px" }}>{client.razao_social}</p>}
@@ -178,10 +189,10 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
 
       {/* ── 5. Itens da Proposta ── */}
       <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 10px" }}>Itens da Proposta</p>
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0", tableLayout: "fixed" }}>
         <thead>
           <tr>
-            {[["#", "center", "4%"], ["Serviço", "left", "22%"], ["Detalhamento", "left", "38%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "15%"], ["Total", "right", "15%"]].map(([h, align, w]) => (
+            {[["#", "center", "5%"], ["Serviço", "left", "25%"], ["Detalhamento", "left", "38%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "13%"], ["Total", "right", "13%"]].map(([h, align, w]) => (
               <th key={h} className="prop-th" style={{ padding: "9px 12px", textAlign: align, fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "#374151", border: "1px solid #d1d5db", background: "#f3f4f6", width: w }}>
                 {h}
               </th>
@@ -190,12 +201,12 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         </thead>
         <tbody>
           {items.map((item, i) => (
-            <tr key={item.id || i} className={i % 2 !== 0 ? "prop-row-alt" : ""} style={{ background: i % 2 === 0 ? "#ffffff" : "#f9fafb" }}>
+            <tr key={item.id || i} className={`print-table-row ${i % 2 !== 0 ? "prop-row-alt" : ""}`} style={{ background: i % 2 === 0 ? "#ffffff" : "#f9fafb" }}>
               <td style={cellStyle({ textAlign: "center", color: "#6b7280" })}>{i + 1}</td>
               <td style={cellStyle({ fontWeight: "600" })}>{item.description}</td>
               <td style={cellStyle({ color: "#4b5563" })}>
                 {item.details
-                  ? <div style={{ fontSize: "11px" }} dangerouslySetInnerHTML={{ __html: item.details }} />
+                  ? <div className="print-rich-text" style={{ fontSize: "11px", lineHeight: "1.5" }} dangerouslySetInnerHTML={{ __html: item.details }} />
                   : <span style={{ color: "#9ca3af" }}>—</span>}
               </td>
               <td style={cellStyle({ textAlign: "center" })}>{item.quantity}</td>
@@ -204,19 +215,19 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
             </tr>
           ))}
           {items.length === 0 && (
-            <tr>
+            <tr className="print-table-row">
               <td colSpan={6} style={cellStyle({ textAlign: "center", color: "#9ca3af" })}>Nenhum item.</td>
             </tr>
           )}
         </tbody>
-        <tfoot>
+        <tfoot style={{ display: "table-row-group" }}>
           {hasDiscount && (
             <>
-              <tr>
+              <tr className="print-table-row">
                 <td colSpan={5} style={cellStyle({ textAlign: "right", fontWeight: "500" })}>Subtotal</td>
                 <td style={cellStyle({ textAlign: "right" })}>{formatBRL(subtotal)}</td>
               </tr>
-              <tr>
+              <tr className="print-table-row">
                 <td colSpan={5} style={cellStyle({ textAlign: "right", color: "#0284c7" })}>
                   Desconto {proposal?.discount_type === "percent" ? `(${proposal.discount_value}%)` : ""}
                 </td>
@@ -224,23 +235,23 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
               </tr>
             </>
           )}
-          <tr className="prop-total-row">
+          <tr className="prop-total-row print-table-row">
             <td colSpan={5} style={{ padding: "11px 14px", textAlign: "right", fontWeight: "700", fontSize: "12px", color: "#ffffff", border: "1px solid #6d28d9", background: "#7c3aed" }}>VALOR TOTAL</td>
             <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: "800", fontSize: "15px", color: "#ffffff", border: "1px solid #6d28d9", background: "#7c3aed" }}>{formatBRL(totalValue)}</td>
           </tr>
         </tfoot>
       </table>
 
-      {/* ── 6. Observações ── */}
+      {/* ── 6. Observações (Evita quebrar no meio) ── */}
       {proposal?.observations && (
-        <div style={{ marginTop: "24px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+        <div style={{ pageBreakInside: "avoid", marginTop: "24px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
           <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9ca3af", margin: "0 0 7px" }}>Observações</p>
-          <p style={{ fontSize: "12px", color: "#374151", margin: 0, whiteSpace: "pre-wrap" }}>{proposal.observations}</p>
+          <p style={{ fontSize: "12px", color: "#374151", margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{proposal.observations}</p>
         </div>
       )}
 
-      {/* ── 7. Assinaturas ── */}
-      <div style={{ display: "flex", justifyContent: "center", gap: "80px", marginTop: "60px", paddingTop: "28px", borderTop: "1px solid #e5e7eb" }}>
+      {/* ── 7. Assinaturas (Evita quebrar no meio) ── */}
+      <div style={{ pageBreakInside: "avoid", display: "flex", justifyContent: "center", gap: "80px", marginTop: "60px", paddingTop: "28px", borderTop: "1px solid #e5e7eb" }}>
         {[tenant?.nome_fantasia || "Contratante", client?.nome_fantasia || "Contratado"].map(name => (
           <div key={name} style={{ textAlign: "center" }}>
             <div style={{ width: "200px", borderBottom: "1px solid #374151", marginBottom: "6px" }} />
@@ -249,8 +260,8 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         ))}
       </div>
 
-      {/* ── 8. Rodapé ── */}
-      <div style={{ marginTop: "36px", textAlign: "center" }}>
+      {/* ── 8. Rodapé (Evita quebrar no meio) ── */}
+      <div style={{ pageBreakInside: "avoid", marginTop: "36px", textAlign: "center" }}>
         <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
       </div>
     </div>
