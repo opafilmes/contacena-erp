@@ -152,7 +152,7 @@
   /* ── Reset global ── */
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
-  body {
+  body, html {
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Montserrat', sans-serif !important;
@@ -167,20 +167,28 @@
   .no-print,
   [data-print-hide],
   [data-sidebar],
-  .topbar,
-  .sheet-overlay {
+  .topbar {
     display: none !important;
   }
 
-  /* Ocultar TUDO do body por padrão — só mostramos .print-only-doc */
-  body > * {
+  /* 🔥 CORREÇÃO 1: Oculta apenas o App Principal, preservando o Portal (Modal) */
+  #root {
     display: none !important;
+  }
+
+  /* 🔥 CORREÇÃO 2: Remove a máscara preta (overlay) do fundo do Modal */
+  div[data-state="open"],
+  div[data-radix-portal] > div,
+  .sheet-overlay {
+    background: transparent !important;
+    backdrop-filter: none !important;
   }
 
   /* ── Área de impressão ── */
   .print-only-doc {
     display: block !important;
-    position: fixed !important;
+    /* 🔥 CORREÇÃO 3: Absolute em vez de Fixed para permitir múltiplas páginas */
+    position: absolute !important; 
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
