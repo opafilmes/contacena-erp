@@ -111,11 +111,49 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         </h1>
         <div style={{ textAlign: "right" }}>
           <p style={{ fontSize: "16px", fontWeight: "800", color: "#111827", margin: 0 }}>{proposal?.number || "PROP-—"}</p>
-          <p style={{ fontSize: "11px", color: "#4b5563", margin: "4px 0 0" }}>Emitida em {issueDate}</p>
         </div>
       </div>
 
       <div style={{ width: "100%", height: "2px", backgroundColor: "#e5e7eb", marginBottom: "20px" }} />
+
+      {/* ── 3. Barra de Metadados (Emissão, Validade, Pagamento, Duração, Vencimento) ── */}
+      <div style={{ display: "flex", gap: "40px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
+        {issueDate && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Data de Emissão</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{issueDate}</p>
+          </div>
+        )}
+        {proposal?.validity_date && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Válida até</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{validityDate}</p>
+          </div>
+        )}
+        {proposal?.payment_method && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Forma de Pagamento</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>
+              {proposal.payment_method}
+              {proposal.installments && proposal.payment_method === "Parcelado" ? ` (${proposal.installments}x)` : ""}
+            </p>
+          </div>
+        )}
+        {proposal?.type === "Mensal" && proposal?.contract_duration && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Duração</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>
+              {proposal.contract_duration} {proposal.contract_duration === 1 ? 'mês' : 'meses'}
+            </p>
+          </div>
+        )}
+        {proposal?.type === "Mensal" && proposal?.contract_due_day && (
+          <div>
+            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Vencimento</p>
+            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>Dia {proposal.contract_due_day}</p>
+          </div>
+        )}
+      </div>
 
       {/* ── 4. Cliente ── */}
       <div style={{ marginBottom: "28px", padding: "14px 18px", border: "1px solid #e5e7eb", borderRadius: "6px" }}>
@@ -135,37 +173,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
           <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>
             {[client.logradouro, client.numero, client.bairro, client.cidade, client.uf].filter(Boolean).join(", ")}
           </p>
-        )}
-      </div>
-
-       {/* ── 3. Barra de Metadados (Validade, Tipo, Pagamento) ── */}
-      <div style={{ display: "flex", gap: "40px", marginBottom: "28px", padding: "14px 18px", background: "#f9fafb", borderRadius: "6px", border: "1px solid #e5e7eb" }}>
-        {proposal?.validity_date && (
-          <div>
-            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Válida até</p>
-            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{validityDate}</p>
-          </div>
-        )}
-        {proposal?.type && (
-          <div>
-            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Tipo</p>
-            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>{proposal.type}</p>
-          </div>
-        )}
-        {proposal?.payment_method && (
-          <div>
-            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Forma de Pagamento</p>
-            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>
-              {proposal.payment_method}
-              {proposal.installments && proposal.payment_method === "Parcelado" ? ` (${proposal.installments}x)` : ""}
-            </p>
-          </div>
-        )}
-        {proposal?.type === "Mensal" && proposal?.contract_due_day && (
-          <div>
-            <p style={{ fontSize: "9px", color: "#9ca3af", margin: "0 0 4px", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Vencimento</p>
-            <p style={{ fontSize: "12px", color: "#111827", margin: 0, fontWeight: "600" }}>Dia {proposal.contract_due_day}</p>
-          </div>
         )}
       </div>
 
@@ -231,6 +238,16 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
           <p style={{ fontSize: "12px", color: "#374151", margin: 0, whiteSpace: "pre-wrap" }}>{proposal.observations}</p>
         </div>
       )}
+
+      {/* ── 7. Assinaturas ── */}
+      <div style={{ display: "flex", justifyContent: "center", gap: "80px", marginTop: "60px", paddingTop: "28px", borderTop: "1px solid #e5e7eb" }}>
+        {[tenant?.nome_fantasia || "Contratante", client?.nome_fantasia || "Contratado"].map(name => (
+          <div key={name} style={{ textAlign: "center" }}>
+            <div style={{ width: "200px", borderBottom: "1px solid #374151", marginBottom: "6px" }} />
+            <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>{name}</p>
+          </div>
+        ))}
+      </div>
 
       {/* ── 8. Rodapé ── */}
       <div style={{ marginTop: "36px", textAlign: "center" }}>
