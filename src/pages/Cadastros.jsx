@@ -231,4 +231,4 @@ export default function Cadastros() {
         record={bankDrawer.record} tenantId={tenantId} onSaved={loadBankAccounts} />
     </div>
   );
-}
+} 
