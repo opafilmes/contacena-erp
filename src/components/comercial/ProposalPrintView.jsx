@@ -112,6 +112,11 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
         }
       `}</style>
 
+      {/* 🔥 RODAPÉ FIXO: Fica ancorado na última linha de todas as páginas */}
+      <div style={{ position: "fixed", bottom: "15mm", left: 0, width: "100%", textAlign: "center", zIndex: 50 }}>
+        <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
+      </div>
+
       <table className="master-print-table">
         
         {/* ── CABEÇALHO REPETITIVO (THEAD) ── */}
@@ -145,7 +150,7 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                   PROPOSTA COMERCIAL
                 </h1>
                 <div style={{ textAlign: "right" }}>
-      <p style={{ fontSize: "16px", fontWeight: "800", color: "#111827", margin: 0 }}>{proposal?.number || "#—"}</p>
+                  <p style={{ fontSize: "16px", fontWeight: "800", color: "#111827", margin: 0 }}>{proposal?.number || "PROP-—"}</p>
                 </div>
               </div>
 
@@ -227,7 +232,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
               <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0" }}>
                 <thead>
                   <tr>
-                    {/* 🔥 Mudança de Detalhamento para Complemento aqui */}
                     {[["#", "center", "4%"], ["Serviço", "left", "24%"], ["Complemento", "left", "36%"], ["Qtd", "center", "6%"], ["Valor Unit.", "right", "15%"], ["Total", "right", "15%"]].map(([h, align, w]) => (
                       <th key={h} className="prop-th" style={{ padding: "9px 12px", textAlign: align, fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "#374151", border: "1px solid #d1d5db", background: "#f3f4f6", width: w }}>
                         {h}
@@ -246,7 +250,6 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
                           : <span style={{ color: "#9ca3af" }}>—</span>}
                       </td>
                       <td style={cellStyle({ textAlign: "center" })}>{item.quantity}</td>
-                      
                       <td style={cellStyle({ textAlign: "right", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(item.unit_price)}</td>
                       <td style={cellStyle({ textAlign: "right", fontWeight: "600", whiteSpace: "nowrap", wordBreak: "normal" })}>{formatBRL(item.total_price)}</td>
                     </tr>
@@ -289,14 +292,12 @@ function PrintDocument({ proposal, client, tenant, items, issueDate, validityDat
           </tr>
         </tbody>
 
-        {/* ── RODAPÉ REPETITIVO (TFOOT) ── */}
+        {/* ── RODAPÉ REPETITIVO (TFOOT) APENAS PARA DAR ESPAÇO ── */}
         <tfoot>
           <tr>
             <td>
-              <div style={{ marginTop: "36px", textAlign: "center", paddingTop: "15px" }}>
-                <p style={{ fontSize: "9px", color: "#9ca3af", margin: 0 }}>Proposta gerada com o ContaCenaERP®</p>
-              </div>
-              <div style={{ height: "15mm" }} />
+              {/* 🔥 ESPAÇADOR: Garante que a tabela nunca vai imprimir por cima do texto fixo no fundo da folha */}
+              <div style={{ height: "25mm" }} />
             </td>
           </tr>
         </tfoot>
