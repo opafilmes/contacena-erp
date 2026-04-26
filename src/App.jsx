@@ -6,7 +6,6 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AppLayout from './components/layout/AppLayout';
-import Home from './pages/Home';
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
@@ -22,6 +21,8 @@ import StudioInventario from './pages/StudioInventario';
 import StudioCallSheet from './pages/StudioCallSheet';
 import GestaoEquipe from './pages/GestaoEquipe';
 import SuperAdminPage from './pages/admin/SuperAdminPage';
+import DashboardGestao from './pages/business/DashboardGestao';
+import DashboardStudio from './pages/studio/DashboardStudio';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -53,7 +54,8 @@ const AuthenticatedApp = () => {
 
       {/* Todas as rotas protegidas sob /app */}
       <Route path="/app" element={<AppLayout />}>
-        <Route index element={<Home />} />
+        <Route index element={<DashboardGestao />} />
+        <Route path="studio" element={<DashboardStudio />} />
         <Route path="configuracoes-empresa" element={<ConfiguracoesEmpresa />} />
         <Route path="meu-perfil" element={<MeuPerfil />} />
         <Route path="cadastros" element={<Cadastros />} />

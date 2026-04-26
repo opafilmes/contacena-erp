@@ -62,7 +62,7 @@ export default function StudioAtividades() {
   const selectedClientObj = clients.find((c) => c.id === selectedClient);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <div className="px-6 pt-8 pb-4 max-w-7xl mx-auto w-full">
         <BackButton to="/app/producao" label="← Studio" />
       </div>

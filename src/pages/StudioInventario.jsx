@@ -51,7 +51,7 @@ export default function StudioInventario() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-6 py-10 max-w-5xl mx-auto">
+    <div className="min-h-screen max-w-5xl mx-auto">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <BackButton to="/app/producao" label="← Studio" />
 
