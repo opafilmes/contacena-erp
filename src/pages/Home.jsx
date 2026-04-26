@@ -153,10 +153,7 @@ export default function Home() {
           <p className="text-zinc-500 mt-2 text-sm">
             Selecione um módulo para começar.
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs font-medium text-green-400">Plano {plano}</span>
-          </div>
+          {/* TAG DO PLANO REMOVIDA DAQUI */}
         </motion.div>
       </div>
 
