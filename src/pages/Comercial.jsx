@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom"; // 🔥 Adicionado useSearchParams
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,17 +26,14 @@ const STATUS_STYLES = {
   "Recusada":   "bg-red-500/15 text-red-400 border-red-500/30",
 };
 
-const NAV = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "propostas", label: "Propostas", icon: FileText },
-  { id: "contratos", label: "Contratos", icon: FileCheck },
-];
-
 export default function Comercial() {
   const { tenant } = useOutletContext();
   const tenantId = tenant?.id;
 
-  const [activeNav, setActiveNav] = useState("propostas");
+  // 🔥 Substituímos o useState interno pelo state da URL
+  const [searchParams] = useSearchParams();
+  const activeNav = searchParams.get("tab") || "propostas";
+
   const [proposals, setProposals] = useState([]);
   const [clients, setClients] = useState([]);
   
@@ -46,7 +43,7 @@ export default function Comercial() {
   const [printProposal, setPrintProposal] = useState(null);
   const [sendProposal, setSendProposal] = useState(null);
   
-  // 🔥 Novo estado para o Modal de Exclusão
+  // Modal de Exclusão
   const [proposalToDelete, setProposalToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -67,7 +64,6 @@ export default function Comercial() {
   const getClientName = useCallback((id) => clients.find(c => c.id === id)?.nome_fantasia || "—", [clients]);
   const getClient = (id) => clients.find(c => c.id === id);
 
-  // 🔥 Nova função de confirmação de exclusão
   const confirmDelete = async () => {
     if (!proposalToDelete) return;
     setIsDeleting(true);
@@ -125,125 +121,105 @@ export default function Comercial() {
   }, [proposals, sortConfig, getClientName]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex">
-      <aside className="w-56 border-r border-zinc-800 bg-zinc-950/60 flex flex-col pt-8 px-3 shrink-0">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-3 mb-3">Comercial</p>
-        <nav className="space-y-1">
-          {NAV.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveNav(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeNav === id
-                  ? "bg-violet-600/20 text-violet-300 border border-violet-500/30"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
-              }`}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    // 🔥 Removido o Flex que continha a aside! Agora a área inteira respira.
+    <div className="min-h-[calc(100vh-4rem)] p-8 max-w-7xl mx-auto w-full">
+      
+      {activeNav === "dashboard" && <ComercialDashboard proposals={proposals} clients={clients} />}
 
-      <div className="flex-1 px-8 py-8 overflow-auto">
-        {activeNav === "dashboard" && <ComercialDashboard proposals={proposals} clients={clients} />}
-
-        {activeNav === "propostas" && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">Propostas</h1>
-                <p className="text-sm text-zinc-500 mt-0.5">{proposals.length} proposta(s) cadastrada(s)</p>
-              </div>
-              <Button onClick={handleNew} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white">
-                <Plus className="w-4 h-4" /> Nova Proposta
-              </Button>
+      {activeNav === "propostas" && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">Pipeline de Propostas</h1>
+              <p className="text-sm text-zinc-500 mt-0.5">{proposals.length} proposta(s) cadastrada(s)</p>
             </div>
+            <Button onClick={handleNew} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white">
+              <Plus className="w-4 h-4" /> Nova Proposta
+            </Button>
+          </div>
 
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-800">
-                    <SortableHeader label="Nº" sortKey="number" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortableHeader label="Data" sortKey="issue_date" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortableHeader label="Cliente" sortKey="client_id" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortableHeader label="Tipo" sortKey="type" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortableHeader label="Valor" sortKey="total_value" sortConfig={sortConfig} onSort={handleSort} />
-                    <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
-                    <th className="px-4 py-3 w-10 text-right" />
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden shadow-lg">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <SortableHeader label="Nº" sortKey="number" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="Data" sortKey="issue_date" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="Cliente" sortKey="client_id" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="Tipo" sortKey="type" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="Valor" sortKey="total_value" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+                  <th className="px-4 py-3 w-10 text-right" />
+                </tr>
+              </thead>
+              <tbody>
+                {sortedProposals.map(p => (
+                  <tr
+                    key={p.id}
+                    onClick={() => handleEdit(p)}
+                    className="border-b border-zinc-800/60 hover:bg-zinc-800/30 cursor-pointer transition-colors group"
+                  >
+                    <td className="px-4 py-3 font-mono text-violet-400 font-semibold">{p.number || "—"}</td>
+                    <td className="px-4 py-3 text-zinc-300">
+                      {p.issue_date ? new Date(p.issue_date + "T00:00:00").toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-200 font-medium">{getClientName(p.client_id)}</td>
+                    <td className="px-4 py-3 text-zinc-400">{p.type || "—"}</td>
+                    <td className="px-4 py-3 text-zinc-200">{formatBRL(p.total_value)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[p.status] || ""}`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 bg-zinc-900 border-zinc-800 text-zinc-300">
+                          <DropdownMenuItem onClick={() => setSendProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white text-violet-400 focus:text-violet-300">
+                            <Send className="w-4 h-4 mr-2" /> Enviar...
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setPrintProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
+                            <Eye className="w-4 h-4 mr-2" /> Visualizar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setPrintProposal(p); setTimeout(() => window.print(), 400); }} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
+                            <Printer className="w-4 h-4 mr-2" /> Imprimir
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
+                            <Pencil className="w-4 h-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem onClick={() => setProposalToDelete(p)} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                            <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {sortedProposals.map(p => (
-                    <tr
-                      key={p.id}
-                      onClick={() => handleEdit(p)}
-                      className="border-b border-zinc-800/60 hover:bg-zinc-800/30 cursor-pointer transition-colors group"
-                    >
-                      <td className="px-4 py-3 font-mono text-violet-400 font-semibold">{p.number || "—"}</td>
-                      <td className="px-4 py-3 text-zinc-300">
-                        {p.issue_date ? new Date(p.issue_date + "T00:00:00").toLocaleDateString("pt-BR") : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-zinc-200 font-medium">{getClientName(p.client_id)}</td>
-                      <td className="px-4 py-3 text-zinc-400">{p.type || "—"}</td>
-                      <td className="px-4 py-3 text-zinc-200">{formatBRL(p.total_value)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[p.status] || ""}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44 bg-zinc-900 border-zinc-800 text-zinc-300">
-                            <DropdownMenuItem onClick={() => setSendProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white text-violet-400 focus:text-violet-300">
-                              <Send className="w-4 h-4 mr-2" /> Enviar...
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setPrintProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
-                              <Eye className="w-4 h-4 mr-2" /> Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setPrintProposal(p); setTimeout(() => window.print(), 400); }} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
-                              <Printer className="w-4 h-4 mr-2" /> Imprimir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
-                              <Pencil className="w-4 h-4 mr-2" /> Editar
-                            </DropdownMenuItem>
-                            
-                            {/* 🔥 Ação de exclusão agora abre o modal em vez do window.confirm */}
-                            <DropdownMenuItem onClick={() => setProposalToDelete(p)} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400 focus:text-red-400 focus:bg-red-500/10">
-                              <Trash2 className="w-4 h-4 mr-2" /> Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                ))}
+                {proposals.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-12 text-center text-zinc-500">Nenhuma proposta cadastrada. Clique em "Nova Proposta" para começar.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
 
-                      </td>
-                    </tr>
-                  ))}
-                  {proposals.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-zinc-500">Nenhuma proposta cadastrada. Clique em "Nova Proposta" para começar.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        )}
+      {activeNav === "contratos" && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="h-full">
+          <ContratosView />
+        </motion.div>
+      )}
 
-        {activeNav === "contratos" && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="h-full">
-            <ContratosView />
-          </motion.div>
-        )}
-      </div>
-
+      {/* Resto dos modais permanecem intocados... */}
       <ProposalForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
@@ -276,7 +252,6 @@ export default function Comercial() {
         onSent={loadData}
       />
 
-      {/* 🔥 Novo Modal de Exclusão Estilizado */}
       <Dialog open={!!proposalToDelete} onOpenChange={() => !isDeleting && setProposalToDelete(null)}>
         <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-sm p-6 overflow-hidden">
           <div className="flex flex-col items-center text-center space-y-4">
