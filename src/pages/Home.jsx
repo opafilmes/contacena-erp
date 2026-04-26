@@ -8,7 +8,7 @@ const MODULES = [
   {
     Icon: Video,
     title: "Studio",
-    subtitle: "Ordem do dia, Inventário, Produção",
+    subtitle: "Gestão de Atividades, Equipamentos, Ordem do Dia",
     to: "/app/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2",
