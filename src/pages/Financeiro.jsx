@@ -1,3 +1,4 @@
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { 
