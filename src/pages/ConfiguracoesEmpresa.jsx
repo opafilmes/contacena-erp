@@ -107,7 +107,7 @@ export default function ConfiguracoesEmpresa() {
   };
 
   // 🔥 AQUI ESTÁ A CORREÇÃO: Bloco try/catch adicionado à função de Salvar
-  const handleSave = async () => {
+ const handleSave = async () => {
     if (!tenant?.id) {
       toast.error("Erro: Não foi possível identificar a sua empresa.");
       return;
@@ -119,12 +119,19 @@ export default function ConfiguracoesEmpresa() {
         ...form,
         faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
       });
+      
+      // 1. Dispara o balão de sucesso
       toast.success("Configurações salvas com sucesso!");
+
+      // 2. Aguarda 1.5 segundos para você ver a notificação e atualiza a página
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error("Ocorreu um erro ao guardar as alterações. Tente novamente.");
     } finally {
-      // O botão agora voltará sempre ao estado normal, mesmo que dê erro!
       setSaving(false);
     }
   };
