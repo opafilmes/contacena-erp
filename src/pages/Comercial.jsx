@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Plus, Eye, Printer, Pencil, Trash2, FileText, LayoutDashboard, FileCheck, 
-  MoreVertical, ArrowUpDown, Send, Mail, MessageCircle
+  MoreVertical, ArrowUpDown, Send, Mail, MessageCircle, AlertTriangle
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
@@ -45,6 +45,10 @@ export default function Comercial() {
   const [printProposal, setPrintProposal] = useState(null);
   const [sendProposal, setSendProposal] = useState(null);
   
+  // 🔥 Novo estado para o Modal de Exclusão
+  const [proposalToDelete, setProposalToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const [sortConfig, setSortConfig] = useState({ key: "created_date", direction: "desc" });
 
   const loadData = useCallback(async () => {
@@ -62,13 +66,23 @@ export default function Comercial() {
   const getClientName = useCallback((id) => clients.find(c => c.id === id)?.nome_fantasia || "—", [clients]);
   const getClient = (id) => clients.find(c => c.id === id);
 
-  const handleDelete = async (p) => {
-    if (!window.confirm(`Excluir proposta ${p.number || ""}?`)) return;
-    const items = await base44.entities.ProposalItem.filter({ proposal_id: p.id });
-    await Promise.all(items.map(i => base44.entities.ProposalItem.delete(i.id)));
-    await base44.entities.Proposal.delete(p.id);
-    setProposals(prev => prev.filter(x => x.id !== p.id));
-    toast.success("Proposta excluída com sucesso!");
+  // 🔥 Nova função de confirmação de exclusão
+  const confirmDelete = async () => {
+    if (!proposalToDelete) return;
+    setIsDeleting(true);
+    try {
+      const items = await base44.entities.ProposalItem.filter({ proposal_id: proposalToDelete.id });
+      await Promise.all(items.map(i => base44.entities.ProposalItem.delete(i.id)));
+      await base44.entities.Proposal.delete(proposalToDelete.id);
+      setProposals(prev => prev.filter(x => x.id !== proposalToDelete.id));
+      toast.success("Proposta excluída com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir a proposta.");
+    } finally {
+      setIsDeleting(false);
+      setProposalToDelete(null);
+    }
   };
 
   const handleEdit = (p) => {
@@ -188,12 +202,9 @@ export default function Comercial() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44 bg-zinc-900 border-zinc-800 text-zinc-300">
-                            
-                            {/* 🔥 Nova Ação: Enviar */}
                             <DropdownMenuItem onClick={() => setSendProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white text-violet-400 focus:text-violet-300">
                               <Send className="w-4 h-4 mr-2" /> Enviar...
                             </DropdownMenuItem>
-                            
                             <DropdownMenuItem onClick={() => setPrintProposal(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
                               <Eye className="w-4 h-4 mr-2" /> Visualizar
                             </DropdownMenuItem>
@@ -203,7 +214,9 @@ export default function Comercial() {
                             <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
                               <Pencil className="w-4 h-4 mr-2" /> Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(p)} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                            
+                            {/* 🔥 Ação de exclusão agora abre o modal em vez do window.confirm */}
+                            <DropdownMenuItem onClick={() => setProposalToDelete(p)} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400 focus:text-red-400 focus:bg-red-500/10">
                               <Trash2 className="w-4 h-4 mr-2" /> Excluir
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -255,7 +268,6 @@ export default function Comercial() {
         />
       )}
 
-      {/* 🔥 Novo Modal de Envio por E-mail ou WhatsApp */}
       <SendProposalDialog 
         open={!!sendProposal}
         onClose={() => setSendProposal(null)}
@@ -264,6 +276,32 @@ export default function Comercial() {
         tenant={tenant}
         onSent={loadData}
       />
+
+      {/* 🔥 Novo Modal de Exclusão Estilizado */}
+      <Dialog open={!!proposalToDelete} onOpenChange={() => !isDeleting && setProposalToDelete(null)}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-sm p-6 overflow-hidden">
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
+            </div>
+            <div>
+              <h2 className="font-heading text-xl font-bold text-zinc-100">Excluir Proposta</h2>
+              <p className="text-sm text-zinc-400 mt-2 leading-relaxed">
+                Tem certeza que deseja excluir a proposta <strong className="text-zinc-200">{proposalToDelete?.number}</strong>? <br/>
+                Esta ação <span className="text-red-400">não poderá ser desfeita</span>.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-8">
+            <Button variant="outline" onClick={() => setProposalToDelete(null)} disabled={isDeleting} className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+              Cancelar
+            </Button>
+            <Button onClick={confirmDelete} disabled={isDeleting} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
@@ -284,17 +322,14 @@ function SortableHeader({ label, sortKey, sortConfig, onSort }) {
   );
 }
 
-// 🔥 Componente do Modal de Envio Integrado
 function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent }) {
   const [method, setMethod] = useState("email");
   const [sending, setSending] = useState(false);
 
-  // Email states
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
 
-  // WhatsApp states
   const [whatsappPhone, setWhatsappPhone] = useState("");
   const [whatsappMsg, setWhatsappMsg] = useState("");
 
@@ -305,18 +340,18 @@ function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent })
       const pNum = proposal.number || "Sem Número";
 
       setEmailTo(client?.email || "");
-      setEmailSubject(`Proposta Comercial ${pNum} - ${tName}`);
-      setEmailBody(`Olá, ${cName}!\n\nConforme conversamos, seguem os detalhes da nossa proposta comercial ${pNum} em anexo.\n\nFicamos à disposição para quaisquer dúvidas.\n\nAtenciosamente,\n${tName}`);
+      setEmailSubject(`Sua proposta audiovisual chegou! 🎬 - ${tName}`);
+      setEmailBody(`Olá, ${cName}!\n\nTudo ótimo por aí?\n\nEstruturamos esta proposta com muita dedicação, focando nas melhores soluções para fazer o seu projeto acontecer com excelência.\n\nSeguem em anexo todos os detalhes, escopo e valores (Proposta ${pNum}).\n\nQualquer dúvida ou ajuste que seja necessário, estamos super à disposição para conversar!\n\nUm abraço,\nEquipe ${tName}`);
 
       setWhatsappPhone(client?.telefone || "");
-      setWhatsappMsg(`Olá, ${cName}! Tudo bem? Aqui é da ${tName}.\nEstou enviando a proposta comercial ${pNum} referente ao nosso projeto. Podemos conversar sobre os detalhes?`);
+      setWhatsappMsg(`Fala, ${cName}! Tudo bem? Aqui é da ${tName}.\n\nPassando para avisar que a sua proposta comercial ${pNum} já está na mão! 🚀\n\nQuando conseguir analisar os detalhes, me dá um toque aqui para conversarmos e darmos o próximo passo. Um abraço!`);
     }
   }, [open, proposal, client, tenant]);
 
   const updateStatusToSent = async () => {
     if (proposal.status !== "Aprovada" && proposal.status !== "Enviada") {
       await base44.entities.Proposal.update(proposal.id, { status: "Enviada" });
-      onSent(); // Recarrega a tabela por trás
+      onSent();
     }
   };
 
@@ -324,7 +359,6 @@ function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent })
     if (!emailTo) { toast.error("Preencha o e-mail do destinatário."); return; }
     setSending(true);
     try {
-      // Simulação do envio de e-mail (futuramente conectar à API de disparo)
       await new Promise(resolve => setTimeout(resolve, 800)); 
       await updateStatusToSent();
       toast.success("E-mail enviado com sucesso!");
@@ -343,14 +377,11 @@ function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent })
       return; 
     }
     
-    // Assume DDI 55 (Brasil) caso não tenha sido digitado
     const finalPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
     const url = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(whatsappMsg)}`;
     
-    // Abre o WhatsApp Web
     window.open(url, "_blank");
     
-    // Atualiza o status automaticamente
     await updateStatusToSent();
     onClose();
   };
@@ -360,7 +391,6 @@ function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent })
       <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 max-w-lg p-6">
         <h2 className="font-heading text-lg font-semibold mb-4">Enviar Proposta {proposal?.number}</h2>
 
-        {/* Abas de seleção */}
         <div className="flex gap-2 p-1 bg-zinc-900 border border-zinc-800 rounded-lg mb-6">
           <button 
             onClick={() => setMethod("email")}
