@@ -12,7 +12,7 @@ const MODULES = [
     to: "/app/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2",
-    minH: "min-h-[260px]",
+    minH: "min-h-[280px]", // Aumentei um pouco a altura mínima para acomodar o conteúdo centralizado
     image: "https://images.unsplash.com/photo-1632187981988-40f3cbaeef5e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(34,197,94,0.55)",
     iconColor: "text-green-300",
@@ -25,7 +25,7 @@ const MODULES = [
     to: "/app/financeiro",
     requiredPlan: "Financeiro",
     gridClass: "col-span-1",
-    minH: "min-h-[200px]",
+    minH: "min-h-[220px]", // Aumentei um pouco a altura mínima
     image: "https://images.unsplash.com/photo-1776531056208-1e1bec2642ec?q=80&w=2564&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(139,92,246,0.55)",
     iconColor: "text-violet-300",
@@ -38,7 +38,7 @@ const MODULES = [
     to: "/app/comercial",
     requiredPlan: null,
     gridClass: "col-span-1",
-    minH: "min-h-[200px]",
+    minH: "min-h-[220px]", // Aumentei um pouco a altura mínima
     image: "https://images.unsplash.com/photo-1635927555354-e7fa116808bd?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(14,165,233,0.55)",
     iconColor: "text-sky-300",
@@ -52,7 +52,7 @@ function BentoCard({ mod, index, locked }) {
   const inner = (
     <div
       className={`
-        group relative overflow-hidden rounded-2xl h-full flex flex-col justify-between
+        group relative overflow-hidden rounded-2xl h-full flex flex-col justify-center items-center p-8
         border border-white/[0.08] cursor-pointer
         transition-all duration-500 ease-out
         ${mod.minH}
@@ -66,11 +66,11 @@ function BentoCard({ mod, index, locked }) {
         style={{ backgroundImage: `url(${mod.image})`, filter: "brightness(0.35)" }}
       />
 
-      {/* Deep cinematic gradient overlay — bottom to transparent */}
+      {/* Deep cinematic gradient overlay — full center fade */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `linear-gradient(to top, #09090B 0%, #09090Bcc 30%, transparent 70%)`,
+          background: `radial-gradient(circle at center, transparent 0%, #09090Bcc 70%, #09090B 100%)`,
         }}
       />
 
@@ -81,28 +81,33 @@ function BentoCard({ mod, index, locked }) {
       />
 
       {/* Border glow rim */}
-      <div className="absolute inset-0 rounded-2xl ring-0 group-hover:ring-1 ring-white/10 transition-all duration-500 pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl ring-0 group-hover:ring- ring-white/10 transition-all duration-500 pointer-events-none" />
 
-      {/* Top: Icon + Pro badge */}
-      <div className="relative z-10 flex items-start justify-between p-6 pb-0">
-        <div className={`p-2 rounded-xl bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] ${mod.iconColor}`}>
-          <Icon className="w-5 h-5 stroke-[1.5]" />
-        </div>
-        {locked && (
-          <span className="text-[10px] font-semibold uppercase tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2 py-0.5 rounded-full">
+      {/* Pro badge (Absolute Top-Right) */}
+      {locked && (
+        <div className="absolute top-6 right-6 z-20">
+          <span className="text-[10px] font-semibold uppercase tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2.5 py-0.5 rounded-full">
             Pro
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Bottom: Text (Centralizado e Maior) */}
-      <div className="relative z-10 p-6 pt-4 flex flex-col items-center text-center w-full">
-        <p className="font-heading font-bold text-white text-3xl tracking-tight leading-tight drop-shadow-md">
-          {mod.title}
-        </p>
-        <p className="text-white/70 text-sm mt-2 leading-relaxed font-body">
-          {mod.subtitle}
-        </p>
+      {/* Central Content: Icon + Text (Centralizado nos cards) */}
+      <div className="relative z-10 flex flex-col items-center text-center space-y-5 w-full">
+        {/* Icon (Maior e Centralizado) */}
+        <div className={`p-3 rounded-2xl bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] ${mod.iconColor}`}>
+          <Icon className="w-10 h-10 stroke-[1.25]" />
+        </div>
+        
+        {/* Text */}
+        <div className="flex flex-col items-center">
+          <p className="font-heading font-bold text-white text-3xl md:text-4xl tracking-tight leading-tight drop-shadow-md">
+            {mod.title}
+          </p>
+          <p className="text-white/70 text-base mt-2 leading-relaxed font-body max-w-sm">
+            {mod.subtitle}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -141,7 +146,7 @@ export default function Home() {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col" style={{ background: "#09090B" }}>
       {/* Hero */}
-      <div className="px-6 pt-12 pb-8 max-w-5xl mx-auto w-full">
+      <div className="px-6 pt-12 pb-8 max-w-5xl mx-auto w-full overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
