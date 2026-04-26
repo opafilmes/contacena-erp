@@ -106,8 +106,7 @@ export default function ConfiguracoesEmpresa() {
     }
   };
 
-  // 🔥 AQUI ESTÁ A CORREÇÃO: Bloco try/catch adicionado à função de Salvar
- const handleSave = async () => {
+  const handleSave = async () => {
     if (!tenant?.id) {
       toast.error("Erro: Não foi possível identificar a sua empresa.");
       return;
@@ -217,7 +216,7 @@ export default function ConfiguracoesEmpresa() {
               {loadingCnpj ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </div>
           </div>
-          {loadingCnpj && <p className="text-xs text-muted-foreground">Consultando CNPJ automaticamente...</p>}
+          {loadingCnpj && <p className="text-xs text-muted-foreground">Consultando CNPJ automatically...</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
