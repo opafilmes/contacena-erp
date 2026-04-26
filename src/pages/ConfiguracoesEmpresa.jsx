@@ -95,21 +95,38 @@ export default function ConfiguracoesEmpresa() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingLogo(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    set("logo", file_url);
-    setUploadingLogo(false);
-    toast.success("Logo enviada!");
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      set("logo", file_url);
+      toast.success("Logo enviada!");
+    } catch (error) {
+      toast.error("Erro ao enviar logo.");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
+  // 🔥 AQUI ESTÁ A CORREÇÃO: Bloco try/catch adicionado à função de Salvar
   const handleSave = async () => {
-    if (!tenant?.id) return;
+    if (!tenant?.id) {
+      toast.error("Erro: Não foi possível identificar a sua empresa.");
+      return;
+    }
+    
     setSaving(true);
-    await base44.entities.Tenant.update(tenant.id, {
-      ...form,
-      faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
-    });
-    toast.success("Configurações salvas com sucesso!");
-    setSaving(false);
+    try {
+      await base44.entities.Tenant.update(tenant.id, {
+        ...form,
+        faturamento_anual: form.faturamento_anual !== "" ? Number(form.faturamento_anual) : undefined,
+      });
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Ocorreu um erro ao guardar as alterações. Tente novamente.");
+    } finally {
+      // O botão agora voltará sempre ao estado normal, mesmo que dê erro!
+      setSaving(false);
+    }
   };
 
   const handleManagePlan = async () => {
