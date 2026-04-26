@@ -12,7 +12,7 @@ const MODULES = [
     to: "/app/producao",
     requiredPlan: "Profissional",
     gridClass: "col-span-2",
-    minH: "min-h-[280px]", // Aumentei um pouco a altura mínima para acomodar o conteúdo centralizado
+    minH: "min-h-[290px]", // Aumentei um pouco a altura mínima para acomodar o conteúdo centralizado
     image: "https://images.unsplash.com/photo-1632187981988-40f3cbaeef5e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     accent: "rgba(34,197,94,0.55)",
     iconColor: "text-green-300",
