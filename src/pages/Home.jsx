@@ -95,12 +95,12 @@ function BentoCard({ mod, index, locked }) {
         )}
       </div>
 
-      {/* Bottom: Text */}
-      <div className="relative z-10 p-6 pt-4">
-        <p className="font-heading font-bold text-white text-lg tracking-tight leading-tight drop-shadow-md">
+      {/* Bottom: Text (Centralizado e Maior) */}
+      <div className="relative z-10 p-6 pt-4 flex flex-col items-center text-center w-full">
+        <p className="font-heading font-bold text-white text-3xl tracking-tight leading-tight drop-shadow-md">
           {mod.title}
         </p>
-        <p className="text-white/50 text-xs mt-1 leading-relaxed font-body">
+        <p className="text-white/70 text-sm mt-2 leading-relaxed font-body">
           {mod.subtitle}
         </p>
       </div>
@@ -153,7 +153,6 @@ export default function Home() {
           <p className="text-zinc-500 mt-2 text-sm">
             Selecione um módulo para começar.
           </p>
-          {/* TAG DO PLANO REMOVIDA DAQUI */}
         </motion.div>
       </div>
 
