@@ -24,30 +24,25 @@ const NAV = [
 ];
 
 export default function Financeiro() {
-  const [activeNav, setActiveNav] = useState("dashboard");
+  // Lemos a aba ativa diretamente da URL (ex: ?tab=pagar)
+  const [searchParams] = useSearchParams();
+  const activeNav = searchParams.get("tab") || "dashboard";
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex">
-      {/* ── SIDEBAR FINANCEIRO ── */}
-      <aside className="w-56 border-r border-zinc-800 bg-zinc-950/60 flex flex-col pt-8 px-3 shrink-0">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 px-3 mb-3">Financeiro</p>
-        <nav className="space-y-1">
-          {NAV.map(({ id, label, icon: Icon, color }) => (
-            <button
-              key={id}
-              onClick={() => setActiveNav(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                activeNav === id
-                  ? "bg-violet-600/20 text-violet-300 border border-violet-500/30 font-medium"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
-              }`}
-            >
-              <Icon className={`w-4 h-4 shrink-0 ${activeNav === id ? "text-violet-400" : (color || "text-zinc-500")}`} />
-              {label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    // Removido o flex que dividia a tela. Agora ocupa a largura total!
+    <div className="min-h-[calc(100vh-4rem)] p-8 max-w-7xl mx-auto w-full">
+      
+      {/* ── ÁREA PRINCIPAL ── */}
+      {activeNav === "dashboard" && <FinanceDashboard />}
+      {activeNav === "receber" && <TransactionsList type="receber" />}
+      {activeNav === "pagar" && <TransactionsList type="pagar" />}
+      {activeNav === "conciliacao" && <BankReconciliation />}
+      {activeNav === "inventario" && <InventoryFinanceView />}
+      {activeNav === "relatorios" && <ReportsView />}
+
+    </div>
+  );
+}
 
       {/* ── ÁREA PRINCIPAL ── */}
       <div className="flex-1 px-8 py-8 overflow-auto bg-zinc-950">
