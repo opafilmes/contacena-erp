@@ -1,0 +1,54 @@
+{
+  "name": "CallSheetScene",
+  "type": "object",
+  "properties": {
+    "call_sheet_id": {
+      "type": "string",
+      "description": "ID da CallSheet"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    },
+    "scene_number": {
+      "type": "string",
+      "description": "N\u00famero/nome da cena (ex: Cena 04)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da cena (ex: Interna/Dia - Sala de Estar)"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Hor\u00e1rio de in\u00edcio (HH:MM)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Hor\u00e1rio de t\u00e9rmino (HH:MM)"
+    },
+    "cast_ids": {
+      "type": "string",
+      "description": "Elenco/atores envolvidos (texto livre ou IDs separados por v\u00edrgula)"
+    },
+    "storyboard_url": {
+      "type": "string",
+      "description": "URL da imagem do storyboard"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pendente",
+        "Em Grava\u00e7\u00e3o",
+        "Conclu\u00edda",
+        "Adiada"
+      ],
+      "default": "Pendente",
+      "description": "Status da cena"
+    }
+  },
+  "required": [
+    "call_sheet_id",
+    "tenant_id",
+    "scene_number"
+  ]
+}

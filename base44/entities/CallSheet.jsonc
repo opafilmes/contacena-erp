@@ -1,0 +1,49 @@
+{
+  "name": "CallSheet",
+  "type": "object",
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "ID do Cliente associado"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Nome do projeto / produ\u00e7\u00e3o"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da grava\u00e7\u00e3o"
+    },
+    "location_address": {
+      "type": "string",
+      "description": "Endere\u00e7o / local da grava\u00e7\u00e3o"
+    },
+    "weather_forecast": {
+      "type": "string",
+      "description": "Previs\u00e3o do tempo (ex: 24\u00b0C - Ensolarado)"
+    },
+    "general_call_time": {
+      "type": "string",
+      "description": "Call time geral (HH:MM)"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Vers\u00e3o da Ordem do Dia"
+    },
+    "magic_link_token": {
+      "type": "string",
+      "description": "Token UUID \u00fanico para acesso mobile sem login"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "project_name",
+    "date"
+  ]
+}

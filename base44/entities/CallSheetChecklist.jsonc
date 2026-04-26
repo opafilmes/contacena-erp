@@ -1,0 +1,39 @@
+{
+  "name": "CallSheetChecklist",
+  "type": "object",
+  "properties": {
+    "call_sheet_id": {
+      "type": "string",
+      "description": "ID da CallSheet"
+    },
+    "tenant_id": {
+      "type": "string",
+      "description": "ID do Tenant"
+    },
+    "item_name": {
+      "type": "string",
+      "description": "Nome do item"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Equipamento",
+        "Arte",
+        "Figurino",
+        "Outros"
+      ],
+      "default": "Equipamento",
+      "description": "Categoria do item"
+    },
+    "is_checked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Item confirmado/checado"
+    }
+  },
+  "required": [
+    "call_sheet_id",
+    "tenant_id",
+    "item_name"
+  ]
+}

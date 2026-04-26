@@ -2,7 +2,7 @@ import React from "react";
 import { useOutletContext } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckSquare, Package } from "lucide-react";
+import { CheckSquare, Package, ClipboardList } from "lucide-react";
 
 const HUBS = [
   {
@@ -26,6 +26,17 @@ const HUBS = [
     iconColor: "text-violet-300",
     glow: "group-hover:shadow-[0_0_0_1.5px_rgba(139,92,246,0.45),0_8px_60px_-12px_rgba(139,92,246,0.5)]",
     emoji: "🎥",
+  },
+  {
+    icon: ClipboardList,
+    title: "Ordem do Dia",
+    subtitle: "Call Sheets para gravações: cenas, equipe, checklist e link mobile",
+    to: "/app/studio/call-sheet",
+    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1974&auto=format&fit=crop",
+    accent: "rgba(251,191,36,0.55)",
+    iconColor: "text-amber-300",
+    glow: "group-hover:shadow-[0_0_0_1.5px_rgba(251,191,36,0.45),0_8px_60px_-12px_rgba(251,191,36,0.5)]",
+    emoji: "📋",
   },
 ];
 

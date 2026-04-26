@@ -19,6 +19,7 @@ import RoleGuard from './components/shared/RoleGuard';
 import Studio from './pages/Studio';
 import StudioAtividades from './pages/StudioAtividades';
 import StudioInventario from './pages/StudioInventario';
+import StudioCallSheet from './pages/StudioCallSheet';
 import GestaoEquipe from './pages/GestaoEquipe';
 import SuperAdminPage from './pages/admin/SuperAdminPage';
 
@@ -61,6 +62,7 @@ const AuthenticatedApp = () => {
         <Route path="producao" element={<Studio />} />
         <Route path="studio/atividades" element={<StudioAtividades />} />
         <Route path="studio/inventario" element={<StudioInventario />} />
+        <Route path="studio/call-sheet" element={<StudioCallSheet />} />
         <Route path="financeiro" element={<RoleGuard blockedRoles={["Producao"]}><Financeiro /></RoleGuard>} />
         <Route path="gestao-equipe" element={<GestaoEquipe />} />
       </Route>
