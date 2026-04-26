@@ -17,6 +17,7 @@ import { formatBRL } from "@/utils/format";
 import { toast } from "sonner";
 import ProposalForm from "@/components/comercial/ProposalForm";
 import ProposalPrintView from "@/components/comercial/ProposalPrintView";
+import ContratosView from "@/components/comercial/ContratosView";
 
 const STATUS_STYLES = {
   "Elaboração": "bg-zinc-700/40 text-zinc-300 border-zinc-600/40",
@@ -237,11 +238,9 @@ export default function Comercial() {
         )}
 
         {activeNav === "contratos" && (
-          <div className="flex flex-col items-center justify-center h-64 text-zinc-500">
-            <FileCheck className="w-12 h-12 mb-3 opacity-30" />
-            <p className="font-heading text-lg">Módulo de Contratos</p>
-            <p className="text-sm mt-1">Em breve</p>
-          </div>
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="h-full">
+            <ContratosView />
+          </motion.div>
         )}
       </div>
 
