@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   LayoutDashboard, ArrowDownToLine, ArrowUpFromLine, RefreshCw, BarChart3, 
   Plus, UploadCloud, Search, CheckCircle2, AlertCircle, FileText, Calendar, 
-  DollarSign, ChevronRight, Download, Filter
+  DollarSign, ChevronRight, Download, Filter, Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ const NAV = [
   { id: "receber", label: "Contas a Receber", icon: ArrowDownToLine, color: "text-emerald-400" },
   { id: "pagar", label: "Contas a Pagar", icon: ArrowUpFromLine, color: "text-red-400" },
   { id: "conciliacao", label: "Conciliação Bancária", icon: RefreshCw, color: "text-sky-400" },
+  { id: "inventario", label: "Inventário (Ativos)", icon: Package, color: "text-amber-400" },
   { id: "relatorios", label: "Relatórios", icon: BarChart3 },
 ];
 
@@ -53,6 +54,7 @@ export default function Financeiro() {
         {activeNav === "receber" && <TransactionsList type="receber" />}
         {activeNav === "pagar" && <TransactionsList type="pagar" />}
         {activeNav === "conciliacao" && <BankReconciliation />}
+        {activeNav === "inventario" && <InventoryFinanceView />}
         {activeNav === "relatorios" && <ReportsView />}
       </div>
     </div>
@@ -520,6 +522,139 @@ function ReportsView() {
         </div>
 
       </div>
+    </motion.div>
+  );
+}
+
+/* ==========================================================================
+   5. INVENTÁRIO FINANCEIRO (CONTROLE PATRIMONIAL)
+   ========================================================================== */
+function InventoryFinanceView() {
+  const [baixaModal, setBaixaModal] = useState(null);
+
+  // Mock de dados para visualização
+  const inventory = [
+    { id: "EQP-001", name: "Câmera RED Komodo 6K", cat: "Câmeras", date: "15/01/2025", value: 45000, status: "Ativo" },
+    { id: "EQP-002", name: "Lente Sigma 18-35mm", cat: "Lentes", date: "20/02/2025", value: 5200, status: "Ativo" },
+    { id: "EQP-003", name: "Drone DJI Mavic 3", cat: "Drones", date: "10/06/2024", value: 18000, status: "Vendido" },
+    { id: "EQP-004", name: "Kit Iluminação Aputure 300d", cat: "Luz", date: "05/11/2023", value: 8500, status: "Danificado" },
+  ];
+
+  const totalAtivos = inventory.filter(i => i.status === "Ativo").reduce((acc, curr) => acc + curr.value, 0);
+  const totalBaixados = inventory.filter(i => i.status !== "Ativo").reduce((acc, curr) => acc + curr.value, 0);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">Inventário e Patrimônio</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">Controle de capital imobilizado, valores de compra e baixas.</p>
+        </div>
+        <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+          <Package className="w-4 h-4 mr-2" /> Registrar Compra de Ativo
+        </Button>
+      </div>
+
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6">
+          <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wider">Capital Imobilizado (Ativos)</p>
+          <p className="text-3xl font-bold font-heading text-amber-400">{formatBRL(totalAtivos)}</p>
+          <p className="text-xs text-zinc-400 mt-2">Valor total de compra dos equipamentos em uso.</p>
+        </div>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6">
+          <p className="text-xs text-zinc-500 mb-2 font-medium uppercase tracking-wider">Equipamentos Baixados</p>
+          <p className="text-3xl font-bold font-heading text-zinc-300">{formatBRL(totalBaixados)}</p>
+          <p className="text-xs text-zinc-400 mt-2">Equipamentos vendidos, perdidos ou danificados.</p>
+        </div>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400"><RefreshCw className="w-5 h-5" /></div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-200">Depreciação</p>
+              <p className="text-xs text-zinc-500">Cálculo contábil em breve</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabela de Patrimônio */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-800 bg-zinc-900/30">
+              <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase">Cód / Equipamento</th>
+              <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase">Categoria</th>
+              <th className="text-left px-4 py-3 text-zinc-500 font-medium text-xs uppercase">Data Compra</th>
+              <th className="text-right px-4 py-3 text-zinc-500 font-medium text-xs uppercase">Valor Compra</th>
+              <th className="text-center px-4 py-3 text-zinc-500 font-medium text-xs uppercase">Status Contábil</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {inventory.map(item => (
+              <tr key={item.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/30 transition-colors group">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-zinc-200">{item.name}</p>
+                  <p className="text-xs text-zinc-500 font-mono">{item.id}</p>
+                </td>
+                <td className="px-4 py-3 text-zinc-400">{item.cat}</td>
+                <td className="px-4 py-3 text-zinc-400">{item.date}</td>
+                <td className="px-4 py-3 text-right font-medium text-amber-400/90">{formatBRL(item.value)}</td>
+                <td className="px-4 py-3 text-center">
+                  {item.status === "Ativo" && <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Ativo</span>}
+                  {item.status === "Vendido" && <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-500/10 text-sky-400 border border-sky-500/20">Vendido</span>}
+                  {item.status === "Danificado" && <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-500/10 text-red-400 border border-red-500/20">Danificado (PT)</span>}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {item.status === "Ativo" && (
+                    <Button variant="ghost" size="sm" onClick={() => setBaixaModal(item)} className="h-8 text-zinc-400 hover:text-red-400 hover:bg-red-500/10">
+                      Dar Baixa
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modal de Baixa de Patrimônio */}
+      <Dialog open={!!baixaModal} onOpenChange={() => setBaixaModal(null)}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-200">
+          <DialogHeader>
+            <DialogTitle>Baixa de Patrimônio</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-sm text-zinc-400 mb-4">
+              Você está dando baixa no equipamento <strong className="text-zinc-100">{baixaModal?.name}</strong>. Esta ação removerá o item do módulo da equipe de produção.
+            </p>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-zinc-400">Motivo da Baixa</Label>
+                <Select>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800"><SelectValue placeholder="Selecione o motivo..." /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="venda">Vendido a terceiros</SelectItem>
+                    <SelectItem value="dano">Perda Total / Danificado</SelectItem>
+                    <SelectItem value="roubo">Roubo / Furto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-zinc-400">Valor de Venda / Ressarcimento (se houver)</Label>
+                <Input placeholder="R$ 0,00" className="bg-zinc-900 border-zinc-800" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6 pt-4 border-t border-zinc-800">
+              <Button variant="outline" onClick={() => setBaixaModal(null)} className="flex-1 border-zinc-700 text-zinc-300">Cancelar</Button>
+              <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={() => { toast.success("Baixa realizada com sucesso."); setBaixaModal(null); }}>
+                Confirmar Baixa
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
