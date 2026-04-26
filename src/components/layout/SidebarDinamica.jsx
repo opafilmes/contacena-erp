@@ -22,7 +22,9 @@ const BUSINESS_NAV = [
     label: "Comercial",
     icon: TrendingUp,
     children: [
-      { label: "Pipeline / Propostas", to: "/app/comercial" },
+      { label: "Dashboard Comercial", to: "/app/comercial?tab=dashboard" },
+      { label: "Pipeline / Propostas", to: "/app/comercial?tab=propostas" },
+      { label: "Contratos", to: "/app/comercial?tab=contratos" },
       { label: "Clientes", to: "/app/diretorio" },
     ],
   },
@@ -33,11 +35,6 @@ const BUSINESS_NAV = [
       { label: "Fluxo de Caixa", to: "/app/financeiro" },
       { label: "Patrimônio", to: "/app/financeiro?tab=inventario" },
     ],
-  },
-  {
-    label: "Contratos",
-    icon: FileCheck,
-    to: "/app/comercial?tab=contratos",
   },
 ];
 
@@ -74,15 +71,20 @@ const STUDIO_NAV = [
 
 function NavItem({ item, accent }) {
   const location = useLocation();
-  const [open, setOpen] = useState(() => {
-    if (item.children) return item.children.some(c => location.pathname.startsWith(c.to.split("?")[0]));
-    return false;
-  });
-
+  
+  // Função atualizada para entender submenus com ?tab=...
   const isActive = (to, exact) => {
+    if (to.includes("?")) {
+      return location.pathname + location.search === to;
+    }
     const path = to.split("?")[0];
     return exact ? location.pathname === path : location.pathname.startsWith(path) && path !== "/app";
   };
+
+  const [open, setOpen] = useState(() => {
+    if (item.children) return item.children.some(c => isActive(c.to));
+    return false;
+  });
 
   if (item.children) {
     const anyActive = item.children.some(c => isActive(c.to));
