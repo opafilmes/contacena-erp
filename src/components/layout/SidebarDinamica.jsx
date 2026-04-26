@@ -32,8 +32,12 @@ const BUSINESS_NAV = [
     label: "Financeiro",
     icon: Wallet,
     children: [
-      { label: "Fluxo de Caixa", to: "/app/financeiro" },
-      { label: "Patrimônio", to: "/app/financeiro?tab=inventario" },
+      { label: "Visão Geral", to: "/app/financeiro?tab=dashboard" },
+      { label: "Contas a Receber", to: "/app/financeiro?tab=receber" },
+      { label: "Contas a Pagar", to: "/app/financeiro?tab=pagar" },
+      { label: "Conciliação Bancária", to: "/app/financeiro?tab=conciliacao" },
+      { label: "Inventário (Ativos)", to: "/app/financeiro?tab=inventario" },
+      { label: "Relatórios", to: "/app/financeiro?tab=relatorios" },
     ],
   },
 ];
