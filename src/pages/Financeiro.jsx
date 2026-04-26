@@ -44,19 +44,6 @@ export default function Financeiro() {
   );
 }
 
-      {/* ── ÁREA PRINCIPAL ── */}
-      <div className="flex-1 px-8 py-8 overflow-auto bg-zinc-950">
-        {activeNav === "dashboard" && <FinanceDashboard />}
-        {activeNav === "receber" && <TransactionsList type="receber" />}
-        {activeNav === "pagar" && <TransactionsList type="pagar" />}
-        {activeNav === "conciliacao" && <BankReconciliation />}
-        {activeNav === "inventario" && <InventoryFinanceView />}
-        {activeNav === "relatorios" && <ReportsView />}
-      </div>
-    </div>
-  );
-}
-
 /* ==========================================================================
    1. DASHBOARD
    ========================================================================== */
