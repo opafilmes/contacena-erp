@@ -470,4 +470,4 @@ function ComercialDashboard({ proposals, clients }) {
       </div>
     </motion.div>
   );
-}
+} 
