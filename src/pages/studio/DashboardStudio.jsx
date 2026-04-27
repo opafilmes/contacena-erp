@@ -1,145 +1,81 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useOutletContext } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import React from "react";
 import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
-import { Clapperboard, Calendar, Package, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
-
-const STATUS_KANBAN_COLOR = {
-  "Pré-produção": "border-zinc-500/50 text-zinc-400",
-  "Captação": "border-sky-500/50 text-sky-400",
-  "Edição": "border-violet-500/50 text-violet-400",
-  "Finalizado": "border-emerald-500/50 text-emerald-400",
-};
+import { ListTodo, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 
 export default function DashboardStudio() {
-  const { tenant } = useOutletContext();
-  const tenantId = tenant?.id;
-
-  const [equipment, setEquipment] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    if (!tenantId) return;
-    setLoading(true);
-    const [eq, bk, jb] = await Promise.all([
-      base44.entities.Equipment.filter({ tenant_id: tenantId }),
-      base44.entities.EquipmentBooking.filter({ inquilino_id: tenantId }),
-      base44.entities.Job.filter({ tenant_id: tenantId }),
-    ]);
-    setEquipment(eq);
-    setBookings(bk);
-    setJobs(jb);
-    setLoading(false);
-  }, [tenantId]);
-
-  useEffect(() => { load(); }, [load]);
-
-  // Equipment status counts
-  const now = new Date();
-  const emUso = bookings.filter(b => new Date(b.data_inicio) <= now && new Date(b.data_fim) >= now).length;
-  const manutencao = equipment.filter(e => e.status_manutencao).length;
-  const disponiveis = Math.max(0, equipment.length - manutencao - emUso);
-
-  const pieData = [
-    { name: "Disponível", value: disponiveis, color: "#22c55e" },
-    { name: "Em Uso", value: emUso, color: "#f59e0b" },
-    { name: "Manutenção", value: manutencao, color: "#ef4444" },
-  ].filter(d => d.value > 0);
-
-  // Next 3 active jobs (not finalized)
-  const activeJobs = jobs
-    .filter(j => j.status_kanban !== "Finalizado")
-    .slice(0, 3);
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64 text-zinc-500 text-sm">Carregando dashboard...</div>
-  );
+  // Mock de dados para visualizar o layout
+  const stats = [
+    { label: "Total de Tarefas", value: "42", icon: ListTodo, color: "text-violet-400", bg: "bg-violet-400/10", border: "border-t-violet-500" },
+    { label: "Em Andamento", value: "15", icon: Clock, color: "text-sky-400", bg: "bg-sky-400/10", border: "border-t-sky-500" },
+    { label: "Concluídas", value: "24", icon: CheckCircle2, color: "text-[#1abea0]", bg: "bg-[#1abea0]/10", border: "border-t-[#1abea0]" },
+    { label: "Atrasadas", value: "3", icon: AlertTriangle, color: "text-[#c30147]", bg: "bg-[#c30147]/10", border: "border-t-[#c30147]" },
+  ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">Dashboard Studio</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Visão operacional das produções</p>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Package className="w-4 h-4 text-emerald-400" />
-            <p className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Equipamentos</p>
-          </div>
-          <p className="text-2xl font-bold font-heading text-emerald-400">{equipment.length}</p>
-          <p className="text-xs text-zinc-500 mt-1">{disponiveis} disponíveis agora</p>
-        </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Clapperboard className="w-4 h-4 text-sky-400" />
-            <p className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Jobs Ativos</p>
-          </div>
-          <p className="text-2xl font-bold font-heading text-sky-400">{activeJobs.length}</p>
-          <p className="text-xs text-zinc-500 mt-1">de {jobs.length} total</p>
-        </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-amber-400" />
-            <p className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Em Uso Agora</p>
-          </div>
-          <p className="text-2xl font-bold font-heading text-amber-400">{emUso}</p>
-          <p className="text-xs text-zinc-500 mt-1">{manutencao} em manutenção</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-6">
-        {/* Equipment Pie Chart */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-6">
-          <p className="text-sm font-semibold text-zinc-300 mb-4">Status dos Equipamentos</p>
-          {pieData.length === 0 ? (
-            <div className="h-[200px] flex items-center justify-center text-zinc-600 text-sm">Nenhum equipamento cadastrado.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
-                  {pieData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #27272a", borderRadius: 8, fontSize: 12 }} />
-                <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ color: "#a1a1aa", fontSize: 12 }}>{v}</span>} />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+    <div className="p-8 max-w-7xl mx-auto w-full min-h-[calc(100vh-4rem)]">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        
+        {/* Cabeçalho */}
+        <div className="mb-8">
+          <h1 className="font-heading text-3xl font-bold text-zinc-100 tracking-tight">Dashboard da Produção</h1>
+          <p className="text-sm text-zinc-500 mt-1">Visão geral do desempenho e tarefas da equipe do estúdio.</p>
         </div>
 
-        {/* Upcoming Jobs */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-semibold text-zinc-300">Próximas Produções</p>
-            <Link to="/app/producao" className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">Ver todos →</Link>
-          </div>
-          {activeJobs.length === 0 ? (
-            <div className="h-[160px] flex items-center justify-center text-zinc-600 text-sm">Nenhum job ativo.</div>
-          ) : (
-            <div className="space-y-3">
-              {activeJobs.map(job => (
-                <div key={job.id} className="flex items-center gap-3 p-3 rounded-lg bg-zinc-900/60 border border-zinc-800">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <Clapperboard className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-zinc-200 font-medium truncate">{job.titulo}</p>
-                    <p className={`text-xs border-l-2 pl-1.5 mt-0.5 ${STATUS_KANBAN_COLOR[job.status_kanban] || "text-zinc-500 border-zinc-600"}`}>
-                      {job.status_kanban}
-                    </p>
-                  </div>
+        {/* Cards Superiores (Inspirados na sua imagem) */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+          {stats.map((s, i) => (
+            <div key={i} className={`relative overflow-hidden rounded-2xl bg-zinc-900/40 border border-zinc-800/80 p-5 shadow-sm border-t-2 ${s.border}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{s.label}</p>
+                  <p className="text-4xl font-heading font-bold text-zinc-100">{s.value}</p>
                 </div>
-              ))}
+                <div className={`p-2.5 rounded-xl ${s.bg} ${s.color}`}>
+                  <s.icon className="w-5 h-5 stroke-[2]" />
+                </div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
-      </div>
-    </motion.div>
+
+        {/* Blocos de Informação Inferiores */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Distribuição de Tarefas */}
+          <div className="bg-zinc-900/30 border border-zinc-800/60 rounded-2xl p-6 min-h-[300px]">
+            <h3 className="text-sm font-bold text-zinc-200 mb-6">Distribuição por Projetos</h3>
+            <div className="flex flex-col items-center justify-center h-[200px] text-zinc-600">
+              <p className="text-sm">Gráfico será renderizado aqui</p>
+            </div>
+          </div>
+
+          {/* Carga de Trabalho da Equipe */}
+          <div className="bg-zinc-900/30 border border-zinc-800/60 rounded-2xl p-6 min-h-[300px] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-bold text-zinc-200">Carga de Trabalho</h3>
+              <button className="text-xs text-violet-400 hover:text-violet-300">Ver equipe</button>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 space-y-3">
+               {/* Exemplo de lista vazia inspirada na imagem */}
+               <Users className="w-8 h-8 opacity-20" />
+               <p className="text-sm">Nenhum membro da equipe ativo ainda.</p>
+            </div>
+          </div>
+
+          {/* Próximos Prazos */}
+          <div className="bg-zinc-900/30 border border-zinc-800/60 rounded-2xl p-6 min-h-[300px] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-bold text-zinc-200">Próximos Prazos</h3>
+              <button className="text-xs text-violet-400 hover:text-violet-300">Ver quadro</button>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 space-y-3">
+               <Clock className="w-8 h-8 opacity-20" />
+               <p className="text-sm">Nenhum prazo próximo.</p>
+            </div>
+          </div>
+
+        </div>
+      </motion.div>
+    </div>
   );
 }
