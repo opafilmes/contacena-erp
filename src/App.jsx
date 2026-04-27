@@ -1,4 +1,17 @@
-// ── IMPORTS GLOBAIS (Deixe como estão) ──
+import React from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClientInstance } from '@/lib/query-client';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+
+// ── IMPORTS DE ESTRUTURA E AUTENTICAÇÃO ──
+import PageNotFound from './lib/PageNotFound';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import AppLayout from './components/layout/AppLayout';
+import RoleGuard from './components/shared/RoleGuard';
+
+// ── IMPORTS DE PÁGINAS GLOBAIS ──
 import ConfiguracoesEmpresa from './pages/ConfiguracoesEmpresa';
 import MeuPerfil from './pages/MeuPerfil';
 import Cadastros from './pages/Cadastros';
@@ -7,14 +20,13 @@ import EscolhaPlano from './pages/EscolhaPlano';
 import GestaoEquipe from './pages/GestaoEquipe';
 import SuperAdminPage from './pages/admin/SuperAdminPage';
 
-// ── NOVOS IMPORTS DO MÓDULO BUSINESS ──
+// ── IMPORTS DO MÓDULO BUSINESS ──
 import Comercial from './pages/business/Comercial';
 import Financeiro from './pages/business/Financeiro';
 import DashboardGestao from './pages/business/DashboardGestao';
 
-// ── NOVOS IMPORTS DO MÓDULO STUDIO ──
+// ── IMPORTS DO MÓDULO STUDIO ──
 import Studio from './pages/studio/Studio';
-import Producao from './pages/studio/Producao';
 import StudioAtividades from './pages/studio/StudioAtividades';
 import StudioInventario from './pages/studio/StudioInventario';
 import StudioCallSheet from './pages/studio/StudioCallSheet';
@@ -71,9 +83,7 @@ const AuthenticatedApp = () => {
   );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
@@ -83,7 +93,7 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;
