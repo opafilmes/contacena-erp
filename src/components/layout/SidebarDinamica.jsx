@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, Video, Briefcase, Clapperboard, Package, 
   Archive, Settings, Users, Database, User, Shield, LogOut,
-  PieChart, Target, FileSignature, ArrowDownRight, ArrowUpRight, 
+  Target, FileSignature, TrendingUp, TrendingDown, 
   RefreshCcw, BarChart3, ChevronsUpDown, Layers, ClipboardList,
   ChevronDown, ChevronRight
 } from "lucide-react";
@@ -39,11 +39,10 @@ const BUSINESS_NAV = [
     section: "Financeiro",
     items: [
       { label: "Visão Geral", to: "/app/financeiro?tab=dashboard", icon: Wallet },
-      { label: "Contas a Receber", to: "/app/financeiro?tab=receber", icon: ArrowDownRight },
-      { label: "Contas a Pagar", to: "/app/financeiro?tab=pagar", icon: ArrowUpRight },
+      { label: "Contas a Receber", to: "/app/financeiro?tab=receber", icon: TrendingUp },
+      { label: "Contas a Pagar", to: "/app/financeiro?tab=pagar", icon: TrendingDown },
       { label: "Conciliação", to: "/app/financeiro?tab=conciliacao", icon: RefreshCcw },
-      { label: "Controle Patrimonial", to: "/app/financeiro?tab=inventario", icon: Package },
-      { label: "Relatórios (DRE)", to: "/app/financeiro?tab=relatorios", icon: BarChart3 },
+      { label: "Relatórios", to: "/app/financeiro?tab=relatorios", icon: BarChart3 },
     ]
   }
 ];
@@ -135,22 +134,27 @@ export default function SidebarDinamica({ tenant, usuario }) {
         )}
       </DropdownMenu>
 
-      {/* ── NAVEGAÇÃO STUDIO / BUSINESS ── */}
+      {/* ── NAVEGAÇÃO PRINCIPAL COMPACTADA ── */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-        <nav className="px-3 py-6 space-y-8">
+        {/* Reduzi o padding vertical e o space-y de 8 para 5 */}
+        <nav className="px-3 py-4 space-y-5">
           {navStructure.map((group, idx) => (
             <div key={idx}>
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3">
-                {group.section}
-              </h4>
-              <div className="space-y-1">
+              {group.section && (
+                // Reduzi a margem inferior (mb) do cabeçalho da seção
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-1.5">
+                  {group.section}
+                </h4>
+              )}
+              <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const active = isActive(item.to, item.exact);
                   return (
                     <Link
                       key={item.label}
                       to={item.to}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      // Reduzi o padding vertical (py) dos links
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         active
                           ? accent === "business" ? "bg-[#1abea0]/10 text-[#1abea0]" : "bg-[#c30147]/10 text-[#c30147]"
                           : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
@@ -168,13 +172,13 @@ export default function SidebarDinamica({ tenant, usuario }) {
           {/* ── SEÇÃO ADMINISTRAÇÃO INCORPORADA (BUSINESS) ── */}
           {isBusiness && (
             <div>
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3 pt-4 border-t border-zinc-800/50">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-1.5 pt-3 border-t border-zinc-800/50">
                 Sistema
               </h4>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <button
                   onClick={() => setAdminOpen(!adminOpen)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     adminOpen ? "text-zinc-200 bg-zinc-900/50" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
                   }`}
                 >
