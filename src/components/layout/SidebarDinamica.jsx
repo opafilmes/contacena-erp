@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Wallet, Video, Briefcase, Clapperboard, Package, 
   Archive, Settings, Users, Database, User, Shield, LogOut,
   PieChart, Target, FileSignature, ArrowDownRight, ArrowUpRight, 
-  RefreshCcw, BarChart3, ChevronsUpDown
+  RefreshCcw, BarChart3, ChevronsUpDown, Layers, ClipboardList
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAppMode } from "@/lib/AppModeContext";
@@ -19,7 +19,7 @@ import {
 
 const SUPER_ADMIN_EMAIL = "contato@opafilmes.com";
 
-// ── ESTRUTURA PLANA (FLAT) DO MODO BUSINESS ──
+// ── ESTRUTURA MÓDULO BUSINESS (MANTIDA) ──
 const BUSINESS_NAV = [
   {
     section: "Visão Executiva",
@@ -49,27 +49,21 @@ const BUSINESS_NAV = [
   }
 ];
 
-// ── ESTRUTURA PLANA (FLAT) DO MODO STUDIO ──
+// ── NOVA ESTRUTURA MÓDULO STUDIO ──
 const STUDIO_NAV = [
   {
-    section: "Visão Operacional",
+    section: "Gestão",
     items: [
-      { label: "Dashboard Studio", to: "/app/studio", icon: LayoutDashboard, exact: true },
+      { label: "Dashboard", to: "/app/studio", icon: LayoutDashboard, exact: true },
+      { label: "Projetos", to: "/app/producao", icon: Layers }, // Adaptado para pequenos e grandes
+      { label: "Relatórios", to: "/app/studio/relatorios", icon: BarChart3 },
     ]
   },
   {
     section: "Produção",
     items: [
-      { label: "Jobs / Kanban", to: "/app/producao", icon: Clapperboard },
       { label: "Ordem do Dia", to: "/app/studio/call-sheet", icon: FileSignature },
-      { label: "Atividades", to: "/app/studio/atividades", icon: Target },
-    ]
-  },
-  {
-    section: "Almoxarifado",
-    items: [
-      { label: "Equipamentos", to: "/app/studio/inventario", icon: Package },
-      { label: "Reservas", to: "/app/studio/inventario?tab=reservas", icon: Archive },
+      { label: "Equipamentos", to: "/app/studio/inventario", icon: ClipboardList }, // Foco em Checklist e Ativos
     ]
   }
 ];
@@ -86,7 +80,6 @@ export default function SidebarDinamica({ tenant, usuario }) {
     ? usuario.nome.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
     : "U";
 
-  // Verifica qual aba está ativa lendo a URL (incluindo parâmetros ?tab=)
   const isActive = (to, exact) => {
     if (to.includes("?")) {
       return location.pathname + location.search === to;
@@ -98,7 +91,7 @@ export default function SidebarDinamica({ tenant, usuario }) {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-[#09090B] border-r border-zinc-800/60 flex flex-col z-40">
       
-      {/* ── TOPO: SELETOR DE CONTEXTO (BUSINESS / STUDIO) ── */}
+      {/* ── TOPO: SELETOR DE CONTEXTO ── */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center justify-between w-full px-4 py-4 border-b border-zinc-800/60 hover:bg-zinc-900/40 transition-colors outline-none cursor-pointer">
           <div className="flex items-center gap-3 min-w-0">
@@ -114,7 +107,7 @@ export default function SidebarDinamica({ tenant, usuario }) {
                 {tenant?.nome_fantasia || "ContaCena ERP"}
               </p>
               <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${isBusiness ? "text-violet-400" : "text-emerald-400"}`}>
-                Modo {isBusiness ? "Business" : "Studio"}
+                {isBusiness ? "Business" : "Studio"}
               </p>
             </div>
           </div>
@@ -129,8 +122,8 @@ export default function SidebarDinamica({ tenant, usuario }) {
             >
               <Briefcase className={`w-4 h-4 mr-3 ${isBusiness ? "text-violet-400" : "text-zinc-500"}`} />
               <div className="flex flex-col">
-                <span className={`text-sm font-medium ${isBusiness ? "text-violet-300" : "text-zinc-300"}`}>Modo Business</span>
-                <span className="text-[10px] text-zinc-500">Gestão, Comercial e Financeiro</span>
+                <span className={`text-sm font-medium ${isBusiness ? "text-violet-300" : "text-zinc-300"}`}>Business</span>
+                <span className="text-[10px] text-zinc-500">Gestão e Financeiro</span>
               </div>
             </DropdownMenuItem>
             
@@ -140,15 +133,15 @@ export default function SidebarDinamica({ tenant, usuario }) {
             >
               <Video className={`w-4 h-4 mr-3 ${!isBusiness ? "text-emerald-400" : "text-zinc-500"}`} />
               <div className="flex flex-col">
-                <span className={`text-sm font-medium ${!isBusiness ? "text-emerald-300" : "text-zinc-300"}`}>Modo Studio</span>
-                <span className="text-[10px] text-zinc-500">Equipe, Sets e Equipamentos</span>
+                <span className={`text-sm font-medium ${!isBusiness ? "text-emerald-300" : "text-zinc-300"}`}>Studio</span>
+                <span className="text-[10px] text-zinc-500">Produção e Set</span>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         )}
       </DropdownMenu>
 
-      {/* ── NAVEGAÇÃO PRINCIPAL (SEMPRE ABERTA E LIMPA) ── */}
+      {/* ── NAVEGAÇÃO STUDIO / BUSINESS ── */}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
         <nav className="px-3 py-6 space-y-8">
           {navStructure.map((group, idx) => (
@@ -180,7 +173,6 @@ export default function SidebarDinamica({ tenant, usuario }) {
             </div>
           ))}
 
-          {/* Seção de Conta Integrada na Lista (Opcional, para não perder o acesso rápido) */}
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3 pt-4 border-t border-zinc-800/50">
               Administração
@@ -193,14 +185,14 @@ export default function SidebarDinamica({ tenant, usuario }) {
                 <Users className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Equipe e Acessos
               </Link>
               <Link to="/app/cadastros" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
-                <Database className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Tabelas Auxiliares
+                <Database className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Cadastros
               </Link>
             </div>
           </div>
         </nav>
       </div>
 
-      {/* ── RODAPÉ: USER PROFILE & SUPER ADMIN MINIMIZADOS ── */}
+      {/* ── RODAPÉ: USER PROFILE (CLEAN) ── */}
       <div className="shrink-0 p-3 border-t border-zinc-800/60 bg-zinc-950">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-zinc-900/80 transition-all outline-none border border-transparent hover:border-zinc-800">
@@ -215,8 +207,8 @@ export default function SidebarDinamica({ tenant, usuario }) {
           </DropdownMenuTrigger>
           
           <DropdownMenuContent align="end" className="w-56 bg-zinc-950 border-zinc-800 text-zinc-300 pb-1">
-            <div className="px-3 py-2 mb-1 border-b border-zinc-800/60">
-              <p className="text-sm font-bold text-white truncate">{usuario?.email}</p>
+            <div className="px-3 py-2 mb-1 border-b border-zinc-800/60 text-xs text-zinc-500 truncate">
+              {usuario?.email}
             </div>
             
             <DropdownMenuItem asChild className="cursor-pointer hover:bg-zinc-900 hover:text-white">
@@ -228,7 +220,7 @@ export default function SidebarDinamica({ tenant, usuario }) {
             {isSuperAdmin && (
               <DropdownMenuItem asChild className="cursor-pointer hover:bg-violet-500/10 hover:text-violet-300 text-violet-400 mt-1">
                 <Link to="/super-admin" className="flex items-center w-full">
-                  <Shield className="w-4 h-4 mr-2" /> Painel Super Admin
+                  <Shield className="w-4 h-4 mr-2" /> Super Admin
                 </Link>
               </DropdownMenuItem>
             )}
@@ -239,7 +231,7 @@ export default function SidebarDinamica({ tenant, usuario }) {
               onClick={() => base44.auth.logout()} 
               className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-300 focus:text-red-300 focus:bg-red-500/10"
             >
-              <LogOut className="w-4 h-4 mr-2" /> Sair do Sistema
+              <LogOut className="w-4 h-4 mr-2" /> Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
