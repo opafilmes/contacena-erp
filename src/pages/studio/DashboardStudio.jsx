@@ -225,108 +225,156 @@ function StudioEquipeView() {
 }
 
 /* ==========================================================================
-   4. CHAT (Estilo WhatsApp para a Produtora)
+   4. CHAT (Versão Full Screen & Functional)
    ========================================================================== */
 function StudioChatView() {
-  const chats = [
-    { id: 1, nome: "Equipe Geral", msg: "O roteiro foi atualizado!", time: "10:45", unread: 2 },
-    { id: 2, nome: "Projeto: Doc Raízes", msg: "As lentes já chegaram?", time: "Ontem", unread: 0 },
-    { id: 3, nome: "Gabriel (Edição)", msg: "Mandei o corte 2 no drive.", time: "Segunda", unread: 0 },
-  ];
+  const [messages, setMessages] = useState([
+    { id: 1, sender: "Vitor Costa", text: "Bom dia equipe! A locação de amanhã está confirmada.", time: "10:30", me: false },
+    { id: 2, sender: "Eu", text: "Show! O equipamento já está separado.", time: "10:45", me: true },
+  ]);
+  const [inputText, setInputText] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Função para enviar mensagem e disparar notificação
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+    
+    const newMessage = {
+      id: Date.now(),
+      sender: "Eu",
+      text: inputText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      me: true
+    };
+
+    setMessages([...messages, newMessage]);
+    setInputText("");
+    
+    // Simulação de Notificação (Gatilho)
+    sendBrowserNotification("Nova Mensagem", { body: inputText });
+  };
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="h-[calc(100vh-10rem)] bg-zinc-900/30 border border-zinc-800/80 rounded-3xl overflow-hidden flex shadow-2xl">
+    // Removido padding e max-width para ocupar a tela toda
+    <div className="fixed inset-0 top-16 left-64 flex bg-[#0c0c0e] z-0">
       
-      {/* BARRA LATERAL (Contatos/Grupos) */}
-      <div className="w-80 border-r border-zinc-800 bg-zinc-950/50 flex flex-col">
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/50">
-          <h2 className="font-bold text-lg">Mensagens</h2>
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-white"><Plus className="w-5 h-5"/></Button>
+      {/* BARRA LATERAL DE CHATS */}
+      <div className="w-80 border-r border-zinc-800 flex flex-col bg-[#09090B]">
+        <div className="p-4 h-16 border-b border-zinc-800 flex items-center justify-between">
+          <h2 className="font-bold text-xl text-zinc-100">Mensagens</h2>
+          <Button size="icon" variant="ghost" className="text-zinc-400"><Plus className="w-5 h-5"/></Button>
         </div>
-        <div className="p-3 border-b border-zinc-800">
+        <div className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <Input placeholder="Buscar chat..." className="pl-9 bg-zinc-900 border-none h-9 text-sm" />
+            <Input placeholder="Buscar conversas..." className="pl-10 bg-zinc-900/50 border-zinc-800 h-10" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {chats.map(c => (
-            <div key={c.id} className={`flex items-center gap-3 p-4 cursor-pointer border-b border-zinc-800/30 transition-colors ${c.id === 1 ? 'bg-zinc-800/40' : 'hover:bg-zinc-900'}`}>
-              <Avatar className="w-12 h-12 border border-zinc-800">
-                <AvatarFallback className={`${c.id === 1 ? 'bg-[#c30147]' : 'bg-zinc-800'} text-white font-bold`}>{c.nome[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h4 className="font-bold text-sm text-zinc-100 truncate">{c.nome}</h4>
-                  <span className={`text-[10px] ${c.unread ? 'text-[#c30147] font-bold' : 'text-zinc-500'}`}>{c.time}</span>
-                </div>
-                <p className="text-xs text-zinc-400 truncate">{c.msg}</p>
+          {/* Item de Chat Ativo */}
+          <div className="flex items-center gap-3 p-4 bg-[#c30147]/10 border-l-4 border-[#c30147] cursor-pointer">
+            <Avatar className="h-12 w-12 border border-zinc-800">
+              <AvatarFallback className="bg-[#c30147] text-white">EG</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-baseline">
+                <h4 className="font-bold text-zinc-100 truncate text-sm">Equipe Geral</h4>
+                <span className="text-[10px] text-zinc-500">10:45</span>
               </div>
-              {c.unread > 0 && (
-                <div className="w-5 h-5 rounded-full bg-[#c30147] text-white flex items-center justify-center text-[10px] font-bold">
-                  {c.unread}
-                </div>
-              )}
+              <p className="text-xs text-zinc-400 truncate">Você: Show! O equipamento...</p>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* ÁREA DA MENSAGEM */}
-      <div className="flex-1 flex flex-col bg-[#0c0c0e]">
-        {/* Header do Chat Ativo */}
-        <div className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-900/50">
+      {/* ÁREA DE CONVERSA */}
+      <div className="flex-1 flex flex-col relative">
+        
+        {/* Header do Chat */}
+        <div className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 bg-[#09090B]/80 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <Avatar className="w-10 h-10 border border-zinc-800"><AvatarFallback className="bg-[#c30147] text-white font-bold">EG</AvatarFallback></Avatar>
+            <div className="relative">
+              <Avatar className="h-10 w-10"><AvatarFallback className="bg-[#c30147]">EG</AvatarFallback></Avatar>
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#09090B] rounded-full"></div>
+            </div>
             <div>
-              <h3 className="font-bold text-zinc-100">Equipe Geral</h3>
-              <p className="text-xs text-[#c30147]">4 online</p>
+              <h3 className="font-bold text-zinc-100 text-sm">Equipe Geral</h3>
+              <p className="text-[10px] text-emerald-500 font-medium">8 membros online</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button size="icon" variant="ghost" className="text-zinc-400 hover:text-white"><Phone className="w-5 h-5"/></Button>
-            <Button size="icon" variant="ghost" className="text-zinc-400 hover:text-white"><Video className="w-5 h-5"/></Button>
+          <div className="flex gap-1">
+            {/* Ativadores de Chamada */}
+            <Button onClick={() => alert('Iniciando Chamada de Voz...')} size="icon" variant="ghost" className="text-zinc-400 hover:text-white"><Phone className="w-5 h-5"/></Button>
+            <Button onClick={() => alert('Iniciando Vídeo Chamada...')} size="icon" variant="ghost" className="text-zinc-400 hover:text-white"><Video className="w-5 h-5"/></Button>
             <Button size="icon" variant="ghost" className="text-zinc-400 hover:text-white"><MoreVertical className="w-5 h-5"/></Button>
           </div>
         </div>
 
-        {/* Corpo das Mensagens (Área de Scroll) */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <div className="flex justify-center mb-6">
-            <span className="text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full bg-zinc-900 text-zinc-500">Hoje</span>
-          </div>
-          
-          <div className="flex gap-3">
-            <Avatar className="w-8 h-8"><AvatarFallback className="bg-sky-600 text-xs">V</AvatarFallback></Avatar>
-            <div className="bg-zinc-800/80 p-3 rounded-2xl rounded-tl-none max-w-[70%]">
-              <p className="text-sm text-zinc-200">Bom dia equipe! A locação de amanhã está confirmada.</p>
-              <span className="text-[10px] text-zinc-500 mt-1 block text-right">10:30</span>
-            </div>
-          </div>
-
-          <div className="flex gap-3 flex-row-reverse">
-            <div className="bg-[#c30147] p-3 rounded-2xl rounded-tr-none max-w-[70%]">
-              <p className="text-sm text-white">Show! O equipamento já está separado no almoxarifado.</p>
-              <div className="flex justify-end items-center gap-1 mt-1">
-                <span className="text-[10px] text-zinc-300">10:45</span>
-                <CheckCircle2 className="w-3 h-3 text-zinc-300" />
+        {/* Mensagens */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex gap-3 ${msg.me ? 'flex-row-reverse' : ''}`}>
+              {!msg.me && <Avatar className="h-8 w-8 mt-auto"><AvatarFallback className="text-[10px] bg-zinc-800">{msg.sender[0]}</AvatarFallback></Avatar>}
+              <div className={`max-w-[60%] p-3 rounded-2xl shadow-lg ${msg.me ? 'bg-[#c30147] text-white rounded-tr-none' : 'bg-zinc-800/80 text-zinc-200 rounded-tl-none'}`}>
+                {!msg.me && <p className="text-[10px] font-bold mb-1 opacity-70">{msg.sender}</p>}
+                <p className="text-sm leading-relaxed">{msg.text}</p>
+                <span className={`text-[9px] block mt-1 text-right opacity-60`}>{msg.time}</span>
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Input de Mensagem Refactorado */}
+        <div className="p-4 bg-[#09090B] border-t border-zinc-800">
+          <div className="max-w-4xl mx-auto flex items-center gap-3 bg-zinc-900/50 p-2 rounded-2xl border border-zinc-800">
+            <Button size="icon" variant="ghost" className="text-zinc-500 hover:text-white"><Paperclip className="w-5 h-5"/></Button>
+            
+            <input 
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Escreva sua mensagem..." 
+              className="flex-1 bg-transparent border-none focus:ring-0 text-sm text-zinc-200"
+            />
+
+            <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
+               {/* Botão de Áudio (Segurar para gravar) */}
+              <Button 
+                onMouseDown={() => setIsRecording(true)}
+                onMouseUp={() => { setIsRecording(false); alert('Áudio enviado!'); }}
+                size="icon" 
+                variant="ghost" 
+                className={`transition-colors ${isRecording ? 'text-red-500 animate-pulse' : 'text-zinc-500 hover:text-white'}`}
+              >
+                <span className="sr-only">Gravar Áudio</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+              </Button>
+
+              <Button onClick={handleSendMessage} size="icon" className="bg-[#c30147] hover:bg-[#a0013a] text-white rounded-xl h-10 w-10">
+                <Send className="w-4 h-4 ml-0.5" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Input de Mensagem */}
-        <div className="p-4 bg-zinc-900/50 border-t border-zinc-800 flex items-center gap-3">
-          <Button size="icon" variant="ghost" className="text-zinc-400 hover:text-white shrink-0"><Paperclip className="w-5 h-5"/></Button>
-          <Input placeholder="Digite uma mensagem..." className="flex-1 bg-zinc-950 border-zinc-800 rounded-full h-12 px-5" />
-          <Button size="icon" className="bg-[#c30147] hover:bg-[#a0013a] text-white rounded-full h-12 w-12 shrink-0">
-            <Send className="w-5 h-5 ml-1" />
-          </Button>
-        </div>
       </div>
-
-    </motion.div>
+    </div>
   );
+}
+
+// ── LÓGICA DE NOTIFICAÇÃO DO NAVEGADOR ──
+function sendBrowserNotification(title, options) {
+  if (!("Notification" in window)) return;
+  
+  if (Notification.permission === "granted") {
+    new Notification(title, options);
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        new Notification(title, options);
+      }
+    });
+  }
 }
 
 /* ==========================================================================
