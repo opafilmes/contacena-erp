@@ -31,8 +31,7 @@ const BUSINESS_NAV = [
   {
     section: "Comercial",
     items: [
-      { label: "Dashboard Comercial", to: "/app/comercial?tab=dashboard", icon: PieChart },
-      { label: "Pipeline & Propostas", to: "/app/comercial?tab=propostas", icon: Target },
+      { label: "Propostas", to: "/app/comercial?tab=propostas", icon: Target },
       { label: "Contratos", to: "/app/comercial?tab=contratos", icon: FileSignature },
       { label: "Clientes", to: "/app/diretorio", icon: Users },
     ]
