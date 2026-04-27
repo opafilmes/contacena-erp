@@ -23,7 +23,6 @@ const SUPER_ADMIN_EMAIL = "contato@opafilmes.com";
 // ── ESTRUTURA MÓDULO BUSINESS ──
 const BUSINESS_NAV = [
   {
-    section: "Visão Executiva",
     items: [
       { label: "Dashboard Geral", to: "/app", icon: LayoutDashboard, exact: true },
     ]
