@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, Video, Briefcase, Clapperboard, Package, 
   Archive, Settings, Users, Database, User, Shield, LogOut,
   PieChart, Target, FileSignature, ArrowDownRight, ArrowUpRight, 
-  RefreshCcw, BarChart3, ChevronsUpDown, Layers, ClipboardList
+  RefreshCcw, BarChart3, ChevronsUpDown, Layers, ClipboardList,
+  ChevronDown, ChevronRight
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAppMode } from "@/lib/AppModeContext";
@@ -19,7 +20,7 @@ import {
 
 const SUPER_ADMIN_EMAIL = "contato@opafilmes.com";
 
-// ── ESTRUTURA MÓDULO BUSINESS (MANTIDA) ──
+// ── ESTRUTURA MÓDULO BUSINESS ──
 const BUSINESS_NAV = [
   {
     section: "Visão Executiva",
@@ -49,13 +50,13 @@ const BUSINESS_NAV = [
   }
 ];
 
-// ── NOVA ESTRUTURA MÓDULO STUDIO ──
+// ── ESTRUTURA MÓDULO STUDIO ──
 const STUDIO_NAV = [
   {
     section: "Gestão",
     items: [
       { label: "Dashboard", to: "/app/studio", icon: LayoutDashboard, exact: true },
-      { label: "Projetos", to: "/app/producao", icon: Layers }, // Adaptado para pequenos e grandes
+      { label: "Projetos", to: "/app/producao", icon: Layers },
       { label: "Relatórios", to: "/app/studio/relatorios", icon: BarChart3 },
     ]
   },
@@ -63,7 +64,7 @@ const STUDIO_NAV = [
     section: "Produção",
     items: [
       { label: "Ordem do Dia", to: "/app/studio/call-sheet", icon: FileSignature },
-      { label: "Equipamentos", to: "/app/studio/inventario", icon: ClipboardList }, // Foco em Checklist e Ativos
+      { label: "Equipamentos", to: "/app/studio/inventario", icon: ClipboardList },
     ]
   }
 ];
@@ -75,6 +76,8 @@ export default function SidebarDinamica({ tenant, usuario }) {
   const accent = isBusiness ? "violet" : "emerald";
   const navStructure = isBusiness ? BUSINESS_NAV : STUDIO_NAV;
   const isSuperAdmin = usuario?.email === SUPER_ADMIN_EMAIL;
+
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const initials = usuario?.nome
     ? usuario.nome.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
@@ -116,21 +119,14 @@ export default function SidebarDinamica({ tenant, usuario }) {
         
         {!isEquipe && (
           <DropdownMenuContent align="start" className="w-56 bg-zinc-950 border-zinc-800 p-1">
-            <DropdownMenuItem 
-              onClick={() => { if(!isBusiness) toggleMode(); }} 
-              className={`cursor-pointer p-2 rounded-md mb-1 ${isBusiness ? "bg-violet-500/10" : "hover:bg-zinc-900"}`}
-            >
+            <DropdownMenuItem onClick={() => { if(!isBusiness) toggleMode(); }} className={`cursor-pointer p-2 rounded-md mb-1 ${isBusiness ? "bg-violet-500/10" : "hover:bg-zinc-900"}`}>
               <Briefcase className={`w-4 h-4 mr-3 ${isBusiness ? "text-violet-400" : "text-zinc-500"}`} />
               <div className="flex flex-col">
                 <span className={`text-sm font-medium ${isBusiness ? "text-violet-300" : "text-zinc-300"}`}>Business</span>
                 <span className="text-[10px] text-zinc-500">Gestão e Financeiro</span>
               </div>
             </DropdownMenuItem>
-            
-            <DropdownMenuItem 
-              onClick={() => { if(isBusiness) toggleMode(); }} 
-              className={`cursor-pointer p-2 rounded-md ${!isBusiness ? "bg-emerald-500/10" : "hover:bg-zinc-900"}`}
-            >
+            <DropdownMenuItem onClick={() => { if(isBusiness) toggleMode(); }} className={`cursor-pointer p-2 rounded-md ${!isBusiness ? "bg-emerald-500/10" : "hover:bg-zinc-900"}`}>
               <Video className={`w-4 h-4 mr-3 ${!isBusiness ? "text-emerald-400" : "text-zinc-500"}`} />
               <div className="flex flex-col">
                 <span className={`text-sm font-medium ${!isBusiness ? "text-emerald-300" : "text-zinc-300"}`}>Studio</span>
@@ -158,9 +154,7 @@ export default function SidebarDinamica({ tenant, usuario }) {
                       to={item.to}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                         active
-                          ? accent === "violet" 
-                              ? "bg-violet-500/10 text-violet-300" 
-                              : "bg-emerald-500/10 text-emerald-300"
+                          ? accent === "violet" ? "bg-violet-500/10 text-violet-300" : "bg-emerald-500/10 text-emerald-300"
                           : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
                       }`}
                     >
@@ -173,22 +167,40 @@ export default function SidebarDinamica({ tenant, usuario }) {
             </div>
           ))}
 
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3 pt-4 border-t border-zinc-800/50">
-              Administração
-            </h4>
-            <div className="space-y-1">
-              <Link to="/app/configuracoes-empresa" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
-                <Settings className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Configurações
-              </Link>
-              <Link to="/app/gestao-equipe" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
-                <Users className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Equipe e Acessos
-              </Link>
-              <Link to="/app/cadastros" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
-                <Database className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Cadastros
-              </Link>
+          {/* ── SEÇÃO ADMINISTRAÇÃO INCORPORADA (BUSINESS) ── */}
+          {isBusiness && (
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3 pt-4 border-t border-zinc-800/50">
+                Sistema
+              </h4>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setAdminOpen(!adminOpen)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    adminOpen ? "text-zinc-200 bg-zinc-900/50" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
+                  }`}
+                >
+                  <Settings className={`w-[18px] h-[18px] shrink-0 ${adminOpen ? "text-violet-400" : "text-zinc-500"}`} />
+                  <span className="flex-1 text-left">Configurações</span>
+                  {adminOpen ? <ChevronDown className="w-3.5 h-3.5 opacity-50" /> : <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                </button>
+
+                {adminOpen && (
+                  <div className="ml-7 mt-1 space-y-1 border-l border-zinc-800 pl-3">
+                    <Link to="/app/configuracoes-empresa" className={`block px-2 py-1.5 rounded-md text-xs transition-colors ${isActive("/app/configuracoes-empresa") ? "text-violet-300 font-bold" : "text-zinc-500 hover:text-zinc-300"}`}>
+                      Minha Produtora
+                    </Link>
+                    <Link to="/app/gestao-equipe" className={`block px-2 py-1.5 rounded-md text-xs transition-colors ${isActive("/app/gestao-equipe") ? "text-violet-300 font-bold" : "text-zinc-500 hover:text-zinc-300"}`}>
+                      Usuários
+                    </Link>
+                    <Link to="/app/cadastros" className={`block px-2 py-1.5 rounded-md text-xs transition-colors ${isActive("/app/cadastros") ? "text-violet-300 font-bold" : "text-zinc-500 hover:text-zinc-300"}`}>
+                      Cadastros
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </nav>
       </div>
 
@@ -207,30 +219,17 @@ export default function SidebarDinamica({ tenant, usuario }) {
           </DropdownMenuTrigger>
           
           <DropdownMenuContent align="end" className="w-56 bg-zinc-950 border-zinc-800 text-zinc-300 pb-1">
-            <div className="px-3 py-2 mb-1 border-b border-zinc-800/60 text-xs text-zinc-500 truncate">
-              {usuario?.email}
-            </div>
-            
+            <div className="px-3 py-2 mb-1 border-b border-zinc-800/60 text-xs text-zinc-500 truncate">{usuario?.email}</div>
             <DropdownMenuItem asChild className="cursor-pointer hover:bg-zinc-900 hover:text-white">
-              <Link to="/app/meu-perfil" className="flex items-center w-full">
-                <User className="w-4 h-4 mr-2 text-zinc-400" /> Meu Perfil
-              </Link>
+              <Link to="/app/meu-perfil" className="flex items-center w-full"><User className="w-4 h-4 mr-2 text-zinc-400" /> Meu Perfil</Link>
             </DropdownMenuItem>
-
             {isSuperAdmin && (
               <DropdownMenuItem asChild className="cursor-pointer hover:bg-violet-500/10 hover:text-violet-300 text-violet-400 mt-1">
-                <Link to="/super-admin" className="flex items-center w-full">
-                  <Shield className="w-4 h-4 mr-2" /> Super Admin
-                </Link>
+                <Link to="/super-admin" className="flex items-center w-full"><Shield className="w-4 h-4 mr-2" /> Painel Super Admin</Link>
               </DropdownMenuItem>
             )}
-
             <DropdownMenuSeparator className="bg-zinc-800 my-1" />
-            
-            <DropdownMenuItem 
-              onClick={() => base44.auth.logout()} 
-              className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-300 focus:text-red-300 focus:bg-red-500/10"
-            >
+            <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-300 focus:text-red-300 focus:bg-red-500/10">
               <LogOut className="w-4 h-4 mr-2" /> Sair
             </DropdownMenuItem>
           </DropdownMenuContent>
