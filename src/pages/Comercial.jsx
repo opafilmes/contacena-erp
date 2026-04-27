@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useOutletContext, useSearchParams } from "react-router-dom"; // 🔥 Adicionado useSearchParams
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
-  Plus, Eye, Printer, Pencil, Trash2, FileText, LayoutDashboard, FileCheck, 
-  MoreVertical, ArrowUpDown, Send, Mail, MessageCircle, AlertTriangle
+  Plus, Eye, Printer, Pencil, Trash2, ArrowUpDown, Send, 
+  Mail, MessageCircle, AlertTriangle, MoreVertical
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
@@ -30,8 +30,8 @@ export default function Comercial() {
   const { tenant } = useOutletContext();
   const tenantId = tenant?.id;
 
-  // 🔥 Substituímos o useState interno pelo state da URL
   const [searchParams] = useSearchParams();
+  // Se não houver aba na URL, o padrão agora é "propostas"
   const activeNav = searchParams.get("tab") || "propostas";
 
   const [proposals, setProposals] = useState([]);
@@ -120,28 +120,50 @@ export default function Comercial() {
     return sortableProposals;
   }, [proposals, sortConfig, getClientName]);
 
+  // ── CÁLCULO DAS ESTATÍSTICAS PARA O DASHBOARD EMBUTIDO ──
+  const totalValor = proposals.reduce((s, p) => s + (p.total_value || 0), 0);
+  const aprovadas = proposals.filter(p => p.status === "Aprovada");
+  const txConversao = proposals.length ? Math.round((aprovadas.length / proposals.length) * 100) : 0;
+
+  const stats = [
+    { label: "Total de Propostas", value: proposals.length, color: "text-zinc-200" },
+    { label: "Valor Total (Pipeline)", value: formatBRL(totalValor), color: "text-violet-400" },
+    { label: "Aprovadas", value: aprovadas.length, color: "text-emerald-400" },
+    { label: "Taxa de Conversão", value: `${txConversao}%`, color: "text-sky-400" },
+  ];
+
   return (
-    // 🔥 Removido o Flex que continha a aside! Agora a área inteira respira.
     <div className="min-h-[calc(100vh-4rem)] p-8 max-w-7xl mx-auto w-full">
       
-      {activeNav === "dashboard" && <ComercialDashboard proposals={proposals} clients={clients} />}
-
       {activeNav === "propostas" && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center justify-between mb-6">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+          
+          {/* HEADER DA PÁGINA */}
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">Pipeline de Propostas</h1>
-              <p className="text-sm text-zinc-500 mt-0.5">{proposals.length} proposta(s) cadastrada(s)</p>
+              <h1 className="font-heading text-2xl font-bold text-foreground tracking-tight">Propostas</h1>
+              <p className="text-sm text-zinc-500 mt-0.5">Gerenciamento de funil, valores e envios</p>
             </div>
-            <Button onClick={handleNew} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white">
+            <Button onClick={handleNew} className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-md">
               <Plus className="w-4 h-4" /> Nova Proposta
             </Button>
           </div>
 
+          {/* DASHBOARD EMBUTIDO (KPIs) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map(s => (
+              <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5 shadow-sm">
+                <p className="text-xs text-zinc-500 mb-1 font-semibold uppercase tracking-wider">{s.label}</p>
+                <p className={`text-2xl font-bold font-heading ${s.color}`}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* TABELA PRINCIPAL */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 overflow-hidden shadow-lg">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800">
+                <tr className="border-b border-zinc-800 bg-zinc-900/30">
                   <SortableHeader label="Nº" sortKey="number" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="Data" sortKey="issue_date" sortConfig={sortConfig} onSort={handleSort} />
                   <SortableHeader label="Cliente" sortKey="client_id" sortConfig={sortConfig} onSort={handleSort} />
@@ -164,14 +186,13 @@ export default function Comercial() {
                     </td>
                     <td className="px-4 py-3 text-zinc-200 font-medium">{getClientName(p.client_id)}</td>
                     <td className="px-4 py-3 text-zinc-400">{p.type || "—"}</td>
-                    <td className="px-4 py-3 text-zinc-200">{formatBRL(p.total_value)}</td>
+                    <td className="px-4 py-3 text-zinc-200 font-medium">{formatBRL(p.total_value)}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[p.status] || ""}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${STATUS_STYLES[p.status] || ""}`}>
                         {p.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
@@ -192,13 +213,11 @@ export default function Comercial() {
                           <DropdownMenuItem onClick={() => handleEdit(p)} className="cursor-pointer hover:bg-zinc-800 hover:text-white">
                             <Pencil className="w-4 h-4 mr-2" /> Editar
                           </DropdownMenuItem>
-                          
                           <DropdownMenuItem onClick={() => setProposalToDelete(p)} className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-400 focus:text-red-400 focus:bg-red-500/10">
                             <Trash2 className="w-4 h-4 mr-2" /> Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-
                     </td>
                   </tr>
                 ))}
@@ -219,7 +238,7 @@ export default function Comercial() {
         </motion.div>
       )}
 
-      {/* Resto dos modais permanecem intocados... */}
+      {/* ── MODAIS (Formulário, Visualização, Envio, Exclusão) ── */}
       <ProposalForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
@@ -281,6 +300,7 @@ export default function Comercial() {
   );
 }
 
+// Subcomponente de Header Dinâmico da Tabela
 function SortableHeader({ label, sortKey, sortConfig, onSort }) {
   const isActive = sortConfig.key === sortKey;
   return (
@@ -296,6 +316,7 @@ function SortableHeader({ label, sortKey, sortConfig, onSort }) {
   );
 }
 
+// Subcomponente de Envio (Email / WhatsApp)
 function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent }) {
   const [method, setMethod] = useState("email");
   const [sending, setSending] = useState(false);
@@ -432,42 +453,3 @@ function SendProposalDialog({ open, onClose, proposal, client, tenant, onSent })
     </Dialog>
   );
 }
-
-function ComercialDashboard({ proposals, clients }) {
-  const total = proposals.reduce((s, p) => s + (p.total_value || 0), 0);
-  const aprovadas = proposals.filter(p => p.status === "Aprovada");
-  const pendentes = proposals.filter(p => p.status === "Elaboração" || p.status === "Enviada");
-  const txConversao = proposals.length ? Math.round((aprovadas.length / proposals.length) * 100) : 0;
-
-  const stats = [
-    { label: "Total de Propostas", value: proposals.length, color: "text-zinc-200" },
-    { label: "Valor Total", value: formatBRL(total), color: "text-violet-400" },
-    { label: "Aprovadas", value: aprovadas.length, color: "text-emerald-400" },
-    { label: "Taxa de Conversão", value: `${txConversao}%`, color: "text-sky-400" },
-  ];
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h1 className="font-heading text-2xl font-bold text-foreground mb-6">Dashboard Comercial</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map(s => (
-          <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-            <p className="text-xs text-zinc-500 mb-1">{s.label}</p>
-            <p className={`text-2xl font-bold font-heading ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
-      </div>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-        <p className="text-sm font-semibold text-zinc-300 mb-3">Propostas Recentes</p>
-        {proposals.slice(0, 5).map(p => (
-          <div key={p.id} className="flex items-center justify-between py-2 border-b border-zinc-800/50 last:border-0">
-            <span className="font-mono text-violet-400 text-sm">{p.number}</span>
-            <span className="text-zinc-400 text-sm">{clients.find(c => c.id === p.client_id)?.nome_fantasia || "—"}</span>
-            <span className="text-zinc-200 text-sm">{formatBRL(p.total_value)}</span>
-          </div>
-        ))}
-        {proposals.length === 0 && <p className="text-zinc-600 text-sm text-center py-4">Nenhuma proposta ainda.</p>}
-      </div>
-    </motion.div>
-  );
-} 
