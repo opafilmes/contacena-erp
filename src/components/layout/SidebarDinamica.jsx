@@ -1,82 +1,92 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, TrendingUp, Wallet, FileCheck, Video,
-  Briefcase, Clapperboard, Package, Archive, ChevronDown, ChevronRight,
-  Settings, Users, Database, User, Shield, LogOut
+  LayoutDashboard, Wallet, Video, Briefcase, Clapperboard, Package, 
+  Archive, Settings, Users, Database, User, Shield, LogOut,
+  PieChart, Target, FileSignature, ArrowDownRight, ArrowUpRight, 
+  RefreshCcw, BarChart3, ChevronsUpDown
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAppMode } from "@/lib/AppModeContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SUPER_ADMIN_EMAIL = "contato@opafilmes.com";
 
+// ── ESTRUTURA PLANA (FLAT) DO MODO BUSINESS ──
 const BUSINESS_NAV = [
   {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    to: "/app",
-    exact: true,
+    section: "Visão Executiva",
+    items: [
+      { label: "Dashboard Geral", to: "/app", icon: LayoutDashboard, exact: true },
+    ]
   },
   {
-    label: "Comercial",
-    icon: TrendingUp,
-    children: [
-      { label: "Dashboard Comercial", to: "/app/comercial?tab=dashboard" },
-      { label: "Pipeline / Propostas", to: "/app/comercial?tab=propostas" },
-      { label: "Contratos", to: "/app/comercial?tab=contratos" },
-      { label: "Clientes", to: "/app/diretorio" },
-    ],
+    section: "Comercial",
+    items: [
+      { label: "Dashboard Comercial", to: "/app/comercial?tab=dashboard", icon: PieChart },
+      { label: "Pipeline & Propostas", to: "/app/comercial?tab=propostas", icon: Target },
+      { label: "Contratos", to: "/app/comercial?tab=contratos", icon: FileSignature },
+      { label: "Clientes", to: "/app/diretorio", icon: Users },
+    ]
   },
   {
-    label: "Financeiro",
-    icon: Wallet,
-    children: [
-      { label: "Visão Geral", to: "/app/financeiro?tab=dashboard" },
-      { label: "Contas a Receber", to: "/app/financeiro?tab=receber" },
-      { label: "Contas a Pagar", to: "/app/financeiro?tab=pagar" },
-      { label: "Conciliação Bancária", to: "/app/financeiro?tab=conciliacao" },
-      { label: "Inventário (Ativos)", to: "/app/financeiro?tab=inventario" },
-      { label: "Relatórios", to: "/app/financeiro?tab=relatorios" },
-    ],
-  },
+    section: "Financeiro",
+    items: [
+      { label: "Visão Geral", to: "/app/financeiro?tab=dashboard", icon: Wallet },
+      { label: "Contas a Receber", to: "/app/financeiro?tab=receber", icon: ArrowDownRight },
+      { label: "Contas a Pagar", to: "/app/financeiro?tab=pagar", icon: ArrowUpRight },
+      { label: "Conciliação", to: "/app/financeiro?tab=conciliacao", icon: RefreshCcw },
+      { label: "Controle Patrimonial", to: "/app/financeiro?tab=inventario", icon: Package },
+      { label: "Relatórios (DRE)", to: "/app/financeiro?tab=relatorios", icon: BarChart3 },
+    ]
+  }
 ];
 
+// ── ESTRUTURA PLANA (FLAT) DO MODO STUDIO ──
 const STUDIO_NAV = [
   {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    to: "/app/studio",
-    exact: true,
+    section: "Visão Operacional",
+    items: [
+      { label: "Dashboard Studio", to: "/app/studio", icon: LayoutDashboard, exact: true },
+    ]
   },
   {
-    label: "Produção",
-    icon: Clapperboard,
-    children: [
-      { label: "Jobs / Kanban", to: "/app/producao" },
-      { label: "Ordem do Dia", to: "/app/studio/call-sheet" },
-      { label: "Atividades", to: "/app/studio/atividades" },
-    ],
+    section: "Produção",
+    items: [
+      { label: "Jobs / Kanban", to: "/app/producao", icon: Clapperboard },
+      { label: "Ordem do Dia", to: "/app/studio/call-sheet", icon: FileSignature },
+      { label: "Atividades", to: "/app/studio/atividades", icon: Target },
+    ]
   },
   {
-    label: "Inventário",
-    icon: Package,
-    children: [
-      { label: "Equipamentos", to: "/app/studio/inventario" },
-      { label: "Reservas", to: "/app/studio/inventario?tab=reservas" },
-    ],
-  },
-  {
-    label: "Arquivo",
-    icon: Archive,
-    to: "/app/studio/arquivo",
-  },
+    section: "Almoxarifado",
+    items: [
+      { label: "Equipamentos", to: "/app/studio/inventario", icon: Package },
+      { label: "Reservas", to: "/app/studio/inventario?tab=reservas", icon: Archive },
+    ]
+  }
 ];
 
-function NavItem({ item, accent }) {
+export default function SidebarDinamica({ tenant, usuario }) {
+  const { appMode, toggleMode, isEquipe } = useAppMode();
   const location = useLocation();
-  
-  // Função atualizada para entender submenus com ?tab=...
+  const isBusiness = appMode === "business";
+  const accent = isBusiness ? "violet" : "emerald";
+  const navStructure = isBusiness ? BUSINESS_NAV : STUDIO_NAV;
+  const isSuperAdmin = usuario?.email === SUPER_ADMIN_EMAIL;
+
+  const initials = usuario?.nome
+    ? usuario.nome.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
+    : "U";
+
+  // Verifica qual aba está ativa lendo a URL (incluindo parâmetros ?tab=)
   const isActive = (to, exact) => {
     if (to.includes("?")) {
       return location.pathname + location.search === to;
@@ -85,161 +95,156 @@ function NavItem({ item, accent }) {
     return exact ? location.pathname === path : location.pathname.startsWith(path) && path !== "/app";
   };
 
-  const [open, setOpen] = useState(() => {
-    if (item.children) return item.children.some(c => isActive(c.to));
-    return false;
-  });
-
-  if (item.children) {
-    const anyActive = item.children.some(c => isActive(c.to));
-    return (
-      <div>
-        <button
-          onClick={() => setOpen(o => !o)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group ${
-            anyActive
-              ? accent === "violet" ? "text-violet-300 bg-violet-500/10" : "text-emerald-300 bg-emerald-500/10"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
-          }`}
-        >
-          <item.icon className="w-4 h-4 shrink-0" />
-          <span className="flex-1 text-left">{item.label}</span>
-          {open ? <ChevronDown className="w-3.5 h-3.5 opacity-60" /> : <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
-        </button>
-        {open && (
-          <div className="ml-7 mt-0.5 space-y-0.5 border-l border-zinc-800 pl-3">
-            {item.children.map(child => (
-              <Link
-                key={child.to}
-                to={child.to}
-                className={`block px-2 py-1.5 rounded-md text-xs transition-colors ${
-                  isActive(child.to)
-                    ? accent === "violet" ? "text-violet-300 font-semibold" : "text-emerald-300 font-semibold"
-                    : "text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                {child.label}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const active = isActive(item.to, item.exact);
   return (
-    <Link
-      to={item.to}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-        active
-          ? accent === "violet" ? "bg-violet-500/15 text-violet-300 border border-violet-500/25" : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
-          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
-      }`}
-    >
-      <item.icon className="w-4 h-4 shrink-0" />
-      {item.label}
-    </Link>
-  );
-}
-
-export default function SidebarDinamica({ tenant, usuario }) {
-  const { appMode, toggleMode, isEquipe } = useAppMode();
-  const isBusiness = appMode === "business";
-  const accent = isBusiness ? "violet" : "emerald";
-  const nav = isBusiness ? BUSINESS_NAV : STUDIO_NAV;
-  const isSuperAdmin = usuario?.email === SUPER_ADMIN_EMAIL;
-
-  const initials = usuario?.nome
-    ? usuario.nome.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase()
-    : "U";
-
-  return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 bg-zinc-950 border-r border-zinc-800/80 flex flex-col z-40">
-      {/* Logo / Tenant */}
-      <div className="h-16 flex items-center px-4 border-b border-zinc-800/80 shrink-0">
-        <Link to="/app" className="flex items-center gap-3 min-w-0">
-          {tenant?.logo ? (
-            <img src={tenant.logo} alt={tenant.nome_fantasia} className="h-8 w-8 rounded-lg object-cover shrink-0" />
-          ) : (
-            <div className="h-8 w-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
-              <span className="text-violet-300 font-heading font-bold text-sm">{tenant?.nome_fantasia?.[0] || "C"}</span>
+    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-[#09090B] border-r border-zinc-800/60 flex flex-col z-40">
+      
+      {/* ── TOPO: SELETOR DE CONTEXTO (BUSINESS / STUDIO) ── */}
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center justify-between w-full px-4 py-4 border-b border-zinc-800/60 hover:bg-zinc-900/40 transition-colors outline-none cursor-pointer">
+          <div className="flex items-center gap-3 min-w-0">
+            {tenant?.logo ? (
+              <img src={tenant.logo} alt={tenant.nome_fantasia} className="h-9 w-9 rounded-lg object-cover shrink-0 shadow-sm" />
+            ) : (
+              <div className="h-9 w-9 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
+                <span className="text-zinc-300 font-heading font-bold text-sm">{tenant?.nome_fantasia?.[0] || "C"}</span>
+              </div>
+            )}
+            <div className="text-left min-w-0">
+              <p className="font-heading font-bold text-zinc-100 text-sm truncate leading-tight">
+                {tenant?.nome_fantasia || "ContaCena ERP"}
+              </p>
+              <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${isBusiness ? "text-violet-400" : "text-emerald-400"}`}>
+                Modo {isBusiness ? "Business" : "Studio"}
+              </p>
             </div>
-          )}
-          <div className="min-w-0">
-            <p className="font-heading font-semibold text-zinc-100 text-sm truncate leading-tight">{tenant?.nome_fantasia || "ContaCena"}</p>
-            <p className={`text-[10px] font-medium uppercase tracking-wider ${isBusiness ? "text-violet-400" : "text-emerald-400"}`}>
-              {isBusiness ? "Modo Business" : "Modo Studio"}
-            </p>
           </div>
-        </Link>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 px-3 mb-2">
-          {isBusiness ? "Gestão" : "Produção"}
-        </p>
-        {nav.map(item => (
-          <NavItem key={item.label} item={item} accent={accent} />
-        ))}
-
-        {/* Separator */}
-        <div className="pt-4 pb-2">
-          <div className="border-t border-zinc-800/80" />
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 px-3 mt-3 mb-2">Conta</p>
-        </div>
-
-        <Link to="/app/configuracoes-empresa" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors">
-          <Settings className="w-4 h-4 shrink-0" /> Configurações
-        </Link>
-        <Link to="/app/gestao-equipe" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors">
-          <Users className="w-4 h-4 shrink-0" /> Usuários
-        </Link>
-        <Link to="/app/cadastros" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors">
-          <Database className="w-4 h-4 shrink-0" /> Cadastros
-        </Link>
-        <Link to="/app/meu-perfil" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors">
-          <User className="w-4 h-4 shrink-0" /> Meu Perfil
-        </Link>
-        {isSuperAdmin && (
-          <Link to="/super-admin" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors">
-            <Shield className="w-4 h-4 shrink-0" /> Super Admin
-          </Link>
-        )}
-      </nav>
-
-      {/* Footer: Mode Toggle + User */}
-      <div className="shrink-0 border-t border-zinc-800/80 p-3 space-y-2">
+          {!isEquipe && <ChevronsUpDown className="w-4 h-4 text-zinc-500 shrink-0" />}
+        </DropdownMenuTrigger>
+        
         {!isEquipe && (
-          <button
-            onClick={toggleMode}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border ${
-              isBusiness
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
-                : "border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20"
-            }`}
-          >
-            {isBusiness
-              ? <><Video className="w-4 h-4 shrink-0" /> Ir para Modo Studio</>
-              : <><Briefcase className="w-4 h-4 shrink-0" /> Ir para Modo Business</>
-            }
-          </button>
+          <DropdownMenuContent align="start" className="w-56 bg-zinc-950 border-zinc-800 p-1">
+            <DropdownMenuItem 
+              onClick={() => { if(!isBusiness) toggleMode(); }} 
+              className={`cursor-pointer p-2 rounded-md mb-1 ${isBusiness ? "bg-violet-500/10" : "hover:bg-zinc-900"}`}
+            >
+              <Briefcase className={`w-4 h-4 mr-3 ${isBusiness ? "text-violet-400" : "text-zinc-500"}`} />
+              <div className="flex flex-col">
+                <span className={`text-sm font-medium ${isBusiness ? "text-violet-300" : "text-zinc-300"}`}>Modo Business</span>
+                <span className="text-[10px] text-zinc-500">Gestão, Comercial e Financeiro</span>
+              </div>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              onClick={() => { if(isBusiness) toggleMode(); }} 
+              className={`cursor-pointer p-2 rounded-md ${!isBusiness ? "bg-emerald-500/10" : "hover:bg-zinc-900"}`}
+            >
+              <Video className={`w-4 h-4 mr-3 ${!isBusiness ? "text-emerald-400" : "text-zinc-500"}`} />
+              <div className="flex flex-col">
+                <span className={`text-sm font-medium ${!isBusiness ? "text-emerald-300" : "text-zinc-300"}`}>Modo Studio</span>
+                <span className="text-[10px] text-zinc-500">Equipe, Sets e Equipamentos</span>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
         )}
-        <div className="flex items-center gap-3 px-2 py-1.5">
-          <Avatar className="h-8 w-8 border border-zinc-700 shrink-0">
-            <AvatarImage src={usuario?.foto_perfil} />
-            <AvatarFallback className="bg-zinc-800 text-zinc-300 text-xs font-semibold">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-zinc-200 font-medium truncate leading-tight">{usuario?.nome || "Usuário"}</p>
-            <p className="text-[11px] text-zinc-500 truncate">{usuario?.role}</p>
+      </DropdownMenu>
+
+      {/* ── NAVEGAÇÃO PRINCIPAL (SEMPRE ABERTA E LIMPA) ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+        <nav className="px-3 py-6 space-y-8">
+          {navStructure.map((group, idx) => (
+            <div key={idx}>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3">
+                {group.section}
+              </h4>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const active = isActive(item.to, item.exact);
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? accent === "violet" 
+                              ? "bg-violet-500/10 text-violet-300" 
+                              : "bg-emerald-500/10 text-emerald-300"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50"
+                      }`}
+                    >
+                      <item.icon className={`w-[18px] h-[18px] shrink-0 ${active ? (accent === "violet" ? "text-violet-400" : "text-emerald-400") : "text-zinc-500"}`} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* Seção de Conta Integrada na Lista (Opcional, para não perder o acesso rápido) */}
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 px-3 mb-3 pt-4 border-t border-zinc-800/50">
+              Administração
+            </h4>
+            <div className="space-y-1">
+              <Link to="/app/configuracoes-empresa" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
+                <Settings className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Configurações
+              </Link>
+              <Link to="/app/gestao-equipe" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
+                <Users className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Equipe e Acessos
+              </Link>
+              <Link to="/app/cadastros" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 transition-colors">
+                <Database className="w-[18px] h-[18px] shrink-0 text-zinc-500" /> Tabelas Auxiliares
+              </Link>
+            </div>
           </div>
-          <button onClick={() => base44.auth.logout()} className="p-1.5 rounded-md text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        </nav>
       </div>
+
+      {/* ── RODAPÉ: USER PROFILE & SUPER ADMIN MINIMIZADOS ── */}
+      <div className="shrink-0 p-3 border-t border-zinc-800/60 bg-zinc-950">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-zinc-900/80 transition-all outline-none border border-transparent hover:border-zinc-800">
+            <Avatar className="h-9 w-9 border border-zinc-800 shrink-0 shadow-sm">
+              <AvatarImage src={usuario?.foto_perfil} />
+              <AvatarFallback className="bg-zinc-800 text-zinc-300 text-xs font-bold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm text-zinc-200 font-bold truncate leading-tight">{usuario?.nome || "Usuário"}</p>
+              <p className="text-[11px] text-zinc-500 truncate font-medium">{usuario?.role}</p>
+            </div>
+          </DropdownMenuTrigger>
+          
+          <DropdownMenuContent align="end" className="w-56 bg-zinc-950 border-zinc-800 text-zinc-300 pb-1">
+            <div className="px-3 py-2 mb-1 border-b border-zinc-800/60">
+              <p className="text-sm font-bold text-white truncate">{usuario?.email}</p>
+            </div>
+            
+            <DropdownMenuItem asChild className="cursor-pointer hover:bg-zinc-900 hover:text-white">
+              <Link to="/app/meu-perfil" className="flex items-center w-full">
+                <User className="w-4 h-4 mr-2 text-zinc-400" /> Meu Perfil
+              </Link>
+            </DropdownMenuItem>
+
+            {isSuperAdmin && (
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-violet-500/10 hover:text-violet-300 text-violet-400 mt-1">
+                <Link to="/super-admin" className="flex items-center w-full">
+                  <Shield className="w-4 h-4 mr-2" /> Painel Super Admin
+                </Link>
+              </DropdownMenuItem>
+            )}
+
+            <DropdownMenuSeparator className="bg-zinc-800 my-1" />
+            
+            <DropdownMenuItem 
+              onClick={() => base44.auth.logout()} 
+              className="cursor-pointer text-red-400 hover:bg-red-500/10 hover:text-red-300 focus:text-red-300 focus:bg-red-500/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" /> Sair do Sistema
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
     </aside>
   );
 }
