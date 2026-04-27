@@ -47,14 +47,18 @@ const BUSINESS_NAV = [
   }
 ];
 
-// ── ESTRUTURA MÓDULO STUDIO ──
+// ── ESTRUTURA MÓDULO STUDIO (ATUALIZADA) ──
+import { MessageCircle } from "lucide-react"; // Lembre-se de adicionar o MessageCircle lá no topo do arquivo nos imports do lucide-react!
+
 const STUDIO_NAV = [
   {
     section: "Gestão",
     items: [
-      { label: "Dashboard", to: "/app/studio", icon: LayoutDashboard, exact: true },
-      { label: "Projetos", to: "/app/producao", icon: Layers },
-      { label: "Relatórios", to: "/app/studio/relatorios", icon: BarChart3 },
+      { label: "Dashboard", to: "/app/studio?tab=dashboard", icon: LayoutDashboard },
+      { label: "Projetos e Tarefas", to: "/app/studio?tab=projetos", icon: Layers },
+      { label: "Equipe", to: "/app/studio?tab=equipe", icon: Users },
+      { label: "Chat", to: "/app/studio?tab=chat", icon: MessageCircle },
+      { label: "Relatórios", to: "/app/studio?tab=relatorios", icon: BarChart3 },
     ]
   },
   {
